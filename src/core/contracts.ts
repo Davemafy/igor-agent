@@ -366,6 +366,13 @@ export const ConversationFocusSchema = z.object({
   ordinalMap: z.record(z.string(), z.string()).default({}),
   lastResultRevision: z.number().int().nonnegative().default(0),
   lastQuestionId: z.string().nullable().default(null),
+  pendingQuestion: z
+    .object({
+      prompt: z.string().min(1).max(1600),
+      messageIndex: z.number().int().nonnegative(),
+    })
+    .nullable()
+    .optional(),
   referencedParticipants: z.array(z.string()).max(12).default([]),
 });
 

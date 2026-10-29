@@ -1,8 +1,22 @@
 import { ModelRequestBudgetError } from "../tools/model-budget";
 import { z } from "zod";
 
+/** Stable error categories for model-generated tool protocol, no raw provider body. */
+export class ModelOutputFormatError extends Error {
+  constructor(
+    readonly stage: "agent.decision" | "research.synthesis",
+    readonly reason: "invalid JSON" | "invalid schema",
+  ) {
+    super(`${stage}: ${reason}`);
+  }
+}
+
 /** Report only known categories and schema paths, never raw provider content or credentials. */
 export function interpretationFailure(error: unknown): string {
+  if (error instanceof ModelOutputFormatError) {
+    return error.message;
+  }
+
   if (error instanceof ModelRequestBudgetError) {
     return "model request_budget exhausted";
   }

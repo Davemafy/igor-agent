@@ -727,6 +727,27 @@ function CanvasDocument({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const conflict = dirty && saved !== base;
+  const media = (node.media ?? []).flatMap((entry) => {
+    const candidate = task.candidates.find(
+      (item) =>
+        item.id === entry.candidateId &&
+        !item.sample &&
+        item.freshness === "current" &&
+        item.imageUrl?.startsWith("https://images.qloo.com/"),
+    );
+
+    return candidate?.imageUrl ? [{ ...entry, url: candidate.imageUrl }] : [];
+  });
+  const visuals = media.length > 0 && (
+    <div className="ic-document-media" aria-label="Document imagery">
+      {media.map((image) => (
+        <figure key={image.candidateId}>
+          <LoadingImage src={image.url} alt={image.alt} />
+          {image.caption && <figcaption>{image.caption}</figcaption>}
+        </figure>
+      ))}
+    </div>
+  );
 
   return (
     <div className="ic-document">
@@ -780,11 +801,13 @@ function CanvasDocument({
             />
           </label>
           <div className="ic-paper">
+            {visuals}
             <ProductText text={draft} />
           </div>
         </div>
       ) : (
         <div className="ic-paper">
+          {visuals}
           <ProductText text={draft} />
         </div>
       )}

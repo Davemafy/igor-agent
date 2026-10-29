@@ -74,11 +74,13 @@ it("routes an occasion answer with its prior question and keeps the original goa
 
         return Response.json({
           status: "completed",
-          output: [{
-            type: "function_call",
-            name: selected,
-            arguments: JSON.stringify({ intent: "draft" }),
-          }],
+          output: [
+            {
+              type: "function_call",
+              name: selected,
+              arguments: JSON.stringify({ intent: "draft" }),
+            },
+          ],
         });
       }
 
@@ -90,14 +92,17 @@ it("routes an occasion answer with its prior question and keeps the original goa
 
       return Response.json({
         status: "completed",
-        output: [{
-          type: "function_call",
-          name: selected,
-          arguments: JSON.stringify({
-            title: "Proposal-day gift and experience ideas",
-            content: "A tentative marriage proposal idea: a lakeside fishing picnic, with her favorite fast food. Confirm the meaning of proposal when refining.",
-          }),
-        }],
+        output: [
+          {
+            type: "function_call",
+            name: selected,
+            arguments: JSON.stringify({
+              title: "Proposal-day gift and experience ideas",
+              content:
+                "A tentative marriage proposal idea: a lakeside fishing picnic, with her favorite fast food. Confirm the meaning of proposal when refining.",
+            }),
+          },
+        ],
       });
     }),
   );
@@ -152,36 +157,45 @@ it("accepts only current sourced candidate images inside editable documents", ()
     `A thoughtful weekend featuring ${candidate.name} and a relaxed dinner.`,
   );
 
-  expect(media).toEqual([{
-    candidateId: candidate.id,
-    alt: `Provider image for ${candidate.name}`,
-    caption: candidate.name,
-  }]);
+  expect(media).toEqual([
+    {
+      candidateId: candidate.id,
+      alt: `Provider image for ${candidate.name}`,
+      caption: candidate.name,
+    },
+  ]);
 
   const surface = {
     id: "image-brief",
     title: "Visual brief",
     basis: "draft",
     root: "doc",
-    nodes: [{
-      id: "doc",
-      type: "document",
-      content: "An editable proposal with source-linked imagery.",
-      media,
-    }],
+    nodes: [
+      {
+        id: "doc",
+        type: "document",
+        content: "An editable proposal with source-linked imagery.",
+        media,
+      },
+    ],
   };
 
   expect(validatePresentation(surface, task).nodes[0]).toMatchObject({
     media,
   });
   expect(() =>
-    validatePresentation({
-      ...surface,
-      nodes: [{
-        ...surface.nodes[0],
-        media: [{ ...media[0], candidateId: "invented-candidate" }],
-      }],
-    }, task),
+    validatePresentation(
+      {
+        ...surface,
+        nodes: [
+          {
+            ...surface.nodes[0],
+            media: [{ ...media[0], candidateId: "invented-candidate" }],
+          },
+        ],
+      },
+      task,
+    ),
   ).toThrow("Document images must reference");
 
   task.candidates[0].freshness = "stale";

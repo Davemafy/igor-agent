@@ -592,4 +592,4 @@ it("lets a valid post-discovery composition decision outlast 15 seconds within G
     timeout.mockRestore();
     vi.useRealTimers();
   }
-});
+}, 20000);

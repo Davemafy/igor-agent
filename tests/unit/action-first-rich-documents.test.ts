@@ -71,6 +71,7 @@ it("routes an occasion answer with its prior question and keeps the original goa
       if (selected === "route_conversation") {
         expect(prompt).toContain("What's the occasion");
         expect(prompt).toContain("rather than requesting a new document");
+
         return Response.json({
           status: "completed",
           output: [{
@@ -86,6 +87,7 @@ it("routes an occasion answer with its prior question and keeps the original goa
       expect(prompt).toContain("latestUserAnswer");
       expect(prompt).toContain("proposal");
       expect(prompt).toContain("Continue the original user request");
+
       return Response.json({
         status: "completed",
         output: [{

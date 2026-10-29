@@ -357,7 +357,9 @@ export function validatePresentation(
           !candidate.imageUrl ||
           !candidate.imageUrl.startsWith("https://images.qloo.com/")
         ) {
-          throw new Error("Document images must reference distinct, current provider-backed candidates.");
+          throw new Error(
+            "Document images must reference distinct, current provider-backed candidates.",
+          );
         }
 
         used.add(image.candidateId);

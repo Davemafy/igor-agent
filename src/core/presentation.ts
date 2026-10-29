@@ -325,7 +325,12 @@ export const CanvasMutationSchema = z.discriminatedUnion("operation", [
 export type CanvasMutation = z.infer<typeof CanvasMutationSchema>;
 
 type GroundingContext = {
-  candidates: { id: string; freshness: string; imageUrl?: string | null; sample?: boolean }[];
+  candidates: {
+    id: string;
+    freshness: string;
+    imageUrl?: string | null;
+    sample?: boolean;
+  }[];
   evidence: { id: string }[];
   artifacts: { id: string }[];
   messages?: { role: string; text: string }[];

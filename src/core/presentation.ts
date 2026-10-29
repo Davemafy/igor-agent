@@ -355,7 +355,7 @@ export function validatePresentation(
           candidate.sample ||
           candidate.freshness !== "current" ||
           !candidate.imageUrl ||
-          !/^https:\/\/images\\.qloo\\.com\//.test(candidate.imageUrl)
+          !candidate.imageUrl.startsWith("https://images.qloo.com/")
         ) {
           throw new Error("Document images must reference distinct, current provider-backed candidates.");
         }

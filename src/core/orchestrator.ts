@@ -14,6 +14,7 @@ import {
   type ExecutionTrace,
 } from "./contracts";
 import { ConflictError, type TaskStore } from "../data/store";
+import { interpretationFailure } from "./interpretation-failure";
 import { SuppliedFactsProvider } from "../tools/fixture-provider";
 import type {
   CulturalProvider,

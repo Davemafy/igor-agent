@@ -208,7 +208,7 @@ describe("unified tool orchestration", () => {
             call_id: "agent",
             arguments: JSON.stringify({
               name: "agent.finish",
-              argumentsJson: "{}",
+              arguments: {},
             }),
           },
         ],

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { LiveDecisionSchema, type Task } from "../core/contracts";
 import {
   interpretationFailure,
+  ModelOutputFormatError,
   ProviderHttpError,
 } from "../core/interpretation-failure";
 import { turnTool, readTurnDecision } from "./turn-protocol";
@@ -161,6 +162,53 @@ export class ToolCallingModel implements ModelProvider {
     protected transport: typeof fetch = fetch,
     protected maxCalls = modelCallLimit(),
   ) {}
+
+  /**
+   * Model decisions are proposals only: a single protocol-format repair
+   * cannot duplicate an external tool action. Provider 4xx/5xx, timeouts and
+   * request-budget errors fail immediately instead of consuming more credits.
+   */
+  protected async callWithSchemaRepair<T>(
+    input: unknown[],
+    tools: unknown[],
+    stage: ModelOutputFormatError["stage"],
+    parse: (result: Awaited<ReturnType<ToolCallingModel["call"]>>) => T,
+    timeoutMs = this.requestTimeoutMs,
+  ): Promise<T> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const messages =
+          attempt === 0
+            ? input
+            : [
+                ...input,
+                {
+                  role: "system",
+                  content:
+                    "The previous response was not parseable against the declared tool schema. Emit exactly one valid tool call with correctly typed JSON arguments. Do not execute tools or invent observations.",
+                },
+              ];
+
+        return parse(await this.call(messages, tools, timeoutMs));
+      } catch (error) {
+        const malformed =
+          error instanceof SyntaxError || error instanceof z.ZodError;
+
+        if (!malformed) {
+          throw error;
+        }
+
+        if (attempt === 1) {
+          throw new ModelOutputFormatError(
+            stage,
+            error instanceof SyntaxError ? "invalid JSON" : "invalid schema",
+          );
+        }
+      }
+    }
+
+    throw new ModelOutputFormatError(stage, "invalid schema");
+  }
 
   protected async call(
     input: unknown[],
@@ -737,22 +785,26 @@ export class ToolCallingModel implements ModelProvider {
           },
         },
       ];
-    // Tool selection does not execute tools, so one schema-only repair is safe.
-    // Never repeat calls on upstream HTTP errors, timeouts, or exhausted budgets.
-    const call = await this.call(input, decisionTools, Math.max(1000, this.timeoutMs - 5000));
+    return this.callWithSchemaRepair(
+      input,
+      decisionTools,
+      "agent.decision",
+      (call) => {
+        if (call.call.name !== "choose_agent_action") {
+          throw new Error("Unauthorized general-agent decision.");
+        }
 
-    if (call.call.name !== "choose_agent_action") {
-      throw new Error("Unauthorized general-agent decision.");
-    }
+        const proposal = z
+          .object({
+            name: z.enum(allowed as [string, ...string[]]),
+            arguments: z.record(z.string(), z.unknown()),
+          })
+          .parse(JSON.parse(call.call.arguments ?? "{}"));
 
-    const proposal = z
-      .object({
-        name: z.enum(allowed as [string, ...string[]]),
-        arguments: z.record(z.string(), z.unknown()),
-      })
-      .parse(JSON.parse(call.call.arguments ?? "{}"));
-
-    return { name: proposal.name, arguments: proposal.arguments };
+        return { name: proposal.name, arguments: proposal.arguments };
+      },
+      Math.max(1000, this.timeoutMs - 5000),
+    );
   }
 
   async chooseResearchStep(
@@ -883,7 +935,7 @@ export class ToolCallingModel implements ModelProvider {
         required: ["text", "sourceIds"],
       },
     };
-    const result = await this.call(
+    return this.callWithSchemaRepair(
       [
         {
           role: "system",
@@ -926,29 +978,31 @@ export class ToolCallingModel implements ModelProvider {
         },
       ],
       [responseTool],
+      "research.synthesis",
+      (result) => {
+        if (result.call.name !== "submit_research_answer") {
+          throw new Error("Unauthorized research synthesis tool.");
+        }
+
+        const parsed = z
+          .object({
+            text: z.string().trim().min(1).max(3000),
+            sourceIds: z.array(z.string()).max(5),
+          })
+          .parse(JSON.parse(result.call.arguments ?? "{}"));
+        const allowed = new Set(selected.map((source) => source.id));
+
+        if (
+          !parsed.sourceIds.length ||
+          parsed.sourceIds.some((id) => !allowed.has(id))
+        ) {
+          throw new Error("Research answer cited unavailable sources.");
+        }
+
+        return parsed;
+      },
       Math.max(1000, this.timeoutMs - 5000),
     );
-
-    if (result.call.name !== "submit_research_answer") {
-      throw new Error("Unauthorized research synthesis tool.");
-    }
-
-    const parsed = z
-      .object({
-        text: z.string().trim().min(1).max(3000),
-        sourceIds: z.array(z.string()).max(5),
-      })
-      .parse(JSON.parse(result.call.arguments ?? "{}"));
-    const allowed = new Set(selected.map((source) => source.id));
-
-    if (
-      !parsed.sourceIds.length ||
-      parsed.sourceIds.some((id) => !allowed.has(id))
-    ) {
-      throw new Error("Research answer cited unavailable sources.");
-    }
-
-    return parsed;
   }
 
   async interpret(text: string, context?: Task) {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProviderHttpError } from "../core/interpretation-failure";
+import { ModelOutputFormatError, ProviderHttpError } from "../core/interpretation-failure";
 import type { Task } from "../core/contracts";
 import type { ModelProvider } from "./interfaces";
 import type { ResearchSource } from "./live-research";
@@ -11,6 +11,7 @@ import type {
 
 function recoverableModelError(error: unknown) {
   return (
+    error instanceof ModelOutputFormatError ||
     error instanceof z.ZodError ||
     error instanceof SyntaxError ||
     (error instanceof ProviderHttpError &&

@@ -1,9 +1,30 @@
 # Igor — system architecture map
-**Version:** 2026-10-29 · **Target:** the single Igor development branch · **Authority:** inspected code at commit d4afa937d726385d23ed24e3447ad28eb21a03bb
 
-**Reliability design input:** user-provided *IGOR — System Architecture v2*, an October 26 proposal based on an older `main` tree and informed by `Enoch208/parallel`. This document folds its turn-gateway, durable journal, reference binding, action safety, proof and error semantics into the October 29 active-branch architecture. v2 was **not** an implemented migration; source-specific claims below were rechecked against the newer branch. Do not treat any proposed table or event as live.
+**Version:** 2026-10-29 · **Target:** the single Igor development branch · **Current implementation checkpoint:** `2f725786f7a0c26a61a6064617e20929eae7efc3`
+
+The original map below was inspected at `d4afa937d726385d23ed24e3447ad28eb21a03bb`. The following implementation status supersedes its historical P0 gap labels; proposed external-write and hosting capabilities remain proposals.
+
+**Reliability design input:** user-provided _IGOR — System Architecture v2_, an October 26 proposal based on an older `main` tree and informed by `Enoch208/parallel`. This document folds its turn-gateway, durable journal, reference binding, action safety, proof and error semantics into the October 29 active-branch architecture. v2 was **not** an implemented migration; source-specific claims below were rechecked against the newer branch. Do not treat any proposed table or event as live.
 
 This document distinguishes **implemented (I)**, **implemented but not proven live (V)**, **proposed (P)**, and **not supported (N)**. It is an executable architecture plan, not a claim that all services are connected or that the listening-bar workflow exists end to end.
+
+## Current implementation status
+
+| Contract                            | Source implementation                                                                                                              | Verification boundary                                                                                                        |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Durable admission and idempotency   | `src/core/turn-lifecycle.ts`, `src/data/store.ts`, task turn route: atomic accepted message/journal, payload hash, revision checks | Durable-turn, turn-recovery and authenticated browser regressions                                                            |
+| Replay and recovery                 | Stored ordered events, run leases/fencing, expired-run recovery; `src/components/workspace-api.ts` read-only reconnect             | Restart/expiry tests; no automatic replay of paid/external operations                                                        |
+| References                          | `src/core/conversation-focus.ts`, model context, optional owned artifact context on a message                                      | Ordered current candidates; artifact selection survives reload; ambiguous/stale references are not inferred                  |
+| One existing execution system       | `orchestrator.ts`, capability planner, `unified-agent.ts`, shared tool registry and acceptance                                     | Existing paths retained; no third orchestrator                                                                               |
+| Experience composition and critique | `work-contracts.ts`, `connected-work.ts`, `experience-critique.ts`, registry compose/critique tools                                | Typed domain decisions, unknown costs, source/schedule/budget/restriction checks, selective invalidation and protected edits |
+| Recovery operations                 | `scripts/persistence-snapshot.mjs` and `docs/operations/PERSISTENCE_RECOVERY.md`                                                   | Four-store WAL-aware backup/restore rehearsal passes; actual Railway volume configuration unverified                         |
+| Actual providers                    | Qloo resolved three flagship anchors and returned 10 LIVE candidates after active-time budget fix                                  | Subsequent Gemini HTTP 503 prevented completion; no live-artifact or same-pool evaluation pass                               |
+| Product journeys                    | Existing inline workspace, editable connected work, invitation studio; `scripts/verify-live-experiences.mjs`                       | Scripted/recorded desktop/mobile regressions pass; both unscripted live journeys remain blocked by model availability        |
+
+For exact-SHA test results and unresolved release gates, use
+[the implementation ledger](implementation/END_TO_END_LEDGER.md). Mocked or
+recorded success is not proof of a completed live journey. TrueForge remains an
+optional tested adapter; live acceptance needs a configured service.
 
 ## 0. The product invariant
 
@@ -13,7 +34,7 @@ The engine is **goal-general**. A six-person gathering and a listening-bar conce
 
 ## 1. Logical architecture
 
-~~~mermaid
+```mermaid
 flowchart TB
   U["User • goal / correction / approval"] --> UI["Igor web client · Partiful-aligned · Next.js /app"]
   UI --> API["Authenticated task and outcome APIs"]
@@ -40,18 +61,21 @@ flowchart TB
   CRIT --> UI
   UI --> DOC["Living outputs · invitation / document / cultural selection"]
   DOC --> U
-~~~
+```
 
 **Existing runtime flow (I).** Browser work comes through the task routes and the SSE turn route. The orchestrator validates interpretation and routes either to early reply/clarification/local connected-work actions, to an ordered capability plan, or (when a research query exists and the model supports agent tool selection) to the bounded agent loop. The tool registry is **not** a universal replacement for the planner; both execution paths remain in current code. All results must ultimately respect the same saved Task schema.
 
 **Design boundary (I).** No separate TrueForge UI, no new dashboard. Igor's own editor, provenance badges, document, invitation, and discovery views render the work. Refer to **docs/design-system.md**.
 
-
 ## 2. Durable conversation contract — inherited from Architecture v2 (P0)
 
-The most important correction to the architecture is **persistence at ingress**, not merely at the beginning of a slow provider call. Current Igor saves complete Task blobs with optimistic concurrency; the message is appended by `interpretMessage` before a model call **in memory**, while some paths checkpoint before research. There is **no dedicated durable turn journal or stable clientTurnId idempotency** in the inspected implementation. Therefore, "persist before executing" is **a required migration, not an existing guarantee for every inference path**.
+**Implemented:** `SqliteTaskStore.acceptTurn` saves an accepted message, payload identity,
+run reservation and initial journal entry in one owner-scoped transaction before
+inference. Lease-fenced execution checkpoints and replayable events preserve
+progress; a failure cannot erase the accepted input. Legacy task snapshots remain
+readable. No paid provider calls run inside that admission transaction.
 
-~~~mermaid
+```mermaid
 flowchart TD
     CLIENT["Client sends message + clientTurnId + expectedRevision"] --> GW["Turn gateway: auth / version / idempotency"]
     GW --> JOURNAL[("SQLite transaction: immutable user message + turn accepted")]
@@ -66,7 +90,7 @@ flowchart TD
     APPROVE --> COMMIT
     COMMIT --> EVENTS[("Stored events + replayable client progress")]
     EVENTS --> UI["Igor renders message, cards, document and next actions"]
-~~~
+```
 
 ### External turn input and lifecycle
 
@@ -75,7 +99,7 @@ flowchart TD
 // compatibility parsing and must not be silently changed without migration.
 type TurnEnvelope = {
   workspaceId: string;
-  clientTurnId: string;        // UUID generated once client-side, reused on retry
+  clientTurnId: string; // UUID generated once client-side, reused on retry
   expectedRevision: number;
   message: string;
   actionContext?: {
@@ -86,9 +110,18 @@ type TurnEnvelope = {
 };
 
 type TurnPhase =
-  | "accepted" | "understanding" | "responding" | "awaiting_input"
-  | "retrieving" | "evaluating" | "awaiting_approval" | "composing"
-  | "completed" | "partial" | "failed" | "superseded";
+  | "accepted"
+  | "understanding"
+  | "responding"
+  | "awaiting_input"
+  | "retrieving"
+  | "evaluating"
+  | "awaiting_approval"
+  | "composing"
+  | "completed"
+  | "partial"
+  | "failed"
+  | "superseded";
 ```
 
 - **Uniqueness:** `UNIQUE(workspaceId, clientTurnId)`. Matching duplicate: return saved turn/stream and **never** append the message or execute a second paid call. Same key with changed payload: reject. A newer conflicting edit marks late work superseded without replacing valid state.
@@ -100,26 +133,28 @@ type TurnPhase =
 
 ### Conversation reference registry — important for agent intelligence
 
-Persist a `ConversationFocus` with `activeArtifactId`, `activeCandidateIds`, `ordinalMap`, `lastQuestionId`, `referencedParticipants` and `lastResultRevision`. Ground “the second one,” “that place,” “Maya's pick,” “why that one?” against **the exact visible result revision**. If the reference is stale or ambiguous, ask one question rather than guessing. Current conversation handlers resolve named/ID matches; this explicit ordinal/focus contract is not yet present.
+Persist a `ConversationFocus` with `activeArtifactId`, `activeCandidateIds`, `ordinalMap`, `lastQuestionId`, `referencedParticipants` and `lastResultRevision`. Ground “the second one,” “that place,” “Maya's pick,” “why that one?” against **the exact visible result revision**. If the reference is stale or ambiguous, ask one question rather than guessing. The explicit focus contract is implemented in `conversation-focus.ts`; stale or absent ordered references request clarification. A bounded artifact ID on the next real message is validated against the owner-loaded task and committed atomically. Browser-only view metadata never grants evidence or execution authority.
 
 Three distinct memories: (1) immutable thread history, (2) working goal/current focus and source-linked decisions, (3) **opt-in** long-term preferences with confirmation, scope and deletion. Prompt context must be rebuilt from these server records on every turn; neither Gemini nor TrueForge is the canonical conversation memory.
 
-### Proposed backward-compatible SQLite tables
+### Historical proposed table decomposition
 
-Add `turns` (workspace, clientTurnId, payloadHash, revision, phase), `messages` (turn, role, order, text), `run_steps` (run, phase, lease, checkpoint, budget), and `stream_events` (turn, sequence, type, JSON). Index evidence/artifact/dependency nodes as needed, **without migrating every existing Task blob first**. Use `TaskStore` compatibility methods and one Node 24 + Railway persistent volume until tested scaling constraints justify changing storage.
+The original proposal called for `turns` (workspace, clientTurnId, payloadHash, revision, phase), `messages` (turn, role, order, text), `run_steps` (run, phase, lease, checkpoint, budget), and `stream_events` (turn, sequence, type, JSON). Index evidence/artifact/dependency nodes as needed, **without migrating every existing Task blob first**. Use `TaskStore` compatibility methods and one Node 24 + Railway persistent volume until tested scaling constraints justify changing storage.
 
-### v2 concerns verified against October 29 code
+### Historical v2 concerns at the original inspection
 
-| v2 claim or proposed change | Rechecked on the active branch | Decision |
-| --- | --- | --- |
-| No clientTurnId, dedicated journal or replayable SSE event IDs | Still absent in current `TurnSchema`, `SqliteTaskStore` and streaming route | **P0 build** |
-| Whole-turn interpretation failure affects conversational reliability | `interpret-message.ts` still records `task.status = "error"` after recovery failure; a read-only conversation route exists | **P0 decouple**; preserve existing recovery logic |
-| “the second one” must bind to current visible result | Named/ID reference resolution exists; no persistent ordinal map or focus revision | **P0 implement** |
-| Goal/output enums are limited | `goals.ts` has gathering/discovery/creative; `outcome-spec.ts` has four specific outcome types | Keep typed executable outcomes; **allow general chat** independently |
-| `count.some(saved => saved.id === saved.id)` memory-cap typo | Active branch now correctly tests `saved.id === preference.id` | **Already fixed**; don't reintroduce bug |
-| Missing production-model key silently falls back to scripted | Current runtime uses real adapters and a transparent no-model error outside fixture/test modes | **Improved**; retain transparent failure |
-| Late provider result cannot overwrite newer user edit | Optimistic versioned Task store and isolated agent tool work copies exist | **Partially implemented**; preserve conflict checks, add run leases for crash recovery |
-| Parallel-style universal taste score | Not appropriate for Igor's mixed tasks | **Reject**; strategy-specific constraints and sourced comparisons only |
+This table records the original baseline. The current implementation status above supersedes its unresolved P0 labels.
+
+| v2 claim or proposed change                                          | Rechecked on the active branch                                                                                             | Decision                                                                               |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| No clientTurnId, dedicated journal or replayable SSE event IDs       | Still absent in current `TurnSchema`, `SqliteTaskStore` and streaming route                                                | **P0 build**                                                                           |
+| Whole-turn interpretation failure affects conversational reliability | `interpret-message.ts` still records `task.status = "error"` after recovery failure; a read-only conversation route exists | **P0 decouple**; preserve existing recovery logic                                      |
+| “the second one” must bind to current visible result                 | Named/ID reference resolution exists; no persistent ordinal map or focus revision                                          | **P0 implement**                                                                       |
+| Goal/output enums are limited                                        | `goals.ts` has gathering/discovery/creative; `outcome-spec.ts` has four specific outcome types                             | Keep typed executable outcomes; **allow general chat** independently                   |
+| `count.some(saved => saved.id === saved.id)` memory-cap typo         | Active branch now correctly tests `saved.id === preference.id`                                                             | **Already fixed**; don't reintroduce bug                                               |
+| Missing production-model key silently falls back to scripted         | Current runtime uses real adapters and a transparent no-model error outside fixture/test modes                             | **Improved**; retain transparent failure                                               |
+| Late provider result cannot overwrite newer user edit                | Optimistic versioned Task store and isolated agent tool work copies exist                                                  | **Partially implemented**; preserve conflict checks, add run leases for crash recovery |
+| Parallel-style universal taste score                                 | Not appropriate for Igor's mixed tasks                                                                                     | **Reject**; strategy-specific constraints and sourced comparisons only                 |
 
 ### Read/commit authorization boundary
 
@@ -140,23 +175,23 @@ For external action flows, enforce `action_proposed → validate target/owner/re
 
 ## 3. Source code ownership
 
-| Responsibility | Existing implementation | Current truth |
-| --- | --- | --- |
-| Shell, chat, work area | **src/components/agent-workspace.tsx**, task canvas, research discovery, invitation studio | I |
-| Task creation, fetch, turns | **src/app/api/tasks**, **src/app/api/tasks/[id]/turn/route.ts** | I; SSE sends state/action/done/error |
-| Identity and security | **src/core/security.ts**, **src/data/auth-store.ts** | I; owner-scoped cookie/account sessions |
-| Intent and response | **src/core/interpret-message.ts**, **src/core/orchestrator.ts**, model adapters | I; live-model quality not broadly proven |
-| Bounded dynamic agent | **src/core/unified-agent.ts**, **src/core/agent-tool-registry.ts** | I; validated tools, step/request budget and checkpoints |
-| Capability execution | **src/core/capability-plan.ts**, **src/core/execute-plan.ts**, **src/capabilities/** | I; discovery/evaluate/collaborate/compose |
-| Cultural data | **src/tools/qloo-live.ts**, **qloo-response.ts**, **recorded-qloo.ts**, **qloo-cache.ts** | I; live freshness must be verified |
-| Search & real-world data | **src/tools/live-research.ts**, **google-maps.ts**, **browserbase-observer.ts** | I adapters; credentials/provider success unconfirmed |
-| Delegation | **src/tools/trueforge.ts** | V; disabled by default, mocked API tests only |
-| Contract + critique | **src/core/contracts.ts**, **agent-acceptance.ts**, **src/capabilities/evaluate.ts** | I; compositional experience critique is still incomplete |
-| Durable edits and dependencies | **src/core/connected-work.ts**, **connected-artifacts.ts**, **revision.ts** | I; broader cross-domain dependency graph requires expansion |
-| Durable task state | **src/data/store.ts** | I; SQLite tasks + explicitly confirmed memory |
-| Auth, sharing, collection, review | **src/data/auth-store.ts**, **outcome-store.ts**, **src/core/outcomes.ts** | I; not email/calendar external execution |
-| Presentation | **src/components/invitation-studio.tsx**, **liquid-discovery.tsx** | I; current design review contract is Partiful-based |
-| Real cross-app write actions | **src/core/connected-work.ts** | N; external actions explicitly record *blocked*, nothing is sent or booked |
+| Responsibility                    | Existing implementation                                                                    | Current truth                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Shell, chat, work area            | **src/components/agent-workspace.tsx**, task canvas, research discovery, invitation studio | I                                                                          |
+| Task creation, fetch, turns       | **src/app/api/tasks**, **src/app/api/tasks/[id]/turn/route.ts**                            | I; SSE sends state/action/done/error                                       |
+| Identity and security             | **src/core/security.ts**, **src/data/auth-store.ts**                                       | I; owner-scoped cookie/account sessions                                    |
+| Intent and response               | **src/core/interpret-message.ts**, **src/core/orchestrator.ts**, model adapters            | I; live-model quality not broadly proven                                   |
+| Bounded dynamic agent             | **src/core/unified-agent.ts**, **src/core/agent-tool-registry.ts**                         | I; validated tools, step/request budget and checkpoints                    |
+| Capability execution              | **src/core/capability-plan.ts**, **src/core/execute-plan.ts**, **src/capabilities/**       | I; discovery/evaluate/collaborate/compose                                  |
+| Cultural data                     | **src/tools/qloo-live.ts**, **qloo-response.ts**, **recorded-qloo.ts**, **qloo-cache.ts**  | I; live freshness must be verified                                         |
+| Search & real-world data          | **src/tools/live-research.ts**, **google-maps.ts**, **browserbase-observer.ts**            | I adapters; credentials/provider success unconfirmed                       |
+| Delegation                        | **src/tools/trueforge.ts**                                                                 | V; disabled by default, mocked API tests only                              |
+| Contract + critique               | **src/core/contracts.ts**, **agent-acceptance.ts**, **src/capabilities/evaluate.ts**       | I; compositional experience critique is still incomplete                   |
+| Durable edits and dependencies    | **src/core/connected-work.ts**, **connected-artifacts.ts**, **revision.ts**                | I; broader cross-domain dependency graph requires expansion                |
+| Durable task state                | **src/data/store.ts**                                                                      | I; SQLite tasks + explicitly confirmed memory                              |
+| Auth, sharing, collection, review | **src/data/auth-store.ts**, **outcome-store.ts**, **src/core/outcomes.ts**                 | I; not email/calendar external execution                                   |
+| Presentation                      | **src/components/invitation-studio.tsx**, **liquid-discovery.tsx**                         | I; current design review contract is Partiful-based                        |
+| Real cross-app write actions      | **src/core/connected-work.ts**                                                             | N; external actions explicitly record _blocked_, nothing is sent or booked |
 
 ## 4. Task state = system of record
 
@@ -174,7 +209,7 @@ The durable unit is a **Task** (owner-scoped), **not** a TrueForge session, a ch
 
 ## 5. Agent's decision and execution loop
 
-~~~mermaid
+```mermaid
 sequenceDiagram
   participant U as User
   participant UI as Igor UI
@@ -203,7 +238,7 @@ sequenceDiagram
   O-->>API: state/action/done events
   API-->>UI: Server-sent events
   UI-->>U: Continuously editable, inspectable result
-~~~
+```
 
 **Guardrails already in code:** origin/owner checks, bounded request body, typed decisions, one bounded repair for malformed model output, finite agent actions, no model-chosen URLs for search-page reads, process-local request limits, optimistic versioned persistence, source-aware evidence checks, and protection against rewriting manually edited/approved work.
 
@@ -213,7 +248,7 @@ sequenceDiagram
 
 Gastro-Acoustic must be a **reusable experience graph** layered over existing connected work, not a one-off prompt template.
 
-~~~mermaid
+```mermaid
 flowchart LR
   AUD["Audience and goal"] --> TASTE["Taste constraints"]
   TASTE --> MUSIC["Music direction"]
@@ -227,22 +262,23 @@ flowchart LR
   REV --> MUSIC
   REV --> FOOD
   REVIEW -->|pass with sourced caveats| OUTPUT["Versioned experience brief + invitation"]
-~~~
+```
 
 **Proposed experience records (P):**
+
 - **ExperienceGoal:** audience, use case, intent, known and unknown constraints.
 - **DecisionNode:** domain = music | food | atmosphere | space | identity | operations; chosen value; alternatives; justification; confidence; estimated cost or unknown; approval state.
 - **EvidenceLink:** immutable provider/candidate/source references with original timestamps, delivery mode, limitations and whether evidence is cultural versus practical.
-- **DependencyEdge:** which decisions and authored sections must become *stale* when a constraint changes.
+- **DependencyEdge:** which decisions and authored sections must become _stale_ when a constraint changes.
 - **ExperienceArtifact:** editable launch brief, timeline, invitation, shortlist, menu/sound direction and explicit unresolved questions.
 
-**Boundary rule:** Qloo affinities support a *cultural* connection, never venue availability, dietary suitability, actual acoustical performance, price, a booking, or a personal psychological claim. The model may propose a coherent pairing but should mark unsupported parts as interpretation. Critique must independently reject missing or contradictory inputs instead of praising everything.
+**Boundary rule:** Qloo affinities support a _cultural_ connection, never venue availability, dietary suitability, actual acoustical performance, price, a booking, or a personal psychological claim. The model may propose a coherent pairing but should mark unsupported parts as interpretation. Critique must independently reject missing or contradictory inputs instead of praising everything.
 
-**Gap:** Igor has general-purpose work decisions, budget conflicts, evaluator and stale-dependency machinery. It does **not yet** have a fully implemented typed music ↔ food ↔ atmosphere experience graph nor a demonstrated independent cross-domain critique loop (P).
+**Implemented, not proven live end to end:** the typed experience fields, composition tools and deterministic independent critique now exist in `work-contracts.ts`, `connected-work.ts`, `agent-tool-registry.ts` and `experience-critique.ts`. Linked decisions, budget/schedule/restriction/source checks and protected selective revision have regression coverage. Live cross-domain artifact completion remains blocked by Gemini availability.
 
 ## 7. Proposed hosting topology — minimum credible production
 
-~~~mermaid
+```mermaid
 flowchart TB
   USER["Browser"] -->|HTTPS| R["Railway: Igor Next.js Node 24 API + web"]
   R --> VOL[("Railway persistent volume: SQLite WAL files")]
@@ -255,7 +291,7 @@ flowchart TB
   TF --> TFDB[("TrueForge hosted persistence: Postgres / Redis")]
   CI["qloo-test CI runner"] -.->|read exact Igor commit| REPO["Igor active development branch"]
   CI -.-> PROOF["Unit + build + browser evidence"]
-~~~
+```
 
 **P0 hosting topology:** one Igor Node 24 app instance, TLS and a Railway persistent volume containing **the workspace, account, outcome and Qloo cache SQLite files together**, with scheduled backups **including WAL** and a tested restore. Mount before any real user data is collected. Verify actual volume and backup configuration; the presence of SQLite in code does not establish that the deployed Railway app is durable. If multiple replicas are required later, migrate to a shared database and shared quotas first—do not share SQLite WAL across multiple containers.
 
@@ -267,16 +303,16 @@ flowchart TB
 
 ## 8. The two required acceptance journeys
 
-| Gate | Six-person gathering | Listening bar |
-| --- | --- | --- |
-| Open-ended first turn | Starts from ordinary natural language | Starts from founder, audience, finite budget |
+| Gate                    | Six-person gathering                               | Listening bar                                                      |
+| ----------------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
+| Open-ended first turn   | Starts from ordinary natural language              | Starts from founder, audience, finite budget                       |
 | True cultural retrieval | Qloo-derived film/music/artist choices, source IDs | Cross-domain artist/place/brand signals actually supported by Qloo |
-| Practical grounding | Timings, group budget, access unknowns | Actual venues or market signals, cost/permit/acoustic unknowns |
-| Composition | Feasible programme + editable invitation | Sound/menu/space/identity concept + launch brief |
-| Critique | Group compatibility and contradictions | Audience fit, conflicting themes, budget feasibility |
-| Revision | Friend dislikes music: revise affected choices | Half budget/no alcohol: revise affected choices only |
-| Persistence | Reload, continue thread and retain protected edits | Reload, retain approved positioning and source links |
-| Proof | LIVE provider trace, actual browser captures | Independent second goal using same interfaces and engine |
+| Practical grounding     | Timings, group budget, access unknowns             | Actual venues or market signals, cost/permit/acoustic unknowns     |
+| Composition             | Feasible programme + editable invitation           | Sound/menu/space/identity concept + launch brief                   |
+| Critique                | Group compatibility and contradictions             | Audience fit, conflicting themes, budget feasibility               |
+| Revision                | Friend dislikes music: revise affected choices     | Half budget/no alcohol: revise affected choices only               |
+| Persistence             | Reload, continue thread and retain protected edits | Reload, retain approved positioning and source links               |
+| Proof                   | LIVE provider trace, actual browser captures       | Independent second goal using same interfaces and engine           |
 
 For every gate: verify **actual** provider calls separately from CACHED/recorded demo mode. Do not call a cached screenshot proof of live execution. Where no live data is available, render explicit unknowns.
 

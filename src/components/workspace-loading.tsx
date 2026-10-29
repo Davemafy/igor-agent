@@ -68,13 +68,7 @@ export function LoadingSurface({
   );
 }
 
-export function LoadingImage({
-  src,
-  alt = "",
-}: {
-  src: string;
-  alt?: string;
-}) {
+export function LoadingImage({ src, alt = "" }: { src: string; alt?: string }) {
   return <ImagePlaceholder key={src} src={src} alt={alt} />;
 }
 

@@ -784,7 +784,7 @@ export class ToolCallingModel implements ModelProvider {
           required: ["name", "arguments"],
         },
       },
-      ];
+    ];
 
     return this.callWithSchemaRepair(
       input,

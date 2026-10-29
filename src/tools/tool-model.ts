@@ -5,6 +5,7 @@ import {
 } from "../core/agent-acceptance";
 import { interfaceReply } from "./interface-replies";
 import { modelContext } from "./model-context";
+import { pendingQuestionAnswer } from "../core/pending-question";
 import { readModelResponse } from "./response-body";
 import { z } from "zod";
 import { LiveDecisionSchema, type Task } from "../core/contracts";
@@ -41,6 +42,8 @@ const quickRouteInstructions = [
   "You are Igor, a capable general-purpose conversational agent with cultural intelligence.",
   "Route this message in its ongoing conversation. The current user message takes priority over old task goals.",
   "Choose conversation for greetings, discussion, explanations, brainstorming and questions you can answer with general knowledge.",
+  "Act with the known facts. A useful first result with labelled assumptions is better than serial intake questions. Only ask for details that genuinely block the next safe action; group truly blocking details into one concise question.",
+  "When the last assistant reply asked a question and the user responds briefly, treat that response as an answer IN THE EXISTING TASK rather than a command with the same keyword. For example, proposal after What is the occasion? is an occasion answer, not a new request to write a proposal document.",
   "Choose clarification only when a missing detail actually blocks a useful response; ask exactly one natural question.",
   "Choose draft for a NEW requested deliverable such as a concept, build plan, proposal, brief, story, itinerary or written draft that can be authored from general knowledge and supplied facts. Produce a useful first version with labelled assumptions instead of asking broad preference questions. A game concept for gamers is enough to propose an original concept and scope. Draft is not permission to deploy software, execute code, publish, send, buy or claim live verification. Existing document revisions still choose delegate, preserving approved/manual work.",
   "Act rather than interview. On real-world planning, once the destination and an interest or occasion are known, choose research with a standalone, location-specific query for actual venues/options. A missing borough, optional taste profile, or ambiguity between total and per-person budget must not block useful source-backed research; flag assumptions and unverified availability instead.",
@@ -64,6 +67,8 @@ const conversationInstructions = [
   "Use update_brief to choose the turn type",
   "Return decision as a normal object, never encode it as a JSON string",
   "For discussion, greetings, explanations, reactions, questions about previous messages or brainstorming, set intent conversation and give a helpful reply; no actions are needed",
+  "Do the useful work first using known details and labelled assumptions; do not repeatedly ask optional questions or demand a budget to brainstorm provisional directions",
+  "The reply to the latest assistant question has contextual priority over a dictionary meaning of the reply. Proposal as the answer to What is the occasion? can mean a marriage proposal; do not silently turn it into a new request for a proposal document",
   "For a vague request or an ambiguous reference, set intent clarification and ask one useful follow-up question in reply",
   "Do not invent a goal merely to fit a schema",
   "For conversation/clarification omit cultural planning fields; an optional presentation can create or update shared work without running cultural tools",
@@ -290,6 +295,7 @@ export class ToolCallingModel implements ModelProvider {
       return null;
     }
 
+    const pending = context ? pendingQuestionAnswer(context, text) : null;
     const snapshot = context ? modelContext(context, text) : undefined;
     const messages = snapshot?.thread.messages ?? [];
     const recent = messages.slice(-16);
@@ -404,7 +410,12 @@ export class ToolCallingModel implements ModelProvider {
               ? " FULL PLANNER FAILED before any edits or tool execution. This is a recovery reply, not permission to claim work completed. Choose conversation or clarification ONLY. Acknowledge the latest user input, give a practical provisional next step using saved user facts when possible, and clearly disclose that no discovery, booking or external action was performed. Do not invent live names, availability or recommendations with Qloo evidence. If the original request requires an unavailable tool or saved-state modification, explain the temporary limitation rather than claiming completion."
               : "") +
             "\nSaved context: " +
-            JSON.stringify(compactContext),
+            JSON.stringify(compactContext) +
+            (pending
+              ? "\nThis turn ANSWERS Igor's latest question, rather than requesting a new document. Pending question and exact answer: " +
+                JSON.stringify(pending) +
+                ". Continue the original goal immediately with a useful result, labelling uncertain interpretations. Do not restart intake."
+              : ""),
         },
         { role: "user", content: text },
       ],
@@ -471,6 +482,7 @@ export class ToolCallingModel implements ModelProvider {
   }
 
   async composeDraft(text: string, context: Task) {
+    const pending = pendingQuestionAnswer(context, text);
     const result = await this.call(
       [
         {
@@ -478,6 +490,7 @@ export class ToolCallingModel implements ModelProvider {
           content: [
             "You are Igor. Produce the concrete first deliverable the user requested, not an intake interview or a promise.",
             "Use the user's supplied facts and recent conversation. Make reasonable CREATIVE proposals and label assumptions; never infer personal taste or practical facts as confirmed.",
+            "If the user answered the latest assistant question, treat that as an input to the original task, NOT a request to write a document named after that word. Prefer a useful first result over further optional intake; mark ambiguous interpretations as assumptions.",
             "For a game concept include a distinctive premise, core loop, mechanics, smallest playable scope, and a practical implementation sequence. Other work must match its requested format rather than use this example's format.",
             "Write useful Markdown in content, and a short descriptive title. Include actionable detail, not generic encouragement.",
             "This is an editable draft based on general knowledge. No browsing, Qloo, code execution, deployment, publishing or external action happened in this step. Never claim otherwise or invent URLs/citations/current prices.",
@@ -487,7 +500,11 @@ export class ToolCallingModel implements ModelProvider {
         {
           role: "user",
           content: JSON.stringify({
-            request: text,
+            request: pending
+              ? "Continue the original user request with the newly supplied answer. Do not treat the short answer as a fresh command."
+              : text,
+            latestUserAnswer: text,
+            pendingQuestion: pending?.question ?? null,
             recentMessages: context.messages
               .slice(-12)
               .map(({ role, text }) => ({ role, text: text.slice(0, 1600) })),

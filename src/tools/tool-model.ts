@@ -760,7 +760,7 @@ export class ToolCallingModel implements ModelProvider {
             observations: observations.slice(-12),
           }),
         },
-      ] as unknown[],
+    ] as unknown[];
     const decisionTools = [
         {
           type: "function",

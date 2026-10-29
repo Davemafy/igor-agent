@@ -130,9 +130,7 @@ it("routes a short occasion answer to the original gift goal", async () => {
         title: "Proposal-day gift and experience ideas",
       },
     ]);
-    expect(db.load(task.id, "owner").messages.at(-2)?.text).toBe(
-      "proposal",
-    );
+    expect(db.load(task.id, "owner").messages.at(-2)?.text).toBe("proposal");
     expect(output.conversationFocus?.pendingQuestion).toBeNull();
   } finally {
     db.close();

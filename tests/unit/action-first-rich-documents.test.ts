@@ -36,7 +36,7 @@ function giftTask() {
   return task;
 }
 
-it("treats proposal as an answer to the occasion question, not a new document instruction", () => {
+it("grounds proposal in the outstanding occasion question", () => {
   const task = giftTask();
   const answer = pendingQuestionAnswer(task, "proposal");
 
@@ -46,7 +46,9 @@ it("treats proposal as an answer to the occasion question, not a new document in
   });
   expect(pendingQuestionAnswer(task, "birthday")?.answer).toBe("birthday");
   expect(pendingQuestionAnswer(task, "under $100")?.answer).toBe("under $100");
-  expect(pendingQuestionAnswer(task, "write me a business proposal")).toBeNull();
+  expect(
+    pendingQuestionAnswer(task, "write me a business proposal"),
+  ).toBeNull();
   expect(pendingQuestionAnswer(task, "actually, change the topic")).toBeNull();
 
   updateConversationFocus(task);
@@ -56,7 +58,7 @@ it("treats proposal as an answer to the occasion question, not a new document in
   });
 });
 
-it("routes an occasion answer with its prior question and keeps the original goal", async () => {
+it("routes a short occasion answer to the original gift goal", async () => {
   const task = giftTask();
   const requests: string[] = [];
   const model = new ToolCallingModel(
@@ -128,14 +130,16 @@ it("routes an occasion answer with its prior question and keeps the original goa
         title: "Proposal-day gift and experience ideas",
       },
     ]);
-    expect(db.load(task.id, "owner").messages.at(-2)?.text).toBe("proposal");
+    expect(db.load(task.id, "owner").messages.at(-2)?.text).toBe(
+      "proposal",
+    );
     expect(output.conversationFocus?.pendingQuestion).toBeNull();
   } finally {
     db.close();
   }
 });
 
-it("accepts only current sourced candidate images inside editable documents", () => {
+it("validates only current sourced candidate imagery", () => {
   const task = freshTask("media-document", "owner");
   const candidate = task.catalogue[0];
   const saved = {

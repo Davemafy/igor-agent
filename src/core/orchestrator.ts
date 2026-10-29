@@ -448,11 +448,12 @@ export async function runTurn(
         }
 
         answer = synthesized.text;
-      } catch {
+      } catch (error) {
         // Never replace real provider observations with fabricated synthesis.
+        // Save only a safe category; never print the upstream model response.
         trace(
           "model.research.error",
-          "Research synthesis was unavailable; real source observations are preserved.",
+          `Research synthesis unavailable (${interpretationFailure(error)}); real source observations are preserved.`,
         );
         research.status = "partial";
       }

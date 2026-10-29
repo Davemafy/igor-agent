@@ -44,7 +44,7 @@ const options = [
   },
 ];
 
-it("uses native JSON tool arguments without a nested encoded string", async () => {
+it("uses native tool arguments without nested JSON encoding", async () => {
   const fetcher = vi.fn<typeof fetch>(async (_url, init) => {
     const body = JSON.parse(String(init?.body));
     const tool = body.tools[0];
@@ -58,7 +58,7 @@ it("uses native JSON tool arguments without a nested encoded string", async () =
       name: "document.create",
       arguments: {
         title: "New York golf outing",
-        content: "A sourced shortlist with a budget and availability checklist.",
+        content: "A sourced shortlist with unknown fees and tee times.",
         sourceIds: ["web-1", "web-2"],
       },
     });
@@ -81,14 +81,14 @@ it("uses native JSON tool arguments without a nested encoded string", async () =
     name: "document.create",
     arguments: {
       title: "New York golf outing",
-      content: "A sourced shortlist with a budget and availability checklist.",
+      content: "A sourced shortlist with unknown fees and tee times.",
       sourceIds: ["web-1", "web-2"],
     },
   });
   expect(fetcher).toHaveBeenCalledOnce();
 });
 
-it("repairs one malformed next-tool proposal without re-executing research", async () => {
+it("repairs malformed proposals without repeating research", async () => {
   const fetcher = vi
     .fn<typeof fetch>()
     .mockResolvedValueOnce(
@@ -123,7 +123,7 @@ it("repairs one malformed next-tool proposal without re-executing research", asy
   // The model read-only proposal was repeated; no research tool was invoked.
 });
 
-it("classifies two malformed model proposals without saving raw output", async () => {
+it("classifies malformed proposals without recording raw output", async () => {
   const fetcher = vi.fn<typeof fetch>(async () =>
     result("choose_agent_action", "{truncated sensitive source contents"),
   );
@@ -158,13 +158,13 @@ it("never retries upstream provider failure as a schema repair", async () => {
   expect(fetcher).toHaveBeenCalledOnce();
 });
 
-it("repairs a malformed research synthesis and preserves only supplied source IDs", async () => {
+it("repairs research synthesis with existing source IDs", async () => {
   const fetcher = vi
     .fn<typeof fetch>()
     .mockResolvedValueOnce(result("submit_research_answer", "invalid:JSON"))
     .mockResolvedValueOnce(
       result("submit_research_answer", {
-        text: "Five NYC public golf leads were found [web-1]. Tee time and pricing remain unknown.",
+        text: "NYC golf sources found [web-1]. Pricing remains unknown.",
         sourceIds: ["web-1"],
       }),
     );

@@ -75,6 +75,14 @@ export function updateConversationFocus(task: Task) {
   const currentQuestion =
     task.canvas?.surface.nodes.find((node) => node.type === "question")?.id ??
     null;
+  const lastMessage = task.messages.at(-1);
+  const lastIndex = task.messages.length - 1;
+  const pendingQuestion =
+    lastMessage?.role === "assistant"
+      ? lastMessage.text.includes("?")
+        ? { prompt: lastMessage.text, messageIndex: lastIndex }
+        : null
+      : (previous?.pendingQuestion ?? null);
 
   task.conversationFocus = {
     activeGoalId: task.work?.activeGoalId ?? null,
@@ -101,6 +109,7 @@ export function updateConversationFocus(task: Task) {
       ? task.brief.version
       : (previous?.lastResultRevision ?? task.brief.version),
     lastQuestionId: currentQuestion,
+    pendingQuestion,
     referencedParticipants: task.brief.participants
       .filter((person) => !person.sample)
       .map((person) => person.id),

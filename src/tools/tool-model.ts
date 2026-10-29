@@ -785,6 +785,7 @@ export class ToolCallingModel implements ModelProvider {
           },
         },
       ];
+
     return this.callWithSchemaRepair(
       input,
       decisionTools,
@@ -935,6 +936,7 @@ export class ToolCallingModel implements ModelProvider {
         required: ["text", "sourceIds"],
       },
     };
+
     return this.callWithSchemaRepair(
       [
         {

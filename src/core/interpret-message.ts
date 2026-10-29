@@ -1,5 +1,6 @@
 import { installPresentation, validatePresentation } from "./presentation";
 import { resolveOrdinalFocus } from "./conversation-focus";
+import { sourceLinkedDocumentMedia } from "./document-media";
 import { practicalDiscoveryOpportunity } from "./action-readiness";
 import {
   interpretationFailure,
@@ -208,6 +209,7 @@ export async function interpretMessage(
               type: "document",
               title: draft.title,
               content: draft.content,
+              media: sourceLinkedDocumentMedia(task, draft.content),
             },
           ],
         },

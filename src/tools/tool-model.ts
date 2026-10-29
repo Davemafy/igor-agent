@@ -600,13 +600,12 @@ export class ToolCallingModel implements ModelProvider {
         ),
       ),
     );
-    const call = await this.call(
-      [
+    const input = [
         {
           role: "system",
           content: [
             "You are Igor, a general-purpose agent deciding ONE next action based on the user's goal and REAL observed tool results.",
-            "Use the available tools only. Each available tool includes its real inputSchema. Use exactly those field names and enum values; do not invent aliases. Return the tool name and a JSON STRING containing its arguments.",
+            "Use the available tools only. Each tool includes its real inputSchema. Use exactly those field names and enum values; do not invent aliases. Return the tool name and a structured JSON OBJECT of arguments (not a JSON-encoded string).",
             "When requirements name experienceDomains, create the required linked domain decisions as well as the requested documents before finishing.",
             "Do not invent tool results, Qloo scores, IDs, prices, venue opening times, browser actions or completed external work.",
             "When culturalDecision is required, resolving entities only identifies seeds. Call qloo.discover for the currently required seeds to obtain actual candidate affinities and evidence. qloo.explore_location supplies geography/category leads and does not satisfy personalized cultural evidence. Candidate IDs must come from culturalCandidates, never knownEntities. If web tools are unavailable, create a culturally grounded creative draft with practical facts explicitly unverified instead of inventing venues or citations.",
@@ -713,8 +712,8 @@ export class ToolCallingModel implements ModelProvider {
             observations: observations.slice(-12),
           }),
         },
-      ],
-      [
+      ] as unknown[],
+    const decisionTools = [
         {
           type: "function",
           name: "choose_agent_action",
@@ -725,18 +724,22 @@ export class ToolCallingModel implements ModelProvider {
             additionalProperties: false,
             properties: {
               name: { type: "string", enum: allowed },
-              argumentsJson: {
-                type: "string",
+              arguments: {
+                type: "object",
+                // The registry owns the strict, selected-tool-specific schema.
+                // Keep this envelope permissive for heterogeneous tool inputs.
+                additionalProperties: true,
                 description:
-                  "JSON object arguments for this tool, e.g. {} for agent.finish.",
+                  "Real JSON object matching the chosen tool's inputSchema. Use {} for agent.finish. Never encode JSON as a string.",
               },
             },
-            required: ["name", "argumentsJson"],
+            required: ["name", "arguments"],
           },
         },
-      ],
-      Math.max(1000, this.timeoutMs - 5000),
-    );
+      ];
+    // Tool selection does not execute tools, so one schema-only repair is safe.
+    // Never repeat calls on upstream HTTP errors, timeouts, or exhausted budgets.
+    const call = await this.call(input, decisionTools, Math.max(1000, this.timeoutMs - 5000));
 
     if (call.call.name !== "choose_agent_action") {
       throw new Error("Unauthorized general-agent decision.");
@@ -744,21 +747,12 @@ export class ToolCallingModel implements ModelProvider {
 
     const proposal = z
       .object({
-        name: z.string(),
-        // Allow declared 12k documents plus graph metadata; actual tool schemas remain strict.
-        argumentsJson: z.string().max(64000),
+        name: z.enum(allowed as [string, ...string[]]),
+        arguments: z.record(z.string(), z.unknown()),
       })
       .parse(JSON.parse(call.call.arguments ?? "{}"));
 
-    if (!allowed.includes(proposal.name)) {
-      throw new Error("Model selected a tool that was not offered.");
-    }
-
-    const args = z
-      .record(z.string(), z.unknown())
-      .parse(JSON.parse(proposal.argumentsJson));
-
-    return { name: proposal.name, arguments: args };
+    return { name: proposal.name, arguments: proposal.arguments };
   }
 
   async chooseResearchStep(

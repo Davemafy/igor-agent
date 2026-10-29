@@ -79,6 +79,17 @@ export const PresentationNodeSchema = z.discriminatedUnion("type", [
   z.strictObject({
     ...base,
     type: z.literal("document"),
+    // Source-linked visual references, never arbitrary model-supplied URLs.
+    media: z
+      .array(
+        z.strictObject({
+          candidateId: z.string().min(1).max(150),
+          alt: z.string().trim().min(1).max(180),
+          caption: z.string().trim().max(280).optional(),
+        }),
+      )
+      .max(4)
+      .optional(),
     artifactId: z.string().max(100).optional(),
     content: copy.optional(),
   }),
@@ -314,7 +325,7 @@ export const CanvasMutationSchema = z.discriminatedUnion("operation", [
 export type CanvasMutation = z.infer<typeof CanvasMutationSchema>;
 
 type GroundingContext = {
-  candidates: { id: string; freshness: string }[];
+  candidates: { id: string; freshness: string; imageUrl?: string | null; sample?: boolean }[];
   evidence: { id: string }[];
   artifacts: { id: string }[];
   messages?: { role: string; text: string }[];
@@ -330,6 +341,29 @@ export function validatePresentation(
   const candidates = new Set(context.candidates.map((c) => c.id));
 
   for (const node of surface.nodes) {
+    if (node.type === "document" && node.media) {
+      const used = new Set<string>();
+
+      for (const image of node.media) {
+        const candidate = context.candidates.find(
+          (item) => item.id === image.candidateId,
+        );
+
+        if (
+          used.has(image.candidateId) ||
+          !candidate ||
+          candidate.sample ||
+          candidate.freshness !== "current" ||
+          !candidate.imageUrl ||
+          !/^https:\/\/images\\.qloo\\.com\//.test(candidate.imageUrl)
+        ) {
+          throw new Error("Document images must reference distinct, current provider-backed candidates.");
+        }
+
+        used.add(image.candidateId);
+      }
+    }
+
     if (node.type === "question" && !["you", "group"].includes(node.subject)) {
       const subject = node.subject.toLocaleLowerCase();
       const known =

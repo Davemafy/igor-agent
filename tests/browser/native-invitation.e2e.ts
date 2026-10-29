@@ -108,7 +108,8 @@ test("recorded Qloo gathering produces a native, editable invitation — desktop
   );
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Your work" }).click();
+  await studio.scrollIntoViewIfNeeded();
+  await expect(page.locator(".iw-pane-switch")).toHaveCount(0);
   await expect(studio).toBeVisible();
   await studio.getByLabel("Invitation poster preview").screenshot({
     path: testInfo.outputPath("igor-native-invitation-mobile-poster.png"),

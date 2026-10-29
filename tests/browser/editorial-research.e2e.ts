@@ -117,7 +117,7 @@ test("real desktop research view is editorial and does not dump URLs or activity
     "0px",
   );
   await expect(gallery.locator(".ird-reference-number")).toContainText("02");
-  await expect(page.locator(".iw-work-stage")).toHaveCSS(
+  await expect(page.locator(".iw-inline-output")).toHaveCSS(
     "scrollbar-gutter",
     "auto",
   );
@@ -180,13 +180,14 @@ test("mobile research cards retain legible typography and a single-column layout
     }),
   );
   await page.goto("/app");
-  await page.getByRole("button", { name: "Your work", exact: true }).click();
+  await page.locator(".ird-gallery .ird-card").first().scrollIntoViewIfNeeded();
+  await expect(page.locator(".iw-pane-switch")).toHaveCount(0);
   await expect(
     page.getByRole("region", { name: "Your work", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Conversation", exact: true }),
-  ).not.toBeVisible();
+  ).toBeVisible();
   await expect(page.locator(".ird-gallery .ird-card")).toHaveCount(2);
   const columns = await page
     .locator(".ird-gallery")
@@ -198,19 +199,21 @@ test("mobile research cards retain legible typography and a single-column layout
     ),
   ).toBe(true);
   const composer = await page.locator(".iw-workspace-footer").boundingBox();
-  const work = await page.locator(".iw-work-stage").boundingBox();
-  expect(work!.y + work!.height).toBeLessThanOrEqual(composer!.y + 1);
+  const thread = await page.locator(".iw-messages").boundingBox();
+  expect(thread!.y + thread!.height).toBeLessThanOrEqual(composer!.y + 1);
   await page.screenshot({
     path: "test-results/editorial-research-mobile.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Conversation", exact: true }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Message Igor", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Conversation", exact: true }),
   ).toBeVisible();
 });
 
-test("short landscape keeps work scrollable above the composer", async ({
+test("short landscape scrolls the continuous conversation above the composer", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 994, height: 410 });
@@ -230,18 +233,27 @@ test("short landscape keeps work scrollable above the composer", async ({
     }),
   );
   await page.goto("/app");
-  const work = page.locator(".iw-work-stage");
+  const work = page.locator(".iw-inline-output");
   await expect(work).toBeVisible();
   const before = await work.boundingBox();
   await page.locator(".iw-nav").hover();
   const after = await work.boundingBox();
   expect(after!.x).toBe(before!.x);
   const composer = await page.locator(".iw-workspace-footer").boundingBox();
-  expect(after!.y + after!.height).toBeLessThanOrEqual(composer!.y + 1);
+  const thread = page.locator(".iw-messages");
+  const threadBox = await thread.boundingBox();
+  expect(threadBox!.y + threadBox!.height).toBeLessThanOrEqual(composer!.y + 1);
   expect(composer!.y + composer!.height).toBeLessThanOrEqual(410);
-  expect(await work.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(
+  expect(await thread.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(
     true,
   );
+  expect(
+    await work.evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
+  ).toBe(true);
+  await page.locator(".ird-card").last().scrollIntoViewIfNeeded();
+  await expect(page.locator(".ird-card").last()).toBeInViewport({
+    ratio: 0.05,
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

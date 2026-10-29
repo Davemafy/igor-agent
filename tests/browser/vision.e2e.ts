@@ -254,7 +254,10 @@ test("one-click Tokyo discovery renders actual mapped places and locality revisi
     page.getByText("Moco Museum | Amsterdam", { exact: true }).first(),
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Your work", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Your work", exact: true })
+    .scrollIntoViewIfNeeded();
+  await expect(page.locator(".iw-pane-switch")).toHaveCount(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth + 1,

@@ -88,11 +88,10 @@ for (const { mobile, reduced } of [
     );
     await page.goto("/app");
 
-    if (mobile) {
-      const work = page.getByRole("button", { name: "Your work", exact: true });
-      await expect(work).toBeVisible();
-      await work.click();
-    }
+    await expect(
+      page.getByRole("region", { name: "Your work", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".iw-pane-switch")).toHaveCount(0);
 
     const card = page.locator('[data-candidate-id="moonrise"]');
     await expect(card).toBeVisible();
@@ -201,11 +200,9 @@ for (const { mobile, reduced } of [
     ).toBeVisible();
     await page.reload();
 
-    if (mobile) {
-      await page
-        .getByRole("button", { name: "Your work", exact: true })
-        .click();
-    }
+    await expect(
+      page.getByRole("region", { name: "Your work", exact: true }),
+    ).toBeVisible();
 
     await expect(
       page
@@ -268,9 +265,23 @@ test("original Codrops gallery switches real candidate layout without losing ins
     },
   ];
   const examples = [
-    { name: "Aalto & light", type: "artist" as const, description: "An editorial design reference from the local sample artwork library." },
-    { name: "A night for Alex", type: "place" as const, description: "A sample invitation and candlelit gathering, not a verified venue." },
-    { name: "Colour studies", type: "artist" as const, description: "A graphic poster from the local sample artwork library." },
+    {
+      name: "Aalto & light",
+      type: "artist" as const,
+      description:
+        "An editorial design reference from the local sample artwork library.",
+    },
+    {
+      name: "A night for Alex",
+      type: "place" as const,
+      description:
+        "A sample invitation and candlelit gathering, not a verified venue.",
+    },
+    {
+      name: "Colour studies",
+      type: "artist" as const,
+      description: "A graphic poster from the local sample artwork library.",
+    },
   ];
   task.candidates = sampleCatalogue()
     .slice(0, 3)
@@ -312,25 +323,38 @@ test("original Codrops gallery switches real candidate layout without losing ins
     task.id,
   );
   db.close();
-  await page.route("https://images.qloo.com/igor-sample-*.webp", async (route) => {
-    const match = route.request().url().match(/igor-sample-c0([1-3])[.]webp$/);
+  await page.route(
+    "https://images.qloo.com/igor-sample-*.webp",
+    async (route) => {
+      const match = route
+        .request()
+        .url()
+        .match(/igor-sample-c0([1-3])[.]webp$/);
 
-    if (!match) {
-      await route.abort();
+      if (!match) {
+        await route.abort();
 
-      return;
-    }
+        return;
+      }
 
-    const media = await readFile(
-      resolve(process.cwd(), "public/marketing/assets/covers", `c0${match[1]}.webp`),
-    );
-    await route.fulfill({
-      status: 200,
-      contentType: "image/webp",
-      body: media,
-    });
-  });
-  await page.addInitScript((id) => localStorage.setItem("igor-task", id), task.id);
+      const media = await readFile(
+        resolve(
+          process.cwd(),
+          "public/marketing/assets/covers",
+          `c0${match[1]}.webp`,
+        ),
+      );
+      await route.fulfill({
+        status: 200,
+        contentType: "image/webp",
+        body: media,
+      });
+    },
+  );
+  await page.addInitScript(
+    (id) => localStorage.setItem("igor-task", id),
+    task.id,
+  );
   // Explicit task URL ensures the browser opens the fixture-backed task,
   // not a newly created empty workspace from a previous session.
   await page.goto(`/app?task=${task.id}`);
@@ -340,34 +364,54 @@ test("original Codrops gallery switches real candidate layout without losing ins
     await work.click();
   }
 
-  await expect(page.getByRole("button", { name: "Expand canvas" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Expand canvas" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Expand canvas" }).click();
-  await expect(page.getByRole("complementary", { name: "Task canvas" })).toHaveClass(/ic-fullscreen/);
+  await expect(
+    page.getByRole("complementary", { name: "Task canvas" }),
+  ).toHaveClass(/ic-fullscreen/);
   const gallery = page.locator(".iw-liquid-grid.grid_gallery_container");
   await expect(gallery).toHaveAttribute("data-size-grid", "150%");
   await expect(gallery.locator('[data-gallery="true"]')).toHaveCount(3);
   await expect(page.getByText("EXAMPLE ARTWORK")).toBeVisible();
   const first = gallery.locator('[data-candidate-id="moonrise"]');
-  await expect(first.getByRole("button", { name: "Inspect Aalto & light" })).toBeVisible();
+  await expect(
+    first.getByRole("button", { name: "Inspect Aalto & light" }),
+  ).toBeVisible();
   await page.screenshot({ path: info.outputPath("original-gallery.png") });
   const initial = await first.boundingBox();
 
-  await page.getByRole("group", { name: "Discovery layout" }).getByRole("button", { name: "Detailed" }).click();
+  await page
+    .getByRole("group", { name: "Discovery layout" })
+    .getByRole("button", { name: "Detailed" })
+    .click();
   await expect(gallery).toHaveAttribute("data-size-grid", "75%");
   await expect(first.getByRole("button", { name: "Choose" })).toBeVisible();
   expect(initial).not.toBeNull();
-  await expect.poll(async () => {
-    const detailed = await first.boundingBox();
+  await expect
+    .poll(async () => {
+      const detailed = await first.boundingBox();
 
-    return Math.abs((initial?.width ?? 0) - (detailed?.width ?? 0));
-  }).toBeGreaterThan(20);
+      return Math.abs((initial?.width ?? 0) - (detailed?.width ?? 0));
+    })
+    .toBeGreaterThan(20);
   await page.screenshot({ path: info.outputPath("original-detailed.png") });
 
-  await page.getByRole("group", { name: "Discovery layout" }).getByRole("button", { name: "Gallery" }).click();
+  await page
+    .getByRole("group", { name: "Discovery layout" })
+    .getByRole("button", { name: "Gallery" })
+    .click();
   await first.getByRole("button", { name: "Inspect Aalto & light" }).click();
-  await expect(page.getByRole("dialog", { name: "Details for Aalto & light" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Details for Aalto & light" })).toBeFocused();
-  await expect(page.getByText("SAMPLE only; no cultural association inferred")).toBeVisible();
+  await expect(
+    page.getByRole("dialog", { name: "Details for Aalto & light" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Details for Aalto & light" }),
+  ).toBeFocused();
+  await expect(
+    page.getByText("SAMPLE only; no cultural association inferred"),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Close details" }).click();
   await expect(gallery).toHaveAttribute("data-size-grid", "150%");
 });

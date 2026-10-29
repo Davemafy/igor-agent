@@ -68,11 +68,17 @@ export function LoadingSurface({
   );
 }
 
-export function LoadingImage({ src }: { src: string }) {
-  return <ImagePlaceholder key={src} src={src} />;
+export function LoadingImage({
+  src,
+  alt = "",
+}: {
+  src: string;
+  alt?: string;
+}) {
+  return <ImagePlaceholder key={src} src={src} alt={alt} />;
 }
 
-function ImagePlaceholder({ src }: { src: string }) {
+function ImagePlaceholder({ src, alt }: { src: string; alt: string }) {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -94,7 +100,7 @@ function ImagePlaceholder({ src }: { src: string }) {
       )}
       <img
         src={src}
-        alt=""
+        alt={alt}
         loading="lazy"
         decoding="async"
         onLoad={() => setReady(true)}

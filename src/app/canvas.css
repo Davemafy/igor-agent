@@ -332,6 +332,35 @@
   min-height: 180px;
   overflow-wrap: anywhere;
 }
+.ic-document-media {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.ic-document-media figure {
+  margin: 0;
+  min-width: 0;
+}
+.ic-document-media .iw-loading-image {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 4 / 3;
+  background: #dfd9cb;
+}
+.ic-document-media .iw-loading-image > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ic-document-media figcaption {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #716c65;
+}
 .ic-paper .pp-message-text {
   font-size: 14px;
   line-height: 1.75;

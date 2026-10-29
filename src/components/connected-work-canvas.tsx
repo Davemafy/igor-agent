@@ -1,4 +1,5 @@
 "use client";
+import { readArtifactView, rememberArtifactView } from "./artifact-focus";
 import { ProductText } from "./product-surfaces";
 import { RevisionImpact } from "./revision-impact";
 
@@ -32,7 +33,12 @@ export function ConnectedWorkCanvas({
 }) {
   const work = task.work;
   const documents = work?.documents ?? [];
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const persistedId = task.conversationFocus?.activeArtifactId?.startsWith(
+    "document:",
+  )
+    ? task.conversationFocus.activeArtifactId.slice("document:".length)
+    : null;
+  const [activeId, setActiveId] = useState<string | null>(persistedId);
   const selected =
     documents.find((item) => item.id === activeId) ??
     documents.find((item) => item.goalId === work?.activeGoalId) ??
@@ -47,6 +53,16 @@ export function ConnectedWorkCanvas({
   const [compareRevisions, setCompareRevisions] = useState(false);
   const dirty = draft !== base;
   const content = selected?.content ?? "";
+
+  useEffect(() => {
+    // Only view metadata is local. Evidence, approvals and content stay server-owned.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveId(
+      readArtifactView(task)?.slice("document:".length) ?? persistedId,
+    );
+    // A new workspace or goal starts a new view; streamed revisions retain it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.id, work?.activeGoalId]);
 
   // Server snapshots may arrive after any turn, reload or direct mutation.
   // Never overwrite text the user is actively editing.
@@ -140,12 +156,15 @@ export function ConnectedWorkCanvas({
     }
 
     morphLayout(() => setActiveId(doc.id));
+    rememberArtifactView(task, `document:${doc.id}`);
   };
 
   return (
     <aside
       className={`ic-canvas ig-connected-work ${full ? "ic-fullscreen" : ""}`}
       style={{ viewTransitionName: "igor-task-canvas" }}
+      data-workspace-id={task.id}
+      data-active-artifact-id={`document:${selected.id}`}
       aria-label="Connected work"
       aria-busy={busy}
     >

@@ -262,6 +262,7 @@ export class ToolCallingModel implements ModelProvider {
       .map(({ entry }) => entry)
       .sort((left, right) => left.index - right.index);
     const compactContext = {
+      conversationFocus: snapshot?.conversationFocus,
       thread: {
         totalMessages: snapshot?.thread.totalMessages ?? 0,
         omittedMessages: snapshot?.thread.omittedMessages ?? 0,
@@ -624,6 +625,7 @@ export class ToolCallingModel implements ModelProvider {
             goal,
             acceptanceRequirements: context.agentRun?.requirements,
             connectedWork: context.work,
+            conversationFocus: context.conversationFocus,
             priorConversation: context.messages.slice(-10).map((message) => ({
               role: message.role,
               text: message.text.slice(0, 600),

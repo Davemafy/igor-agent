@@ -140,3 +140,44 @@ signals so the old 14/15-second deadlines actually fail those tests.
 
 Focused recovery/provider regressions: 30 passed locally; typecheck passes. The
 new source still requires exact-head external CI and live acceptance.
+
+## Verified current-main integration and artifact context
+
+The active branch incorporates main `c6fe5261460ead6989a70ad903ee43cb588a70e3`
+through merge `7698ac36f4e8a21e374e5a29709f1accffb55054`, preserving the inline
+conversation/work layout and engine changes. PR #27 is now mergeable and remains
+draft. No release merge or deployment occurred.
+
+Exact source `a4d2f1c5747fc5d5087079e9cdfcc3695e30e9c2` passed external run
+[40929536800](https://github.com/Davemafy/qloo-test/actions/runs/40929536800):
+typecheck, lint (0 errors, existing warnings), all 542 unit tests using the original
+archive, 6 evaluation tests, mission-file formatting, production build and
+41 browser tests (4 Codrops + 29 authenticated + 6 connected work + 2 inline work).
+Repository-wide formatting debt is still reported; the full repository audit is
+not a passing gate. Live acceptance was explicitly not run in that deterministic
+run and its success must not be interpreted as live product acceptance.
+
+Actual application-adapter live probe in run 40928582224 failed at the first
+ordinary greeting: Gemini 3.1 Flash Lite HTTP 503 / UNAVAILABLE, one model call,
+5738ms, no Qloo call. A previous run at `e6fc622` resolved all three flagship
+anchors and returned 10 LIVE Qloo movie candidates before the next Gemini request
+failed HTTP 503. A tiny Gemini 3.5 Flash function check returned HTTP 200, but its
+actual application interpreter then returned HTTP 503. No live proposal/revision,
+same-pool cultural evaluation, TrueForge execution or release-ready film is claimed.
+
+Artifact focus now travels as optional bounded context on a real user message.
+Admission verifies the reference belongs to the owner-loaded workspace, validates
+the expected revision, and commits focus with the message and execution journal.
+Invalid references roll back without a message or execution reservation. Context
+is included in deduplication identity. Both routing and agent selection receive it.
+Selecting a document alone never submits a turn, advances the server revision or
+cancels active paid work. Goal-scoped local view metadata restores the selected
+document on reload; the next message reads this tab's visible owned document,
+not another tab's storage selection. All content, evidence and approvals remain
+server-owned. New goals reset the default; explicit historical viewing does not
+relax evidence-freshness acceptance.
+
+Local focused tests: 16 passed, typecheck passed, touched-file lint 0 errors.
+Full local unit execution remains blocked by the unavailable original cultural
+archive (six affected suites); external CI is the authoritative full-suite path.
+The new artifact-context commit still requires exact-head browser and CI results.

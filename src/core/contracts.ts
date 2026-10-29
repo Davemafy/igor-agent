@@ -615,6 +615,9 @@ export const TurnSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("message"),
+    context: z
+      .strictObject({ artifactId: z.string().min(1).max(200) })
+      .optional(),
     text: z.string().trim().min(1).max(3000),
     version: z.number().int().nonnegative(),
   }),

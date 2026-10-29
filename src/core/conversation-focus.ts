@@ -22,6 +22,22 @@ export function ordinalMention(text: string): number | null {
   return match ? words[match[1].toLowerCase()] : null;
 }
 
+export function hasTaskArtifact(task: Task, id: string) {
+  return (
+    task.artifacts.some((item) => item.id === id) ||
+    (task.work?.documents.some((item) => `document:${item.id}` === id) ?? false)
+  );
+}
+
+export function focusTaskArtifact(task: Task, id: string) {
+  if (!hasTaskArtifact(task, id)) {
+    throw new Error("Artifact is not in this workspace.");
+  }
+
+  const focus = task.conversationFocus ?? updateConversationFocus(task);
+  focus.activeArtifactId = id;
+}
+
 /** Build on the authoritative task at save time. Keep list order stable on
  * non-discovery turns; update the reference revision only if IDs change. */
 export function updateConversationFocus(task: Task) {
@@ -44,15 +60,18 @@ export function updateConversationFocus(task: Task) {
   const changed =
     candidateIds.length !== priorIds.length ||
     candidateIds.some((id, index) => id !== priorIds[index]);
+  const activeDocument = task.work?.documents.find(
+    (d) => d.goalId === task.work?.activeGoalId && d.freshness === "current",
+  );
   const activeArtifact =
+    previous?.activeGoalId === (task.work?.activeGoalId ?? null) &&
     previous?.activeArtifactId &&
-    task.artifacts.some(
-      (item) =>
-        item.id === previous.activeArtifactId && item.freshness === "current",
-    )
+    hasTaskArtifact(task, previous.activeArtifactId)
       ? previous.activeArtifactId
-      : (task.artifacts.findLast((item) => item.freshness === "current")?.id ??
-        null);
+      : activeDocument
+        ? `document:${activeDocument.id}`
+        : (task.artifacts.findLast((item) => item.freshness === "current")
+            ?.id ?? null);
   const currentQuestion =
     task.canvas?.surface.nodes.find((node) => node.type === "question")?.id ??
     null;

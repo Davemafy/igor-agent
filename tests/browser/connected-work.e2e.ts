@@ -79,6 +79,14 @@ test("existing chat UI carries a listening-bar concept through approvals, edits,
   const overview = surface.getByRole("region", { name: "Saved work overview" });
   await expect(overview).toContainText("Launch brief");
   await expect(overview).toContainText("WORKING PROPOSAL");
+  const messageCountBeforeViewing = (await saved(page)).messages.length;
+  await page.reload();
+  await expect(surface).toHaveAttribute(
+    "data-active-artifact-id",
+    "document:listening-bar-launch",
+  );
+  expect((await saved(page)).messages).toHaveLength(messageCountBeforeViewing);
+
   await surface.getByRole("button", { name: "Expand connected work" }).click();
   await expect(surface).toHaveClass(/ic-fullscreen/);
   await surface.getByRole("button", { name: "Edit document" }).click();
@@ -159,7 +167,19 @@ test("existing chat UI carries a listening-bar concept through approvals, edits,
   await expect(page.locator(".iw-message.iw-assistant").last()).toContainText(
     "Launch brief: saved your wording.",
   );
+  const contextualMessage = page.waitForRequest(
+    (request) =>
+      request.url().endsWith("/turn") &&
+      request.method() === "POST" &&
+      request.postDataJSON()?.text === "Budget: 1000",
+  );
   await message(page, "Budget: 1000");
+  expect((await contextualMessage).postDataJSON().context).toEqual({
+    artifactId: "document:listening-bar-launch",
+  });
+  expect((await saved(page)).conversationFocus?.activeArtifactId).toBe(
+    "document:listening-bar-launch",
+  );
   await message(page, "Approve Musical identity");
   await message(
     page,

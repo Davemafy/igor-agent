@@ -10,7 +10,10 @@ import {
 } from "../core/turn-lifecycle";
 import { z } from "zod";
 import { messageIds } from "../core/agent-events";
-import { updateConversationFocus } from "../core/conversation-focus";
+import {
+  focusTaskArtifact,
+  updateConversationFocus,
+} from "../core/conversation-focus";
 import {
   TaskSchema,
   PreferenceSchema,
@@ -223,6 +226,11 @@ export class SqliteTaskStore implements TaskStore {
       }
 
       const task = readStoredState(row.state);
+
+      if (input.type === "message" && input.context) {
+        focusTaskArtifact(task, input.context.artifactId);
+      }
+
       const next = row.version + 1;
 
       // Preserve every accepted message in the existing read model, not only

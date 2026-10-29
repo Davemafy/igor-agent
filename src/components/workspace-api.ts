@@ -1,3 +1,4 @@
+import { visibleArtifactContext } from "./artifact-focus";
 import {
   EventSchema,
   TaskSchema,
@@ -72,6 +73,9 @@ export async function submitTurn(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       ...action,
+      ...(action.type === "message"
+        ? { context: action.context ?? visibleArtifactContext(task) }
+        : {}),
       version: task.brief.version,
       clientTurnId,
       workspaceId: task.id,

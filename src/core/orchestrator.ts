@@ -1,3 +1,4 @@
+import { focusTaskArtifact } from "./conversation-focus";
 import { agentSavedDocuments } from "./agent-acceptance";
 import { phaseForAction } from "./turn-lifecycle";
 import { groundQuestionAnswer } from "./question-grounding";
@@ -66,6 +67,10 @@ export async function runTurn(
 
   if (task.brief.version !== input.version) {
     throw new ConflictError("A newer correction is already saved.");
+  }
+
+  if (input.type === "message" && input.context) {
+    focusTaskArtifact(task, input.context.artifactId);
   }
 
   // A form submission is one real user turn: validate, share answers with the

@@ -53,7 +53,7 @@ describe("Gemini read-only routing safety boundary", () => {
     expect(model.calls).toBe(1);
   });
 
-  it("does not downgrade real-world vendor investigation into an unsourced draft", async () => {
+  it("keeps sourced vendor investigation on the agent route", async () => {
     const input = "Research local caterers, compare prices and draft a vendor shortlist.";
     const { model } = modelProposingDraft();
 

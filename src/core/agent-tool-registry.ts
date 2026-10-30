@@ -375,15 +375,28 @@ export function createAgentToolRegistry(
     ),
     tool(
       "qloo.discover",
-      "Retrieve actual Qloo affinities: {entityId,targetType}. entityId is the internal id from knownEntities (not provider UUID). targetType is movie, tv_show, artist or place. Resolve alone is NOT discovery. Use this for each cultural seed before making a culturally grounded decision; locality/category leads do not replace affinity evidence.",
+      "Retrieve actual Qloo affinities: {entityId,targetType}. Prefer the exact id from knownEntities; an exact saved provider ID or unique saved entity name is also accepted. NEVER invent an entity. targetType is movie, tv_show, artist or place. Resolving identity alone is NOT discovery. Discover each required seed before cultural decisions.",
       discoverArguments,
       "read",
       Boolean(context.cultural),
       async (args, ctx) => {
         const { entityId, targetType } = discoverArguments.parse(args);
-        const entity = ctx.task.entities.find(
-          (e) => e.id === entityId && e.status === "resolved" && e.providerId,
+        const known = ctx.task.entities.filter(
+          (e) => e.status === "resolved" && e.providerId,
         );
+        const key = entityId.trim().toLocaleLowerCase();
+        // The model may copy a source-returned provider ID or name rather than
+        // Igor's internal ID. Resolve only against previously confirmed task
+        // entities; ambiguous names and invented references still fail closed.
+        const matches = (selector: (e: (typeof known)[number]) => string) =>
+          known.filter((e) => selector(e).toLocaleLowerCase() === key);
+        const candidates =
+          matches((e) => e.id).length > 0
+            ? matches((e) => e.id)
+            : matches((e) => e.providerId!).length > 0
+              ? matches((e) => e.providerId!)
+              : matches((e) => e.name);
+        const entity = candidates.length === 1 ? candidates[0] : undefined;
 
         if (!entity || !ctx.cultural) {
           return {

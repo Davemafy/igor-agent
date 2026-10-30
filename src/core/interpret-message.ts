@@ -7,6 +7,7 @@ import {
   ProviderHttpError,
 } from "./interpretation-failure";
 import { assertGroundedOutcome, OutcomeGroundingError } from "./outcome-spec";
+import { ModelToolProtocolError } from "../tools/model-tool-protocol-error";
 import {
   TurnSchema,
   InterpretationSchema,
@@ -328,6 +329,7 @@ export async function interpretMessage(
     // no Qloo, external calls, state edits or invented execution receipts.
     // This is not a retry of the rejected planning action.
     const recoverableDecision =
+      error instanceof ModelToolProtocolError ||
       error instanceof z.ZodError ||
       error instanceof SyntaxError ||
       (error instanceof ProviderHttpError &&

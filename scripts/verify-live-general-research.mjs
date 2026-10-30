@@ -69,6 +69,7 @@ try {
     steps: (workspace.agentRun?.steps ?? []).map((step) => ({
       tool: step.tool,
       status: step.status,
+      summary: step.summary.slice(0, 260),
     })),
     documents: documents(workspace).map((doc) => ({
       id: doc.id,

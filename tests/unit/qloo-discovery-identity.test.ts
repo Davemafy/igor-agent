@@ -88,6 +88,28 @@ describe("live Qloo discovery identity handoff", () => {
     }
   });
 
+  it("does not spend a Qloo request on an invented tool-name entity", async () => {
+    const { context } = setup();
+    context.task.messages.push({
+      role: "user",
+      text: "Find music influenced by Sade.",
+      at: "2026-10-30T00:00:00.000Z",
+    });
+    const resolve = vi.fn();
+    context.cultural = { resolve, discover: vi.fn() };
+    const tool = createAgentToolRegistry(context).find(
+      (entry) => entry.name === "qloo.resolve_entity",
+    );
+    const result = await tool!.execute(
+      { name: "qloo.resolve_entity", type: "artist" },
+      context,
+    );
+
+    expect(result.status).toBe("blocked");
+    expect(result.requests).toBe(0);
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
   it("rejects unobserved identity without issuing a Qloo request", async () => {
     const { context, tool, discover } = setup();
     const result = await tool.execute(

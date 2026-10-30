@@ -53,7 +53,8 @@ describe("Gemini document function schema compatibility", () => {
                       name: "document.create",
                       arguments: {
                         title: "Source-backed report",
-                        content: "Observed research evidence and open questions.",
+                        content:
+                          "Observed research evidence and open questions.",
                         sourceIds: [],
                       },
                     },
@@ -65,6 +66,7 @@ describe("Gemini document function schema compatibility", () => {
         ],
       });
     });
+
     const model = new GeminiModel(
       "test-key",
       "gemini-3.1-flash-lite",

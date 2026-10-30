@@ -3,7 +3,7 @@ import {
   AgentRunHistorySchema,
   AgentRunSchema,
   ArtifactSchema,
-  CandidateSchema,
+  CandidateInputSchema,
   ConversationFocusSchema,
   EvidenceSchema,
   TaskSchema,
@@ -29,6 +29,7 @@ export const WorkspaceSnapshotSchema = z.object({
   }),
   participants: TaskSchema.shape.brief.shape.participants,
   discovery: z.object({
+    catalogue: TaskSchema.shape.catalogue,
     candidates: TaskSchema.shape.candidates,
     entities: TaskSchema.shape.entities,
     evidence: TaskSchema.shape.evidence,
@@ -36,7 +37,7 @@ export const WorkspaceSnapshotSchema = z.object({
   }),
   spatial: z.object({
     // All place candidates are visible, including those without coordinates.
-    places: z.array(CandidateSchema),
+    places: z.array(CandidateInputSchema),
     // Only non-sample candidates with both coordinates can produce map pins.
     geocodedPlaceIds: z.array(z.string()),
   }),
@@ -69,7 +70,12 @@ export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshotSchema>;
  * availability, images, map coordinates or successful external operations.
  */
 export function projectWorkspace(task: Task): WorkspaceSnapshot {
-  const places = task.candidates.filter((candidate) => candidate.type === "place");
+  // Qloo and practical discovery can return places before candidate evaluation.
+  // Prefer the evaluated version when both collections contain the same ID.
+  const places = [
+    ...task.candidates.filter((candidate) => candidate.type === "place"),
+    ...task.catalogue.filter((candidate) => candidate.type === "place"),
+  ].filter((place, index, all) => all.findIndex((item) => item.id === place.id) === index);
   const geocodedPlaceIds = places
     .filter(
       (candidate) =>
@@ -92,6 +98,7 @@ export function projectWorkspace(task: Task): WorkspaceSnapshot {
     },
     participants: task.brief.participants,
     discovery: {
+      catalogue: task.catalogue,
       candidates: task.candidates,
       entities: task.entities,
       evidence: task.evidence,

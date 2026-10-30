@@ -180,7 +180,12 @@ export function verifyAgentOutcome(
   // synthetic venue/schedule/experience decisions to count as complete.
   const connectedExperience =
     Boolean(requirements?.culturalDecision) ||
-    Boolean(task.work?.activeGoalId);
+    Boolean(task.work?.activeGoalId) ||
+    (requirements?.experienceDomains ?? []).some((domain) =>
+      ["audience", "culture", "music", "food", "atmosphere", "venue"].includes(
+        domain,
+      ),
+    );
 
   for (const domain of connectedExperience
     ? (requirements?.experienceDomains ?? [])

@@ -477,7 +477,12 @@ export function runtimeResearchProvider(): ResearchProvider {
     return bright;
   }
 
-  const key = process.env.XAI_API_KEY || process.env.GROK_API_KEY || "";
+  // Only advertise xAI search after its server-side web_search entitlement
+  // has been verified. A working chat-completions key does not prove this tool.
+  const key =
+    process.env.IGOR_XAI_WEB_SEARCH_ENABLED === "1"
+      ? process.env.XAI_API_KEY || process.env.GROK_API_KEY || ""
+      : "";
 
   return key
     ? new XaiWebResearchProvider(

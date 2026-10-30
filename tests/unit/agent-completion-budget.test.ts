@@ -10,11 +10,12 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
   const task = freshTask("bounded-report", "owner");
   store.create(task);
 
-  const choose = vi.fn(async (
-    _goal: string,
-    offered: { name: string }[],
-    observed: { tool: string }[],
-  ) => {
+  const choose = vi.fn(
+    async (
+      _goal: string,
+      offered: { name: string }[],
+      observed: { tool: string }[],
+    ) => {
     if (observed.length === 0) {
       return {
         name: "web.search",
@@ -42,7 +43,8 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
     }
 
     return { name: "agent.finish", arguments: {} };
-  });
+    },
+  );
 
   try {
     const result = await runUnifiedAgent({

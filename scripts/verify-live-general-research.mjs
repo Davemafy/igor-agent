@@ -70,9 +70,9 @@ try {
     status: workspace.agentRun?.status ?? workspace.status,
     acceptance: workspace.agentRun?.acceptance?.status ?? null,
     modelCalls: workspace.agentRun?.usage?.modelCalls ?? null,
-    warnings: (workspace.agentRun?.warnings ?? []).slice(-6).map((value) =>
-      value.slice(0, 240),
-    ),
+    warnings: (workspace.agentRun?.warnings ?? [])
+      .slice(-6)
+      .map((value) => value.slice(0, 240)),
     failureCategories: (workspace.trace ?? [])
       .filter((entry) => /error|rejected/.test(entry.action))
       .slice(-6)

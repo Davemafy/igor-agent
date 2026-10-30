@@ -102,12 +102,13 @@ try {
       )
       .map((evidence) => evidence.id),
   );
-  const goodInitial = documents(first).some(
+  const initialMemo = documents(first).find(
     (doc) =>
       doc.content.length > 250 &&
       doc.fulfills?.some((key) => /memo|report/i.test(key)) &&
       doc.evidenceIds.some((id) => currentEvidenceIds.has(id)),
   );
+  const goodInitial = Boolean(initialMemo);
 
   if (
     !goodInitial ||
@@ -132,11 +133,32 @@ try {
       reloaded.evidence.some((evidence) => evidence.id === evidenceId),
     );
 
+  const updatedMemo = documents(reloaded).find(
+    (doc) => doc.id === initialMemo?.id,
+  );
+  const actualRevision =
+    Boolean(updatedMemo) &&
+    updatedMemo.content !== initialMemo.content &&
+    updatedMemo.content.length > 250 &&
+    updatedMemo.evidenceIds.some((id) => initialMemo.evidenceIds.includes(id)) &&
+    updatedMemo.version > initialMemo.version;
+  const revisionToolExecuted = (second.agentRun?.steps ?? []).some(
+    (step) => step.tool === "document.revise" && step.status === "ok",
+  );
+  report.revisionVerified = {
+    sameArtifact: updatedMemo?.id === initialMemo?.id,
+    contentChanged: updatedMemo?.content !== initialMemo?.content,
+    citationsPreserved: updatedMemo?.evidenceIds.some((id) =>
+      initialMemo?.evidenceIds.includes(id),
+    ) ?? false,
+    revisionToolExecuted,
+  };
   report.passed =
     retained &&
     reloaded.id === first.id &&
     reloaded.brief.version > first.brief.version &&
-    documents(reloaded).length > 0 &&
+    actualRevision &&
+    revisionToolExecuted &&
     !second.agentRun?.steps.some((step) => step.tool.startsWith("qloo."));
 } catch (error) {
   report.failure = String(error.message)

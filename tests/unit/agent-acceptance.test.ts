@@ -376,11 +376,7 @@ it("does not invent linked experience obligations for a research-only memo", () 
     },
   };
 
-  const acceptance = verifyAgentOutcome(
-    task,
-    task.agentRun.goal,
-    true,
-  );
+  const acceptance = verifyAgentOutcome(task, task.agentRun.goal, true);
 
   expect(
     acceptance.checks.filter((item) =>
@@ -425,9 +421,14 @@ it("revises an agent memo without losing its older verified citations", async ()
     task,
     runId: "following-turn",
     sources: [],
-    research: { available: false, research: async () => ({
-      status: "blocked" as const, requests: 0, sources: [],
-    }) },
+    research: {
+      available: false,
+      research: async () => ({
+        status: "blocked" as const,
+        requests: 0,
+        sources: [],
+      }),
+    },
   };
   const tool = createAgentToolRegistry(ctx).find(
     (item) => item.name === "document.revise",
@@ -436,7 +437,8 @@ it("revises an agent memo without losing its older verified citations", async ()
     {
       artifactId: "agent-doc-original-1",
       title: "Updated EV investment memo",
-      content: "Updated scope and risks; all earlier source claims remain attributed.",
+      content:
+        "Updated scope and risks; all earlier source claims remain attributed.",
       sourceIds: ["web-1"],
     },
     ctx,
@@ -445,16 +447,15 @@ it("revises an agent memo without losing its older verified citations", async ()
   expect(revised.status).toBe("ok");
   expect(task.artifacts[0].evidenceIds).toEqual([earlierId]);
   expect(task.artifacts[0].fulfills).toEqual(["investment_memo"]);
-  expect(
-    (await tool.execute(
-      {
-        artifactId: "agent-doc-original-1",
-        title: "Unverified",
-        content: "This edit attempts to inject a missing citation.",
-        sourceIds: ["web-999"],
-      },
-      ctx,
-    )).status,
-  ).toBe("blocked");
+  const rejected = await tool.execute(
+    {
+      artifactId: "agent-doc-original-1",
+      title: "Unverified",
+      content: "This edit attempts to inject a missing citation.",
+      sourceIds: ["web-999"],
+    },
+    ctx,
+  );
+  expect(rejected.status).toBe("blocked");
   expect(task.artifacts[0].title).toBe("Updated EV investment memo");
 });

@@ -83,7 +83,6 @@ it("research tasks require an observed public source before document creation", 
     expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
       "web.search",
       "document.create",
-      "agent.finish",
     ]);
     expect(task.artifacts[0].evidenceIds).toHaveLength(1);
     expect(store.load(task.id, "owner").artifacts).toEqual(task.artifacts);

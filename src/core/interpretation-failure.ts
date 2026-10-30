@@ -1,4 +1,5 @@
 import { ModelRequestBudgetError } from "../tools/model-budget";
+import { ModelToolProtocolError } from "../tools/model-tool-protocol-error";
 import { z } from "zod";
 
 /** Stable error categories for model-generated tool protocol, no raw provider body. */
@@ -13,6 +14,10 @@ export class ModelOutputFormatError extends Error {
 
 /** Report only known categories and schema paths, never raw provider content or credentials. */
 export function interpretationFailure(error: unknown): string {
+  if (error instanceof ModelToolProtocolError) {
+    return "invalid tool call";
+  }
+
   if (error instanceof ModelOutputFormatError) {
     return error.message;
   }

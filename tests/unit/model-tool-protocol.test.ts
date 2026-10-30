@@ -316,3 +316,38 @@ it("uses the native connected-experience proposal schema when required", async (
 
   expect(chosen.name).toBe("experience.propose");
 });
+
+it("routes an agent-created memo revision back into the persistent agent", async () => {
+  const text =
+    "Revise the saved investment memo to prioritize charging-network operators. " +
+    "Keep the earlier research citations and flag unknown figures.";
+  const fetcher = vi.fn<typeof fetch>(async () =>
+    result("route_conversation", { intent: "delegate" }),
+  );
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+  const task = freshTask("revision-route", "owner");
+  task.agentRun = {
+    id: "11111111-1111-4111-8111-111111111111",
+    goal: "Research EV charging and save an investment memo",
+    status: "completed",
+    startedAt: "2026-10-30T00:00:00.000Z",
+    updatedAt: "2026-10-30T00:00:00.000Z",
+    maxSteps: 8,
+    maxRequests: 8,
+    requests: 1,
+    modelSteps: 2,
+    steps: [],
+    sources: [],
+    warnings: [],
+    outputArtifactIds: ["agent-doc-11111111-1111-4111-8111-111111111111-1"],
+  } as NonNullable<typeof task.agentRun>;
+
+  expect(await model.routeConversation(text, task)).toEqual({
+    intent: "research",
+    query: text.slice(0, 300),
+  });
+  expect(fetcher).toHaveBeenCalledOnce();
+
+  task.agentRun.outputArtifactIds = [];
+  expect(await model.routeConversation(text, task)).toBeNull();
+});

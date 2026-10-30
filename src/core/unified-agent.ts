@@ -496,8 +496,7 @@ export async function runUnifiedAgent(
           tool: selected.name,
           status: "blocked",
           requests: 0,
-          summary:
-            `Arguments rejected (${schemaIssues}). Correct this tool's inputSchema fields. No tool executed.`,
+          summary: `Arguments rejected (${schemaIssues}). Correct this tool's inputSchema fields. No tool executed.`,
           at: now(),
           durationMs: 0,
         });

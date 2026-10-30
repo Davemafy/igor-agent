@@ -25,15 +25,13 @@ Authenticated endpoint:
 
 The response contains these *semantic* sections, not screen-specific payloads:
 
-| Field | Source of truth | UI use |
-| --- | --- | --- |
-| `conversation` | Task messages and focus | Home, chat and thread recovery |
-| `participants` | Task brief | Consented participants and preferences |
-| `discovery` | Candidates, entities, current and archived evidence | Explore, compare, source details |
-| `spatial` | Place candidates and grounded coordinates | 2D/3D map rendering |
-| `plan` | Current selection, schedule, WorkState | Plan, decisions, comparisons |
-| `artifacts` | Current and historic artifact versions | Create, library and revisions |
-| `execution` | Agent run, history, trace and error | Progress, incomplete or failed work |
+- `conversation`: canonical messages and focus for chat and recovery.
+- `participants`: brief-owned people and consented preferences.
+- `discovery`: raw catalogue, evaluated candidates, entities and evidence.
+- `spatial`: grounded places and geocoded IDs for 2D/3D maps.
+- `plan`: selected candidates, schedule, and canonical WorkState.
+- `artifacts`: current documents and version history.
+- `execution`: agent run, history, trace, failures, and partial work.
 
 For maps, only IDs in `spatial.geocodedPlaceIds` are eligible to become real
 pins. Items with no coordinates, or illustrative sample items, must not become
@@ -82,6 +80,7 @@ canonical version/ID retention, edited artifact stability, sample/unknown
 coordinates, empty evidence and blocked external actions.
 
 This contract **does not** prove:
+
 - Live Qloo-to-composed-artifact completion.
 - Healthy model/provider decisions.
 - External email sending or signed asynchronous inbound reply handling.

@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+import { normalizeAgentArguments } from "../../src/core/agent-argument-normalization";
 import { createAgentToolRegistry } from "../../src/core/agent-tool-registry";
 import { freshTask } from "../../src/data/fixtures";
 
@@ -20,7 +21,9 @@ it("normalizes benign document shapes but never manufactures citations", () => {
     evidenceIds: null,
     extraPrivilegedAction: "send email",
   };
-  const parsed = document?.schema.parse(input) as {
+  const parsed = document?.schema.parse(
+    normalizeAgentArguments("document.create", input),
+  ) as {
     content: string;
     title: string;
     sourceIds: string[];

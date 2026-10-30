@@ -411,6 +411,7 @@ describe("unified tool orchestration", () => {
           },
           async chooseAgentAction() {
             decisions++;
+
             if (decisions === 1) {
               return {
                 name: "document.create",
@@ -423,6 +424,7 @@ describe("unified tool orchestration", () => {
                 },
               };
             }
+
             throw new Error("Model decision provider returned HTTP 503");
           },
         },

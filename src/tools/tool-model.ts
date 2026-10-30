@@ -1,4 +1,5 @@
 import { ModelRequestBudgetError, modelCallLimit } from "./model-budget";
+import { ModelToolProtocolError } from "./model-tool-protocol-error";
 import {
   AgentRequirementsSchema,
   culturalEvidenceId,
@@ -197,7 +198,9 @@ export class ToolCallingModel implements ModelProvider {
         return parse(await this.call(messages, tools, timeoutMs));
       } catch (error) {
         const malformed =
-          error instanceof SyntaxError || error instanceof z.ZodError;
+          error instanceof SyntaxError ||
+          error instanceof z.ZodError ||
+          error instanceof ModelToolProtocolError;
 
         if (!malformed) {
           throw error;
@@ -282,7 +285,7 @@ export class ToolCallingModel implements ModelProvider {
     const calls = parsed.output.filter((x) => x.type === "function_call");
 
     if (calls.length !== 1) {
-      throw new Error("Exactly one allowed tool call per step.");
+      throw new ModelToolProtocolError("missing-or-multiple");
     }
 
     return { call: calls[0], output: parsed.output };

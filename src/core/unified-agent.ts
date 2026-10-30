@@ -426,7 +426,31 @@ export async function runUnifiedAgent(
             );
 
             if (!entity) {
+              // Qloo's broad /search can return a film, artist and person
+              // sharing a name. Pass only conservative type hints grounded in
+              // the user's phrasing; Qloo still confirms the exact identity.
+              const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\            if (!entity) {
               return [{ name: "qloo.resolve_entity", arguments: { name } }];
+            }");
+              const personCue = new RegExp(
+                `\\b${escaped}\\s+(?:films?|movies?)\\b|\\bfilms?\\s+(?:by|from)\\s+${escaped}\\b`,
+                "i",
+              ).test(userText);
+              const musicContext =
+                run.requirements?.experienceDomains?.includes("music") &&
+                !personCue;
+              const type = personCue
+                ? "person"
+                : musicContext
+                  ? "artist"
+                  : undefined;
+
+              return [
+                {
+                  name: "qloo.resolve_entity",
+                  arguments: type ? { name, type } : { name },
+                },
+              ];
             }
 
             if (observedSeeds.has(entity.providerId!)) {

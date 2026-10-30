@@ -866,10 +866,12 @@ export function createAgentToolRegistry(
         }
 
         const evidenceIds = [
-          ...culturalIds,
-          ...groundedSourceIds.map(
-            (id) => `${ctx.task.id}:agent:${ctx.runId}:${id}`,
-          ),
+          ...new Set([
+            ...culturalIds,
+            ...groundedSourceIds.map(
+              (id) => `${ctx.task.id}:agent:${ctx.runId}:${id}`,
+            ),
+          ]),
         ];
         const count = ctx.task.artifacts.filter((artifact) =>
           artifact.id.startsWith(`agent-doc-${ctx.runId}-`),

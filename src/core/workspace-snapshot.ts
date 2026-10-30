@@ -75,7 +75,10 @@ export function projectWorkspace(task: Task): WorkspaceSnapshot {
   const places = [
     ...task.candidates.filter((candidate) => candidate.type === "place"),
     ...task.catalogue.filter((candidate) => candidate.type === "place"),
-  ].filter((place, index, all) => all.findIndex((item) => item.id === place.id) === index);
+  ].filter(
+    (place, index, all) =>
+      all.findIndex((item) => item.id === place.id) === index,
+  );
   const geocodedPlaceIds = places
     .filter(
       (candidate) =>

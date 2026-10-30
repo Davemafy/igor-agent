@@ -352,3 +352,109 @@ it("query-qualified context signals retain their original evidence identities", 
     }),
   ).toBe("qloo:actual-query:participant-id:provider-id");
 });
+
+it("does not invent linked experience obligations for a research-only memo", () => {
+  const task = freshTask("research-acceptance", "owner");
+  task.agentRun = {
+    id: "22222222-2222-4222-8222-222222222222",
+    goal: "Research the EV charging market and prepare an investment memo",
+    status: "verifying",
+    startedAt: "2026-10-30T00:00:00Z",
+    updatedAt: "2026-10-30T00:00:00Z",
+    maxSteps: 8,
+    maxRequests: 8,
+    requests: 1,
+    modelSteps: 2,
+    steps: [],
+    sources: [],
+    warnings: [],
+    requirements: {
+      culturalDecision: false,
+      culturalReferences: [],
+      deliverables: ["investment_memo"],
+      experienceDomains: ["budget", "risk"],
+    },
+  };
+
+  const acceptance = verifyAgentOutcome(
+    task,
+    task.agentRun.goal,
+    true,
+  );
+
+  expect(
+    acceptance.checks.filter((item) =>
+      item.requirement.startsWith("Linked experience decision:"),
+    ),
+  ).toEqual([]);
+  expect(acceptance.status).not.toBe("satisfied");
+});
+
+it("revises an agent memo without losing its older verified citations", async () => {
+  const { createAgentToolRegistry } =
+    await import("../../src/core/agent-tool-registry");
+  const task = freshTask("memo-revision", "owner");
+  const earlierId = `${task.id}:agent:original:web-1`;
+  task.evidence.push({
+    id: earlierId,
+    source: "provider-returned",
+    kind: "practical",
+    at: "2026-10-30T00:00:00Z",
+    entityIds: [],
+    reference: "https://example.org/energy",
+    summary: "Previously observed evidence",
+    limitations: [],
+    explanation: null,
+    dependencies: [],
+    freshness: "current",
+  });
+  task.artifacts.push({
+    id: "agent-doc-original-1",
+    kind: "research-report",
+    title: "EV investment memo",
+    content: "An earlier evidence-linked investment memo.",
+    version: 1,
+    dependencies: [],
+    evidenceIds: [earlierId],
+    fulfills: ["investment_memo"],
+    assumptions: [],
+    freshness: "current",
+    edited: false,
+  });
+  const ctx = {
+    task,
+    runId: "following-turn",
+    sources: [],
+    research: { available: false, research: async () => ({
+      status: "blocked" as const, requests: 0, sources: [],
+    }) },
+  };
+  const tool = createAgentToolRegistry(ctx).find(
+    (item) => item.name === "document.revise",
+  )!;
+  const revised = await tool.execute(
+    {
+      artifactId: "agent-doc-original-1",
+      title: "Updated EV investment memo",
+      content: "Updated scope and risks; all earlier source claims remain attributed.",
+      sourceIds: ["web-1"],
+    },
+    ctx,
+  );
+
+  expect(revised.status).toBe("ok");
+  expect(task.artifacts[0].evidenceIds).toEqual([earlierId]);
+  expect(task.artifacts[0].fulfills).toEqual(["investment_memo"]);
+  expect(
+    (await tool.execute(
+      {
+        artifactId: "agent-doc-original-1",
+        title: "Unverified",
+        content: "This edit attempts to inject a missing citation.",
+        sourceIds: ["web-999"],
+      },
+      ctx,
+    )).status,
+  ).toBe("blocked");
+  expect(task.artifacts[0].title).toBe("Updated EV investment memo");
+});

@@ -174,6 +174,7 @@ it("accepts single-action compose envelopes without discarding unsafe keys", () 
 
   for (const proposal of [
     { actions: action },
+    { actions: JSON.stringify([action]) },
     { operations: [action] },
     { payload: { actions: [action] } },
   ]) {

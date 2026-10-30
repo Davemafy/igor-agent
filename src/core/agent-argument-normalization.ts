@@ -36,6 +36,26 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
         return { actions: [value] };
       }
 
+      if (key === "actions" && typeof value === "string" && value.length < 20000) {
+        // Some function-call providers serialize a JSON array within the
+        // arguments object. Parse its shape only; the strict WorkActionSchema
+        // still validates each action and denies privileged writes.
+        try {
+          const parsed: unknown = JSON.parse(value);
+
+          if (Array.isArray(parsed)) {
+            return { actions: parsed };
+          }
+
+          if (parsed && typeof parsed === "object") {
+            return { actions: [parsed] };
+          }
+        } catch {
+          return raw;
+        }
+      }
+
+
       if (
         (key === "workActions" || key === "operations") &&
         Array.isArray(value)

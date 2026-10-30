@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import { z } from "zod";
 import { readResponseText } from "./response-body";
+import { XaiWebResearchProvider } from "./xai-web-research";
 
 export const ResearchQuerySchema = z.string().trim().min(3).max(300);
 
@@ -466,9 +467,22 @@ export class BrightDataResearchProvider implements ResearchProvider {
 }
 
 export function runtimeResearchProvider(): ResearchProvider {
-  return new BrightDataResearchProvider(
+  const bright = new BrightDataResearchProvider(
     process.env.BRIGHTDATA_API_KEY ?? "",
     process.env.BRIGHTDATA_SERP_ZONE ?? "",
     process.env.BRIGHTDATA_UNLOCKER_ZONE ?? "",
   );
+
+  if (bright.available) {
+    return bright;
+  }
+
+  const key = process.env.XAI_API_KEY || process.env.GROK_API_KEY || "";
+
+  return key
+    ? new XaiWebResearchProvider(
+        key,
+        process.env.XAI_SEARCH_MODEL || "grok-4.7",
+      )
+    : bright;
 }

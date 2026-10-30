@@ -101,39 +101,41 @@ it("does not retry indefinitely when a public research provider fails", async ()
     sources: [],
     warning: "Research source unavailable",
   }));
-  const choose = vi.fn(async (
-    _goal: string,
-    tools: { name: string }[],
-    observations: { tool: string }[],
-  ) => {
-    const canSearch = tools.some((tool) => tool.name === "web.search");
+  const choose = vi.fn(
+    async (
+      _goal: string,
+      tools: { name: string }[],
+      observations: { tool: string }[],
+    ) => {
+      const canSearch = tools.some((tool) => tool.name === "web.search");
 
-    if (observations.length < 2) {
-      expect(canSearch).toBe(true);
+      if (observations.length < 2) {
+        expect(canSearch).toBe(true);
+
+        return {
+          name: "web.search",
+          arguments: {
+            query:
+              observations.length === 0
+                ? "charging market"
+                : "charging infrastructure alternatives",
+          },
+        };
+      }
+
+      expect(canSearch).toBe(false);
 
       return {
-        name: "web.search",
+        name: "document.create",
         arguments: {
-          query:
-            observations.length === 0
-              ? "charging market"
-              : "charging infrastructure alternatives",
+          title: "Unverified market notes",
+          content:
+            "The live research provider was unavailable. These notes contain no sourced market assertions. Research must continue later.",
+          fulfills: ["report"],
         },
       };
-    }
-
-    expect(canSearch).toBe(false);
-
-    return {
-      name: "document.create",
-      arguments: {
-        title: "Unverified market notes",
-        content:
-          "The live research provider was unavailable. These notes contain no sourced market assertions. Research must continue later.",
-        fulfills: ["report"],
-      },
-    };
-  });
+    },
+  );
 
   try {
     await runUnifiedAgent({

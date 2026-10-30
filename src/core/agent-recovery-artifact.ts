@@ -28,14 +28,16 @@ export function preservePartialAgentWork(
       : [];
   });
   const currentSeeds = new Set(run.culturalSeedIds ?? []);
-  const culturalCandidates = task.catalogue.flatMap((candidate) => {
+  const culturalCandidates: { id: string; name: string }[] = [];
+
+  for (const candidate of task.catalogue) {
     if (candidate.sample) {
-      return [];
+      continue;
     }
 
-    return Object.entries(candidate.cultural ?? {}).flatMap(([scope, signal]) => {
+    for (const [scope, signal] of Object.entries(candidate.cultural ?? {})) {
       if (!signal.seedIds.some((seed) => currentSeeds.has(seed))) {
-        return [];
+        continue;
       }
 
       const id = culturalEvidenceId(candidate, scope, signal);
@@ -47,11 +49,11 @@ export function preservePartialAgentWork(
           item.freshness === "current",
       );
 
-      return evidence
-        ? [{ id, name: candidate.name.slice(0, 120) }]
-        : [];
-    });
-  });
+      if (evidence) {
+        culturalCandidates.push({ id, name: candidate.name.slice(0, 120) });
+      }
+    }
+  }
   const seenCandidates = new Set<string>();
   const uniqueCandidates = culturalCandidates.filter((candidate) => {
     if (seenCandidates.has(candidate.id)) {
@@ -66,8 +68,9 @@ export function preservePartialAgentWork(
     return null;
   }
 
-  const safe = (value: string) =>
-    value.replace(/[\r\n<>]/g, " ").trim().slice(0, 300);
+  const safe = (value: string) => {
+    return value.replace(/[\r\n<>]/g, " ").trim().slice(0, 300);
+  };
   const evidenceIds = [
     ...new Set([
       ...sourceEvidence.map((source) => source.id),
@@ -85,7 +88,7 @@ export function preservePartialAgentWork(
       (source) => `- Web lead: ${safe(source.title)} — ${safe(source.url)}`,
     ),
     ...uniqueCandidates.slice(0, 12).map(
-      (candidate) => `- Qloo candidate: ${safe(candidate.name)} (evidence ID: ${candidate.id})`,
+      (candidate) => `- Qloo: ${safe(candidate.name)} [${candidate.id}]`,
     ),
     "",
     "## Not yet established",
@@ -103,9 +106,7 @@ export function preservePartialAgentWork(
     version: task.brief.version,
     dependencies: ["evidence:research"],
     evidenceIds,
-    assumptions: [
-      "Partial recovery, not a fulfilled deliverable or verified plan.",
-    ],
+    assumptions: ["Partial recovery, not a fulfilled deliverable or verified plan."],
     freshness: "current",
     edited: false,
   });

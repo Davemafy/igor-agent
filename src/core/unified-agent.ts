@@ -307,8 +307,45 @@ export async function runUnifiedAgent(
         step.tool === "qloo.discover" &&
         (step.status === "blocked" || step.status === "error"),
     );
+    // Partial cultural results are still useful evidence for an editable
+    // provisional artifact. Missing seeds must remain unsatisfied at acceptance,
+    // but should not prevent the user from receiving saved working output.
+    const culturalObserved = Boolean(
+      run.culturalSeedIds?.some((seed) =>
+        task.catalogue.some((candidate) =>
+          Object.values(candidate.cultural ?? {}).some((signal) =>
+            signal.seedIds.includes(seed),
+          ),
+        ),
+      ) &&
+        task.evidence.some(
+          (evidence) =>
+            evidence.kind === "cultural" &&
+            evidence.source === "provider-returned" &&
+            evidence.freshness === "current",
+        ),
+    );
     const waitingForCulture =
-      run.requirements?.culturalDecision && !culturalReady && !discoveryFailed;
+      run.requirements?.culturalDecision &&
+      !culturalReady &&
+      !culturalObserved &&
+      !discoveryFailed;
+    const hasRequestedOutput = Boolean(
+      run.outputArtifactIds?.length ||
+        task.artifacts.some((artifact) =>
+          artifact.id.startsWith(`agent-doc-${run.id}`),
+        ),
+    );
+    const saveBeforeLimit =
+      index >= maxSteps - 2 &&
+      !hasRequestedOutput &&
+      Boolean(
+        run.requirements?.deliverables.length ||
+          run.requirements?.experienceDomains?.length,
+      ) &&
+      (culturalObserved ||
+        run.sources.length > 0 ||
+        !run.requirements?.culturalDecision);
 
     const available = tools.filter(
       (t) =>
@@ -318,7 +355,9 @@ export async function runUnifiedAgent(
         !(
           waitingForCulture &&
           ["document.create", "experience.compose"].includes(t.name)
-        ),
+        ) &&
+        (!saveBeforeLimit ||
+          ["document.create", "experience.compose"].includes(t.name)),
     );
     let selection: Awaited<
       ReturnType<NonNullable<ModelProvider["chooseAgentAction"]>>

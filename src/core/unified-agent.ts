@@ -350,15 +350,22 @@ export async function runUnifiedAgent(
     const failedComplexComposition = run.steps.some(
       (step) => step.tool === "experience.compose" && step.status === "blocked",
     );
+    const canProposeExperience =
+      Boolean(run.requirements?.culturalDecision) &&
+      culturalReady &&
+      tools.some((tool) => tool.name === "experience.propose" && tool.available);
     const savePlainDocument =
       !hasRequestedOutput &&
       needsDeliverable &&
       canSave &&
+      (!canProposeExperience || index === maxSteps - 1) &&
       (failedComplexComposition || (saveBeforeLimit && index === maxSteps - 1));
     const forceSaving = saveBeforeLimit || savePlainDocument;
     const savingTools = savePlainDocument
       ? ["document.create"]
-      : ["document.create", "experience.compose"];
+      : canProposeExperience
+        ? ["experience.propose", "document.create", "experience.compose"]
+        : ["document.create", "experience.compose"];
     // One successful cultural seed is not evidence for the other named seeds.
     // Permit a provisional draft only when further discovery failed or the
     // bounded run must save actual observations before the step budget ends.
@@ -398,7 +405,9 @@ export async function runUnifiedAgent(
         (t.permission === "read" || t.permission === "internal") &&
         !(
           waitingForCulture &&
-          ["document.create", "experience.compose"].includes(t.name)
+          ["document.create", "experience.compose", "experience.propose"].includes(
+            t.name,
+          )
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
         !(researchFirst && t.name !== "web.search") &&

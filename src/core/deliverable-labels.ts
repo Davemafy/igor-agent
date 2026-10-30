@@ -12,14 +12,20 @@ export function reconcileDeliverableLabels(
   requested: string[],
 ): string[] {
   const result = [...new Set(labels ?? [])];
-  const normalizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalizedTitle = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
   if (content.trim().length < 180) {
     return result.slice(0, 6);
   }
 
   for (const key of requested) {
-    const phrase = key.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const phrase = key
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
 
     if (
       phrase &&

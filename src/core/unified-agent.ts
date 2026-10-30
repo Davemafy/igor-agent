@@ -421,6 +421,22 @@ export async function runUnifiedAgent(
     );
 
     if (!selected) {
+      if (selection.name === "agent.finish" && mustContinue && finishRepairs++ < 2) {
+        const missing = run.requirements?.deliverables.join(", ") || "required work";
+        run.steps.push({
+          id: randomUUID(),
+          tool: "agent.finish",
+          status: "blocked",
+          requests: 0,
+          summary: `Completion is not verified: save ${missing} first.`,
+          at: now(),
+          durationMs: 0,
+        });
+        trace("agent.finish.blocked", "Required work is still incomplete.");
+        persist();
+        continue;
+      }
+
       run.warnings.push("Model proposed an unavailable tool.");
       trace("agent.action.blocked", "Unavailable tool was rejected.");
       break;

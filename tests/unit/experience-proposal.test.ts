@@ -170,6 +170,49 @@ describe("compact general-purpose experience composition", () => {
     );
   });
 
+  it("rejects budget-violating estimates without saving unsupported experience work", () => {
+    const { task } = groundedTask();
+    task.agentRun = {
+      goal: "Host a listening evening under $50 with an editable proposal",
+      requirements: {
+        culturalDecision: false,
+        culturalReferences: [],
+        deliverables: ["proposal"],
+        budget: { amount: 50, sourceText: "under $50" },
+      },
+    } as unknown as Task["agentRun"];
+
+    const result = saveExperienceProposal(
+      task,
+      {
+        title: "Affordable listening event",
+        decisions: [
+          {
+            domain: "music",
+            value: "Host a verified-artist listening session",
+            rationale: "Qloo artist association was observed",
+            candidateId: "observed-artist",
+            estimatedCost: 65,
+          },
+        ],
+        documents: [
+          {
+            title: "Working plan",
+            content:
+              "A provisional experience plan with all actual prices and availability explicitly subject to verification.",
+            fulfills: ["proposal"],
+          },
+        ],
+      },
+      "run-budget-guard",
+    );
+
+    expect(result.status).toBe("blocked");
+    expect(result.summary).toContain("exceeding the user budget");
+    expect(task.work?.decisions ?? []).toEqual([]);
+    expect(task.work?.documents ?? []).toEqual([]);
+  });
+
   it("requires model-selected evidence for each named cultural seed", () => {
     const { task } = groundedTask();
     const existingSignal = task.catalogue[0].cultural?.context;

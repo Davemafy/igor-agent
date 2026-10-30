@@ -167,6 +167,7 @@ export async function runUnifiedAgent(
 
   const attempted = new Set<string>();
   let modelFinished = false;
+  let decisionFailed = false;
   let argumentRepairs = 0;
   let finishRepairs = 0;
   task.agentRun.status = "reasoning";
@@ -344,6 +345,7 @@ export async function runUnifiedAgent(
         decisionDeadline,
       );
     } catch (error) {
+      decisionFailed = true;
       run.warnings.push(
         "Agent decision provider failed; completed observations are preserved.",
       );
@@ -566,6 +568,19 @@ export async function runUnifiedAgent(
   const run = task.agentRun!;
   run.status = "verifying";
   run.acceptance = verifyAgentOutcome(task, input.goal, modelFinished);
+
+  // A previously saved document can satisfy deliverable checks, but must not
+  // disguise a later provider failure as a finished agent run.
+  if (decisionFailed) {
+    run.acceptance.checks.push({
+      requirement: "Agent decision completed without provider failure",
+      status: "blocked",
+      artifactIds: [],
+      evidenceIds: [],
+    });
+    run.acceptance.status = "blocked";
+  }
+
   run.status =
     run.acceptance.status === "satisfied" ? "completed" : "partially_completed";
 

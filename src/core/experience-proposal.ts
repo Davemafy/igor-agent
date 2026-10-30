@@ -59,6 +59,33 @@ export function saveExperienceProposal(
   artifactIds: string[];
 } {
   const parsed = ExperienceProposalArguments.parse(input);
+  const budget = task.agentRun?.requirements?.budget;
+  const latestRequest =
+    task.messages.filter((message) => message.role === "user").at(-1)?.text ??
+    task.agentRun?.goal ??
+    "";
+  const estimatedTotal = parsed.decisions.reduce(
+    (sum, decision) => sum + (decision.estimatedCost ?? 0),
+    0,
+  );
+
+  // An explicit user ceiling is an execution constraint, not a suggestion.
+  // Reject an infeasible model-authored allocation before mutating saved work.
+  // Unknown prices remain null and must never be represented as zero quotes.
+  if (
+    budget &&
+    latestRequest.includes(budget.sourceText) &&
+    estimatedTotal > budget.amount
+  ) {
+    const overage = Math.round((estimatedTotal - budget.amount) * 100) / 100;
+
+    return {
+      status: "blocked",
+      summary:
+        `Proposed estimates total ${estimatedTotal}, exceeding the user budget ${budget.amount} by ${overage}. Submit a corrected experience.propose with a total at or below the ceiling. Unknown vendor costs must remain null, not fabricated or called free. No work saved.`,
+      artifactIds: [],
+    };
+  }
 
   const evidenceForCandidate = (id: string) => {
     const candidate = task.catalogue.find(

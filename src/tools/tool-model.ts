@@ -46,12 +46,13 @@ const quickRouteInstructions = [
   "Act with the known facts. A useful first result with labelled assumptions is better than serial intake questions. Only ask for details that genuinely block the next safe action; group truly blocking details into one concise question.",
   "When the last assistant reply asked a question and the user responds briefly, treat that response as an answer IN THE EXISTING TASK rather than a command with the same keyword. For example, proposal after What is the occasion? is an occasion answer, not a new request to write a proposal document.",
   "Choose clarification only when a missing detail actually blocks a useful response; ask exactly one natural question.",
-  "Choose draft for a NEW requested deliverable such as a concept, build plan, proposal, brief, story, itinerary or written draft that can be authored from general knowledge and supplied facts. Produce a useful first version with labelled assumptions instead of asking broad preference questions. A game concept for gamers is enough to propose an original concept and scope. Draft is not permission to deploy software, execute code, publish, send, buy or claim live verification. Existing document revisions still choose delegate, preserving approved/manual work.",
+  "Choose draft ONLY for a standalone creative or written deliverable that needs no new external facts or cultural retrieval. Examples: write a fictional story, a game concept based solely on supplied details, or an email draft. A request that also needs cultural discovery, real venues, sourced research, feasibility checks, coordination or multiple connected deliverables is an AGENT task even if the user says proposal, brief, plan or draft. Label assumptions in purely creative drafts. Draft is not permission to execute external actions. Existing document revisions still choose delegate, preserving approved/manual work.",
   "Act rather than interview. On real-world planning, once the destination and an interest or occasion are known, choose research with a standalone, location-specific query for actual venues/options. A missing borough, optional taste profile, or ambiguity between total and per-person budget must not block useful source-backed research; flag assumptions and unverified availability instead.",
   "Use earlier user answers: the last message may be just a city, interests, 'former', 'go', 'where', or 'show me'. Resolve these against the current conversation, do not reset intake. If the user supplied a locality and activities, execute research NOW; do not repeat a preference question or claim that you are about to search.",
   "Choose research whenever a recommendation needs live places, hours, pricing, availability, opening/booking links or other current sources. Return the useful full search query containing user supplied city, activity, dates and size where known. Never claim a venue search was done in a conversation reply.",
   "Current popularity, popular demand, market demand, trends, most-played games and commercial viability require research, even in a short follow-up to a creative draft. For example, after a game concept, 'stop asking questions use popular demand' means research current gaming demand to inform that concept, not ask for a genre and not invent market trends from general knowledge. Resolve the topic from history and include it in a standalone query. General brainstorming may use assumptions, but never present those as current market evidence.",
   "Choose agent for multi-step goals needing two or more of public research, cultural intelligence, venue investigation and creation of saved work. Supply a standalone goal/query preserving user-supplied cultural references, city, dates and constraints. The server chooses actual tools next; never pretend they have run. Choose agent for continuations or revisions of an existing agent run (including a partial run) when discovery or saved results are required. Do not send these to the legacy planner merely because the request is a revision. Choose delegate for direct wording edits or approvals that need no external discovery.",
+  "Routing priority: agent for evidence-dependent multi-step work takes precedence over draft. Do not author a proposal first when its facts depend on searching, verifying, Qloo taste anchors or choosing real options.",
   "Choose delegate for direct saved-document wording changes or approval actions. Choose agent for Qloo cultural discovery when the user supplied a supported cultural anchor. Use the Qloo capability instead of fabricating cultural associations. Do not demand multiple named tastes before a first useful discovery attempt.",
   "Choose conversation for explanations, ordinary discussion, greetings and questions that need no external action or fresh facts. Clarify only a genuinely blocking missing parameter, at most one question; otherwise act and offer verification steps with the results.",
   "Research creates saved, evidence-linked work; a request to see results ('show me', 'where', 'go ahead') after planning needs tool execution or display of actual saved findings, never a promise that a plan exists.",
@@ -62,6 +63,33 @@ const quickRouteInstructions = [
   "When explaining prior cultural recommendations, distinguish Qloo evidence from interpretation and cite only evidence IDs visible in saved context using replyEvidenceIds.",
   "Return one route_conversation call. For delegate omit reply; for research or agent provide query but no reply; for conversation/clarification provide reply.",
 ].join(" ");
+
+/**
+ * A read-only model route cannot authorize skipping required external evidence.
+ * This conservative guard corrects a `draft` response only for explicit
+ * research/verification requests or concrete real-world coordination goals.
+ * Plain creative writing and simple document drafting stay on the fast path.
+ */
+export function needsEvidenceDrivenExecution(text: string): boolean {
+  const explicitDiscovery =
+    /\b(?:research|investigate|verify|fact[ -]?check|look up|search for|source|find (?:real|local|available)|compare (?:providers|vendors|venues|prices)|check (?:availability|pricing|hours)|Qloo)\b/i.test(
+      text,
+    );
+  const realWorldGoal =
+    /\b(?:event|experience|gathering|outing|trip|travel|venue|venues|space|festival|concert|workshop|conference|market|vendor|vendors)\b/i.test(
+      text,
+    );
+  const planningAction =
+    /\b(?:plan|design|organize|coordinate|arrange|put together|host|launch)\b/i.test(
+      text,
+    );
+  const practicalObligation =
+    /\b(?:budget|under\s*[$£€]|costs?|schedule|itinerary|partners?|pitch|invitations?|availability|vendors?|bookings?|locations?|venues?|attendees|capacity)\b/i.test(
+      text,
+    );
+
+  return explicitDiscovery || (realWorldGoal && planningAction && practicalObligation);
+}
 
 const conversationInstructions = [
   "You are Igor, your agent with taste, in one ongoing conversation",
@@ -445,6 +473,13 @@ export class ToolCallingModel implements ModelProvider {
     }
 
     if (route.intent === "draft") {
+      if (!recovery && needsEvidenceDrivenExecution(text)) {
+        // A completed function call is not proof its chosen route was correct.
+        // Execute the authorized research/agent path instead of inventing facts
+        // inside the lightweight document generator.
+        return { intent: "research" as const, query: text.slice(0, 300) };
+      }
+
       return recovery ? null : { intent: "draft" as const };
     }
 

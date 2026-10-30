@@ -351,3 +351,31 @@ it("routes an agent-created memo revision back into the persistent agent", async
   task.agentRun.outputArtifactIds = [];
   expect(await model.routeConversation(text, task)).toBeNull();
 });
+
+it.each(["conversation", "clarification", "draft"])(
+  "keeps explicit saved-agent revision executable even when model routes %s",
+  async (intent) => {
+    const text = "Revise the saved investment memo and keep prior citations.";
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      result("route_conversation", {
+        intent,
+        reply: "I can discuss the requested revision.",
+      }),
+    );
+    const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+    const task = freshTask("revision-fallback", "owner");
+    task.agentRun = {
+      id: "11111111-1111-4111-8111-111111111111",
+      goal: "Prepare a cited market memo",
+      status: "completed",
+      steps: [],
+      sources: [],
+      outputArtifactIds: ["agent-doc-11111111-1111-4111-8111-111111111111-1"],
+    } as unknown as NonNullable<typeof task.agentRun>;
+
+    expect(await model.routeConversation(text, task)).toEqual({
+      intent: "research",
+      query: text,
+    });
+  },
+);

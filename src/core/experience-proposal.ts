@@ -100,6 +100,7 @@ export function saveExperienceProposal(
         entity.status === "resolved" &&
         entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
     );
+    const seedId = seed?.providerId;
     const eligible = task.catalogue
       .filter(
         (candidate) =>
@@ -108,8 +109,8 @@ export function saveExperienceProposal(
             const citedEvidenceId = culturalEvidenceId(candidate, scope, signal);
 
             return (
-              Boolean(seed?.providerId) &&
-              signal.seedIds.includes(seed!.providerId!) &&
+              typeof seedId === "string" &&
+              signal.seedIds.includes(seedId) &&
               task.evidence.some(
                 (evidence) =>
                   evidence.id === citedEvidenceId &&

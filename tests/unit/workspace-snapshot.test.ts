@@ -37,7 +37,7 @@ const makePlace = (id: string, sample: boolean, latitude: number | null) => {
 };
 
 describe("versioned workspace snapshot integration contract", () => {
-  it("reads the existing task without establishing a parallel state store", () => {
+  it("reads canonical state without making another store", () => {
     const task = freshTask("task-1", "owner");
     task.brief.goal = "Investigate the EV charging market";
     task.brief.version = 4;
@@ -72,10 +72,12 @@ describe("versioned workspace snapshot integration contract", () => {
 
     task.artifacts[0].content = "Later edit";
     expect(snapshot.artifacts.current[0].content).toBe("Working research memo");
-    expect(WorkspaceSnapshotSchema.safeParse({
-      ...snapshot,
-      schemaVersion: 2,
-    }).success).toBe(false);
+    expect(
+      WorkspaceSnapshotSchema.safeParse({
+        ...snapshot,
+        schemaVersion: 2,
+      }).success,
+    ).toBe(false);
   });
 
   it("includes only real, complete coordinates in map pin eligibility", () => {
@@ -128,7 +130,7 @@ describe("versioned workspace snapshot integration contract", () => {
     expect(snapshot.spatial.places[0].available).toBeNull();
   });
 
-  it("does not claim evidence, affinity, availability, or external-action success", () => {
+  it("does not claim unknown evidence or external success", () => {
     const task = freshTask("task-3", "owner");
     task.status = "partial";
     task.error = "Model provider unavailable";

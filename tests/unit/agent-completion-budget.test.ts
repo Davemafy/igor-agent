@@ -96,3 +96,97 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
     }
   }
 });
+
+it("saves a plain document after a complex composition is rejected", async () => {
+  const oldSteps = process.env.IGOR_AGENT_MAX_STEPS;
+  process.env.IGOR_AGENT_MAX_STEPS = "3";
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("rejected-composition", "owner");
+  store.create(task);
+
+  const choose = vi.fn(
+    async (
+      _goal: string,
+      offered: { name: string }[],
+      observed: { tool: string }[],
+    ) => {
+      if (observed.length === 0) {
+        return {
+          name: "web.search",
+          arguments: { query: "EV charging overview" },
+        };
+      }
+
+      if (observed.length === 1) {
+        return { name: "experience.compose", arguments: {} };
+      }
+
+      expect(offered.map((tool) => tool.name)).toEqual([
+        "document.create",
+      ]);
+
+      return {
+        name: "document.create",
+        arguments: {
+          title: "Provisional EV charging brief",
+          content: "Observed source and explicitly unknown market figures.",
+          sourceIds: ["web-1"],
+          fulfills: ["report"],
+        },
+      };
+    },
+  );
+
+  try {
+    const result = await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Research EV charging and save a report",
+      model: {
+        interpret: vi.fn(),
+        interpretAgentRequirements: async () => ({
+          culturalDecision: false,
+          culturalReferences: [],
+          deliverables: ["report"],
+        }),
+        chooseAgentAction: choose,
+      },
+      research: {
+        research: vi.fn(),
+        searchOnce: async () => ({
+          status: "ok" as const,
+          requests: 1,
+          sources: [
+            {
+              id: "original",
+              title: "Observed source",
+              url: "https://example.org/charging",
+              snippet: "A web result",
+              retrievedAt: "2026-10-30T00:00:00.000Z",
+            },
+          ],
+        }),
+      },
+      trace: vi.fn(),
+    });
+
+    expect(choose).toHaveBeenCalledTimes(3);
+    expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
+      "web.search",
+      "experience.compose",
+      "document.create",
+    ]);
+    expect(result.status).toBe("ok");
+    expect(task.artifacts[0].fulfills).toContain("report");
+    expect(store.load(task.id, "owner").artifacts).toHaveLength(1);
+  } finally {
+    store.close();
+
+    if (oldSteps === undefined) {
+      delete process.env.IGOR_AGENT_MAX_STEPS;
+    } else {
+      process.env.IGOR_AGENT_MAX_STEPS = oldSteps;
+    }
+  }
+});

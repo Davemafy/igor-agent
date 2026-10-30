@@ -49,3 +49,38 @@ it("offers only state-appropriate edits once an agent document exists", () => {
   task.artifacts[0].locked = true;
   expect(availability(task)["document.revise"]).toBe(false);
 });
+
+it("rechecks experience availability after requirements arrive", () => {
+  const task = freshTask("late-requirements", "owner");
+  const tools = createAgentToolRegistry({
+    task,
+    sources: [],
+    runId: "run-late",
+    research: { available: false, research: vi.fn() },
+  });
+  const compose = tools.find((tool) => tool.name === "experience.compose");
+
+  expect(compose?.available).toBe(false);
+  task.agentRun = {
+    id: "11111111-1111-4111-8111-111111111111",
+    goal: "Plan a cultural experience",
+    status: "reasoning",
+    startedAt: "2026-10-30T00:00:00.000Z",
+    updatedAt: "2026-10-30T00:00:00.000Z",
+    maxSteps: 8,
+    maxRequests: 8,
+    requests: 0,
+    modelSteps: 0,
+    steps: [],
+    sources: [],
+    warnings: [],
+    requirements: {
+      culturalDecision: false,
+      culturalReferences: [],
+      deliverables: ["proposal"],
+      experienceDomains: ["music"],
+    },
+  };
+
+  expect(compose?.available).toBe(true);
+});

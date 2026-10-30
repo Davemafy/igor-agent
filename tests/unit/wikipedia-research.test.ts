@@ -15,7 +15,8 @@ it("only returns actually retrieved Wikipedia entries as provisional leads", asy
           id: 123,
           key: "Electric_vehicle_charging_station",
           title: "Charging station",
-          excerpt: "<span class=\"searchmatch\">Electric</span> charging infrastructure",
+          excerpt:
+            '<span class="searchmatch">Electric</span> charging infrastructure',
           description: "General background",
         },
       ],
@@ -36,7 +37,9 @@ it("only returns actually retrieved Wikipedia entries as provisional leads", asy
 
 it("fails closed on malformed, oversized or unsuccessful responses", async () => {
   const unavailable = new WikipediaResearchProvider(
-    vi.fn<typeof fetch>(async () => new Response("unavailable", { status: 503 })),
+    vi.fn<typeof fetch>(
+      async () => new Response("unavailable", { status: 503 }),
+    ),
   );
   const broken = new WikipediaResearchProvider(
     vi.fn<typeof fetch>(async () => Response.json({ notPages: [] })),

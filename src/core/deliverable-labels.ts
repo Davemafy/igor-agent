@@ -10,6 +10,7 @@ export function reconcileDeliverableLabels(
   content: string,
   labels: string[] | undefined,
   requested: string[],
+  userRequest = "",
 ): string[] {
   const result = [...new Set(labels ?? [])];
   const normalizedTitle = title
@@ -19,6 +20,35 @@ export function reconcileDeliverableLabels(
 
   if (content.trim().length < 180) {
     return result.slice(0, 6);
+  }
+
+  // The interpreter can call an "investment memo" a "proposal".
+  // Repair the document *kind* only when both the user's request and the
+  // authored title explicitly name it; never infer factual correctness.
+  const normalizedRequest = userRequest
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ");
+  const kinds = [
+    "memo",
+    "report",
+    "brief",
+    "proposal",
+    "plan",
+    "invitation",
+    "schedule",
+    "comparison",
+    "pitch",
+    "letter",
+  ];
+
+  for (const kind of kinds) {
+    if (
+      ` ${normalizedTitle} `.includes(` ${kind} `) &&
+      ` ${normalizedRequest} `.includes(` ${kind} `) &&
+      !result.includes(kind)
+    ) {
+      result.push(kind);
+    }
   }
 
   for (const key of requested) {

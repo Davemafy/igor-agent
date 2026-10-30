@@ -83,7 +83,7 @@ export function preservePartialAgentWork(
     ]),
   ].slice(0, 30);
   const webLines = sourceEvidence.slice(0, 8).map((source) => {
-    return `- Web: ${safe(source.title)} — ${safe(source.url)}`;
+    return `- Web source lead: ${safe(source.title)} — ${safe(source.url)}`;
   });
   const culturalLines = uniqueCandidates.slice(0, 12).map((candidate) => {
     return `- Qloo: ${safe(candidate.name)} [${candidate.id}]`;

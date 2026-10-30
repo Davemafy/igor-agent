@@ -244,9 +244,7 @@ it("prefers the explicitly enabled alternate Gemini model before unverified Grok
     delete process.env.LLM_API_KEY;
     delete process.env.LLM_MODEL;
 
-    const model = runtimeModelProvider(
-      freshTask("alternate-routing", "owner").mode,
-    );
+    const model = runtimeModelProvider("qloo-live");
     expect(model).toBeInstanceOf(FallbackModel);
     const first = model as unknown as {
       primary: ResponsiveGeminiModel;

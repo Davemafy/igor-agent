@@ -53,27 +53,33 @@ describe("source observations are not re-issued as fresh evidence", () => {
     );
     expect(tool).toBeDefined();
 
-    const result = await tool!.execute({ query: "existing venue details" }, ctx);
+    const result = await tool!.execute(
+      { query: "existing venue details" },
+      ctx,
+    );
     expect(result.status).toBe("partial");
     expect(result.sources).toEqual([]);
     expect(ctx.sources).toHaveLength(1);
     expect(result.summary).toContain("0 new unique sources");
   });
 
-  it("does not report old place links as newly discovered sources", async () => {
+  it("does not report old place links as new", async () => {
     const ctx = context();
     const tool = createAgentToolRegistry(ctx).find(
       (entry) => entry.name === "places.search",
     );
     expect(tool).toBeDefined();
 
-    const result = await tool!.execute({ query: "existing venue address" }, ctx);
+    const result = await tool!.execute(
+      { query: "existing venue address" },
+      ctx,
+    );
     expect(result.sources).toEqual([]);
     expect(ctx.sources).toHaveLength(1);
     expect(result.summary).toContain("0 sourced map links");
   });
 
-  it("still returns newly discovered source IDs on a real new search", async () => {
+  it("returns new IDs for newly observed sources", async () => {
     const ctx = context();
     ctx.research.searchOnce = async () => ({
       status: "ok",

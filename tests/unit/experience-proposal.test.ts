@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { freshTask, sampleCatalogue } from "../../src/data/fixtures";
 import { culturalEvidenceId } from "../../src/core/cultural-evidence";
 import { saveExperienceProposal } from "../../src/core/experience-proposal";
+import type { Task } from "../../src/core/contracts";
 
 function groundedTask() {
   const task = freshTask("experience-proposal", "owner");
@@ -96,6 +97,74 @@ describe("compact general-purpose experience composition", () => {
     );
     expect(result.artifactIds).toContain("document:agent-run-proposal-doc-1");
     expect(task.work?.documents[0].status).toBe("proposed");
+  });
+
+  it("requires model-selected evidence for each named cultural seed", () => {
+    const { task } = groundedTask();
+    const second = {
+      ...task.catalogue[0],
+      id: "observed-second-artist",
+      providerId: "qloo-second",
+      cultural: {
+        context: {
+          ...task.catalogue[0].cultural.context,
+          queryId: "second-real-query",
+          seedIds: ["seed-2"],
+        },
+      },
+    };
+    task.catalogue.push(second);
+    task.evidence.push({
+      ...task.evidence[0],
+      id: culturalEvidenceId(second, "context", second.cultural.context),
+      reference: "qloo:second-real-query",
+    });
+    task.entities.push({
+      id: "second-seed",
+      original: "Second Artist",
+      name: "Second Artist",
+      type: "artist",
+      providerId: "seed-2",
+      status: "resolved",
+      metadata: "Unit-test Qloo seed",
+      choices: [],
+    });
+    task.agentRun = {
+      requirements: {
+        culturalDecision: true,
+        culturalReferences: ["Second Artist"],
+        deliverables: ["proposal"],
+      },
+    } as Task["agentRun"];
+
+    const result = saveExperienceProposal(
+      task,
+      {
+        title: "Evidence-grounded cultural evening",
+        decisions: [
+          {
+            domain: "music",
+            value: "Use the first observed artist",
+            rationale: "The first candidate was actually retrieved",
+            candidateId: "observed-artist",
+          },
+        ],
+        documents: [
+          {
+            title: "Draft",
+            content:
+              "An incomplete cultural proposal that must not claim to cover both separate seed references without evidence.",
+            fulfills: ["proposal"],
+          },
+        ],
+      },
+      "run-missing-seed",
+    );
+
+    expect(result.status).toBe("blocked");
+    expect(result.summary).toContain("observed-second-artist");
+    expect(task.work?.documents ?? []).toEqual([]);
+    expect(task.work?.decisions ?? []).toEqual([]);
   });
 
   it("blocks invented cultural selections without changing saved work", () => {

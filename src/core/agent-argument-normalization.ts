@@ -59,7 +59,6 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
         }
       }
 
-
       if (
         (key === "workActions" || key === "operations") &&
         Array.isArray(value)

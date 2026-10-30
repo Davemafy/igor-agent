@@ -88,3 +88,67 @@ describe("required cultural discovery dependencies", () => {
     }
   });
 });
+
+it("uses user-context entity types for mixed music and filmmaker references", async () => {
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("mixed-types", "owner");
+  task.mode = "qloo-live";
+  store.create(task);
+  const resolve = vi.fn(async (name: string, type?: string) => ({
+    status: "ok" as const,
+    evidenceIds: [],
+    retry: "never" as const,
+    requestCount: 1,
+    warnings: [],
+    data: {
+      id: `seed:${name}`,
+      original: name,
+      name,
+      type: type === "person" ? ("person" as const) : ("artist" as const),
+      providerId: name === "Radiohead" ? "mock-radiohead" : "mock-director",
+      status: "resolved" as const,
+      metadata: "Mock identity only",
+      choices: [],
+    },
+  }));
+
+  try {
+    await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Our community loves Radiohead and Wong Kar-wai films. Plan a music and film night.",
+      requirements: {
+        culturalDecision: true,
+        culturalReferences: ["Radiohead", "Wong Kar-wai"],
+        experienceDomains: ["music", "culture"],
+        deliverables: [],
+      },
+      cultural: {
+        resolve,
+        discover: vi.fn(async () => ({
+          status: "partial" as const,
+          evidenceIds: [],
+          retry: "never" as const,
+          requestCount: 0,
+          warnings: ["No matching Qloo candidates."],
+          data: { options: [], evidence: [] },
+        })),
+      },
+      research: { available: false, research: vi.fn() },
+      model: {
+        interpret: vi.fn(),
+        chooseAgentAction: async () => {
+          throw Error("Model unavailable");
+        },
+      },
+      trace: vi.fn(),
+    });
+
+    expect(resolve.mock.calls).toContainEqual(["Radiohead", "artist"]);
+    expect(resolve.mock.calls).toContainEqual(["Wong Kar-wai", "person"]);
+    expect(store.load(task.id, "owner").entities).toHaveLength(2);
+  } finally {
+    store.close();
+  }
+});

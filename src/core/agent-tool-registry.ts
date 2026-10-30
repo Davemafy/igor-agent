@@ -1,4 +1,5 @@
 import { applyWorkActions } from "./connected-work";
+import { ExperienceProposalArguments, saveExperienceProposal } from "./experience-proposal";
 import { WorkActionSchema } from "./work-contracts";
 import { critiqueExperience } from "./experience-critique";
 import {
@@ -676,6 +677,28 @@ export function createAgentToolRegistry(
           })),
           evidence: ctx.task.evidence.length,
         }).slice(0, 580),
+      }),
+    ),
+    tool(
+      "experience.propose",
+      "Produce typed connected experience decisions and editable documents from observed Qloo candidates using a compact proposal contract. Supply title, decisions [{domain,value,rationale,candidateId?,estimatedCost?}], and documents [{title,content,fulfills}]. Candidate IDs MUST be from current culturalCandidates. The server binds real current Qloo evidence, saves dependencies and critiques outcomes; unknown prices and availability are not confirmed.",
+      ExperienceProposalArguments,
+      "internal",
+      () =>
+        experienceRequired() &&
+        context.task.evidence.some(
+          (e) =>
+            e.kind === "cultural" &&
+            e.source === "provider-returned" &&
+            e.freshness === "current",
+        ),
+      async (args, ctx) => ({
+        ...saveExperienceProposal(
+          ctx.task,
+          ExperienceProposalArguments.parse(args),
+          ctx.runId,
+        ),
+        requests: 0,
       }),
     ),
     tool(

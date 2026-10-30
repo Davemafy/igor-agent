@@ -205,10 +205,7 @@ it("uses a third authorized model when the first two independently fail", async 
     }),
   };
   const third = { interpret: vi.fn(async () => reply) };
-  const model = new FallbackModel(
-    first,
-    new FallbackModel(second, third),
-  );
+  const model = new FallbackModel(first, new FallbackModel(second, third));
 
   expect(await model.interpret("Plan an experience")).toEqual(reply);
   expect(first.interpret).toHaveBeenCalledOnce();

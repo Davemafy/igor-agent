@@ -110,6 +110,40 @@ export async function interpretMessage(
     return { ...update, task, conversationOnly: true };
   }
 
+  // Agent-created work has server-owned artifact and evidence identities.
+  // A requested revision must re-enter that same execution boundary instead of
+  // falling through the legacy planner into a harmless-looking, unsaved reply.
+  // This guard only redirects the turn; tool selection, evidence checks,
+  // protected edits and external permissions remain enforced by the agent.
+  const agentWorkExists =
+    context.artifacts.some(
+      (artifact) =>
+        artifact.id.startsWith("agent-doc-") &&
+        artifact.freshness === "current",
+    ) ||
+    (context.work?.documents ?? []).some(
+      (document) =>
+        document.id.startsWith("agent-") &&
+        document.freshness === "current",
+    );
+  const requestedRevision =
+    /\b(?:revise|revision|rewrite|edit|update|refine|modify|replace|swap|change)\b/i.test(
+      input.text,
+    );
+  const externalWrite =
+    /\b(?:send|purchase|pay|book|publish|delete|approve|reject)\b/i.test(
+      input.text,
+    );
+
+  if (!formAnswer && agentWorkExists && requestedRevision && !externalWrite) {
+    trace(
+      "agent.revision.route",
+      "Preserved agent work requires evidence-aware continuation.",
+    );
+
+    return { ...update, task, researchQuery: input.text };
+  }
+
   try {
     // Every natural message gets a small, read-only route before the expensive
     // cultural/work decision protocol. The route can never commit an edit or

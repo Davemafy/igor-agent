@@ -132,6 +132,7 @@ export async function interpretMessage(
         // Do not replay auth, rate-limit, network or provider outage failures:
         // another request to the same backend would waste time and credits.
         const malformed =
+          error instanceof ModelToolProtocolError ||
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
           (error instanceof ProviderHttpError &&

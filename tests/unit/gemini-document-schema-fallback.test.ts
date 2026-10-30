@@ -30,7 +30,11 @@ describe("Gemini document function schema compatibility", () => {
 
       if (modes.length === 1) {
         return Response.json(
-          { error: { message: "request-schema unsupported additionalProperties" } },
+          {
+            error: {
+              message: "request-schema unsupported additionalProperties",
+            },
+          },
           { status: 400 },
         );
       }
@@ -61,7 +65,11 @@ describe("Gemini document function schema compatibility", () => {
         ],
       });
     });
-    const model = new GeminiModel("test-key", "gemini-3.1-flash-lite", transport);
+    const model = new GeminiModel(
+      "test-key",
+      "gemini-3.1-flash-lite",
+      transport,
+    );
 
     const result = await model.chooseAgentAction(
       "Save sourced work",
@@ -83,7 +91,11 @@ describe("Gemini document function schema compatibility", () => {
         { status: 400 },
       ),
     );
-    const model = new GeminiModel("bad-key", "gemini-3.1-flash-lite", transport);
+    const model = new GeminiModel(
+      "bad-key",
+      "gemini-3.1-flash-lite",
+      transport,
+    );
 
     await expect(
       model.chooseAgentAction(

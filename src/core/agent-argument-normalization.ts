@@ -4,6 +4,13 @@
  * the result. NEVER invent or substitute an evidence/source/candidate ID.
  */
 export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
+  // The independent critique reads only persisted task state. Its arguments
+  // are deliberately empty; discard model-invented context keys, never their
+  // values, to avoid wasting an agent step on a harmless no-op payload.
+  if (tool === "experience.critique" && raw && typeof raw === "object") {
+    return {};
+  }
+
   if (
     (tool !== "document.create" && tool !== "document.revise") ||
     !raw ||

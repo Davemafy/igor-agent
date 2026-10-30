@@ -130,6 +130,41 @@ export function verifyAgentOutcome(
     );
   }
 
+  // Source-dependent public research cannot be certified by a fluent
+  // document or a Qloo-only observation. Evidence must have been retrieved in
+  // THIS run, persisted, and cited by any new agent-authored document.
+  const needsPublicResearch =
+    !requirements?.culturalDecision &&
+    /\b(?:research|investigate|fact[ -]?check|source[ -]?backed|verify|market analysis)\b/i.test(
+      goal,
+    );
+
+  if (needsPublicResearch) {
+    const sourceEvidenceIds = run.sources
+      .map((source) => `${task.id}:agent:${run.id}:${source.id}`)
+      .filter((id) =>
+        task.evidence.some(
+          (evidence) =>
+            evidence.id === id &&
+            evidence.kind === "practical" &&
+            evidence.source === "provider-returned" &&
+            evidence.freshness === "current",
+        ),
+      );
+    const citedByDeliverable =
+      documents.length === 0 ||
+      documents.some((document) =>
+        document.evidenceIds.some((id) => sourceEvidenceIds.includes(id)),
+      );
+
+    check(
+      "Public research is grounded in retrieved, saved source evidence",
+      sourceEvidenceIds.length > 0 && citedByDeliverable,
+      documents.map((document) => document.id),
+      sourceEvidenceIds,
+    );
+  }
+
   for (const key of requirements?.deliverables ?? []) {
     const matching = documents.filter((a) => a.fulfills?.includes(key));
     check(

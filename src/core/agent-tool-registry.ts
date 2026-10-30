@@ -684,7 +684,7 @@ export function createAgentToolRegistry(
     ),
     tool(
       "experience.propose",
-      "Produce typed connected experience decisions and editable documents from observed Qloo candidates using a compact proposal contract. Supply title, decisions [{domain,value,rationale,candidateId?,estimatedCost?}], and documents [{title,content,fulfills}]. Candidate IDs MUST be from current culturalCandidates. The server binds real current Qloo evidence, saves dependencies and critiques outcomes; unknown prices and availability are not confirmed.",
+      "Produce typed connected experience decisions and editable documents from observed Qloo candidates using a compact proposal contract. Supply title, decisions [{domain,value,rationale,candidateId?,estimatedCost?}], and documents [{title,content,fulfills}]. For EACH named taste in agent requirements culturalReferences, include at least one distinct decision with candidateId from that exact Qloo seed; the server rejects missing references and returns eligible observed IDs. Candidate IDs MUST be from current culturalCandidates. The server binds real current Qloo evidence, saves dependencies and critiques outcomes; unknown prices and availability are not confirmed.",
       ExperienceProposalArguments,
       "internal",
       () =>

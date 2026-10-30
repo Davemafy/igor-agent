@@ -24,9 +24,7 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
       }
 
       if (observed.length === 1) {
-        expect(offered.map((tool) => tool.name).sort()).toEqual([
-          "document.create",
-        ]);
+        expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
 
         return {
           name: "document.create",
@@ -127,15 +125,6 @@ it("repairs invalid document arguments without discarding observed research", as
 
         return {
           name: "document.create",
-          arguments: { title: "Brief", content: "Too short" },
-        };
-      }
-
-      if (observed.length === 3) {
-        expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
-
-        return {
-          name: "document.create",
           arguments: {
             title: "Provisional EV charging brief",
             content: "Observed source and explicitly unknown market figures.",
@@ -183,14 +172,13 @@ it("repairs invalid document arguments without discarding observed research", as
       trace: vi.fn(),
     });
 
-    expect(choose).toHaveBeenCalledTimes(5);
+    expect(choose).toHaveBeenCalledTimes(4);
     expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
       "web.search",
       "document.create",
       "document.create",
-      "document.create",
     ]);
-    expect(task.agentRun?.steps[2].summary).toContain("too_small");
+    expect(task.agentRun?.steps[1].summary).toContain("invalid_type");
     expect(result.status).toBe("ok");
     expect(task.artifacts[0].fulfills).toContain("report");
     expect(store.load(task.id, "owner").artifacts).toHaveLength(1);

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { readResponseText } from "./response-body";
 import { XaiWebResearchProvider } from "./xai-web-research";
 import { GeminiWebResearchProvider } from "./gemini-web-research";
+import { WikipediaResearchProvider } from "./wikipedia-research";
 
 export const ResearchQuerySchema = z.string().trim().min(3).max(300);
 
@@ -499,10 +500,16 @@ export function runtimeResearchProvider(): ResearchProvider {
       ? process.env.XAI_API_KEY || process.env.GROK_API_KEY || ""
       : "";
 
-  return key
-    ? new XaiWebResearchProvider(
-        key,
-        process.env.XAI_SEARCH_MODEL || "grok-4.7",
-      )
-    : bright;
+  if (key) {
+    return new XaiWebResearchProvider(
+      key,
+      process.env.XAI_SEARCH_MODEL || "grok-4.7",
+    );
+  }
+
+  // Limited but real public research when no paid search entitlement exists.
+  // Returned Wikipedia pages are background leads, never current fact checks.
+  return process.env.IGOR_PUBLIC_BACKGROUND_SEARCH_DISABLED === "1"
+    ? bright
+    : new WikipediaResearchProvider();
 }

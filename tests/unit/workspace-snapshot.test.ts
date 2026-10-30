@@ -9,6 +9,7 @@ import { fixtureDate, freshTask } from "../../src/data/fixtures";
 
 const makePlace = (id: string, sample: boolean, latitude: number | null) => {
   const task = freshTask("fixture", "owner");
+
   return CandidateSchema.parse({
     ...task.catalogue[0],
     id,

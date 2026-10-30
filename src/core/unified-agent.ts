@@ -1,4 +1,5 @@
 import { recordArtifactChanges } from "./preserve-artifacts";
+import { preservePartialAgentWork } from "./agent-recovery-artifact";
 import { applyConversationActions } from "./conversation";
 import { invalidate } from "./revision";
 import { z } from "zod";
@@ -168,7 +169,7 @@ export async function runUnifiedAgent(
   const attempted = new Set<string>();
   let modelFinished = false;
   let decisionFailed = false;
-  let argumentRepairs = 0;
+  const argumentRepairs = new Map<string, number>();
   let finishRepairs = 0;
   task.agentRun.status = "reasoning";
 
@@ -473,7 +474,10 @@ export async function runUnifiedAgent(
         "Tool argument schema rejected the proposal; no tool executed.",
       );
 
-      if (argumentRepairs++ === 0) {
+      const repaired = argumentRepairs.get(selected.name) ?? 0;
+      argumentRepairs.set(selected.name, repaired + 1);
+
+      if (repaired === 0) {
         run.steps.push({
           id: randomUUID(),
           tool: selected.name,
@@ -616,6 +620,19 @@ export async function runUnifiedAgent(
   }
 
   const run = task.agentRun!;
+  // A failed model must not discard real observations. Save an explicitly
+  // incomplete, source-linked workpad; never mark requested deliverables done.
+  const recovered = preservePartialAgentWork(task, sources);
+  if (recovered) {
+    run.outputArtifactIds = [
+      ...new Set([...(run.outputArtifactIds ?? []), recovered]),
+    ].slice(-12);
+    trace(
+      "agent.recovery.saved",
+      "Preserved verified observations in an incomplete editable workpad.",
+    );
+  }
+
   run.status = "verifying";
   run.acceptance = verifyAgentOutcome(task, input.goal, modelFinished);
 

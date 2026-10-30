@@ -353,6 +353,9 @@ export async function runUnifiedAgent(
     const savePlainDocument =
       saveBeforeLimit &&
       (failedComplexComposition || index === maxSteps - 1);
+    const savingTools = savePlainDocument
+      ? ["document.create"]
+      : ["document.create", "experience.compose"];
 
     const available = tools.filter(
       (t) =>
@@ -363,10 +366,7 @@ export async function runUnifiedAgent(
           waitingForCulture &&
           ["document.create", "experience.compose"].includes(t.name)
         ) &&
-        (!saveBeforeLimit ||
-          (savePlainDocument
-            ? t.name === "document.create"
-            : ["document.create", "experience.compose"].includes(t.name))),
+        (!saveBeforeLimit || savingTools.includes(t.name)),
     );
     let selection: Awaited<
       ReturnType<NonNullable<ModelProvider["chooseAgentAction"]>>

@@ -1,5 +1,8 @@
 import { applyWorkActions } from "./connected-work";
-import { ExperienceProposalArguments, saveExperienceProposal } from "./experience-proposal";
+import {
+  ExperienceProposalArguments,
+  saveExperienceProposal,
+} from "./experience-proposal";
 import { WorkActionSchema } from "./work-contracts";
 import { critiqueExperience } from "./experience-critique";
 import {

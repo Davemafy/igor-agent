@@ -111,7 +111,7 @@ const documentArguments = z.object({
   content: z.preprocess(
     (value) =>
       Array.isArray(value) && value.every((part) => typeof part === "string")
-        ? value.join("\\n\\n")
+        ? value.join("\n\n")
         : value,
     z.string().trim().min(30).transform((content) => content.slice(0, 10000)),
   ),

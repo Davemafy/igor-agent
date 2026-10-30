@@ -108,7 +108,9 @@ export function saveExperienceProposal(
           continue;
         }
 
-        for (const [scope, signal] of Object.entries(candidate.cultural ?? {})) {
+        for (const [scope, signal] of Object.entries(
+          candidate.cultural ?? {},
+        )) {
           if (!signal.seedIds.includes(seedId)) {
             continue;
           }

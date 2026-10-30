@@ -101,13 +101,19 @@ describe("compact general-purpose experience composition", () => {
 
   it("requires model-selected evidence for each named cultural seed", () => {
     const { task } = groundedTask();
+    const existingSignal = task.catalogue[0].cultural?.context;
+
+    if (!existingSignal) {
+      throw new Error("Expected a seeded cultural fixture");
+    }
+
     const second = {
       ...task.catalogue[0],
       id: "observed-second-artist",
       providerId: "qloo-second",
       cultural: {
         context: {
-          ...task.catalogue[0].cultural.context,
+          ...existingSignal,
           queryId: "second-real-query",
           seedIds: ["seed-2"],
         },

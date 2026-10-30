@@ -345,6 +345,27 @@ export function createAgentToolRegistry(
       async (args, ctx) => {
         const { name, type } = resolveArguments.parse(args);
 
+        // This tool resolves user-provided taste anchors, not arbitrary strings
+        // invented by the model (including tool identifiers like qloo.resolve_entity).
+        const supplied = [
+          ctx.task.agentRun?.goal ?? "",
+          ...ctx.task.messages
+            .filter((message) => message.role === "user")
+            .map((message) => message.text),
+        ].join(" ").toLocaleLowerCase();
+        const previouslyKnown = ctx.task.entities.some(
+          (entity) => entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+        );
+
+        if (!supplied.includes(name.trim().toLocaleLowerCase()) && !previouslyKnown) {
+          return {
+            status: "blocked",
+            requests: 0,
+            summary:
+              "Resolve a specific cultural name already supplied in the conversation. No external Qloo request was made.",
+          };
+        }
+
         if (!ctx.cultural) {
           return {
             status: "blocked",

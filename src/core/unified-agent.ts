@@ -623,6 +623,7 @@ export async function runUnifiedAgent(
   // A failed model must not discard real observations. Save an explicitly
   // incomplete, source-linked workpad; never mark requested deliverables done.
   const recovered = preservePartialAgentWork(task, sources);
+
   if (recovered) {
     run.outputArtifactIds = [
       ...new Set([...(run.outputArtifactIds ?? []), recovered]),

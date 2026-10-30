@@ -92,3 +92,69 @@ it("ignores model-invented fields for state-only critique, not for writes", () =
     ),
   ).toThrow();
 });
+
+it("accepts only exact citations from the current observed source set", async () => {
+  const source = {
+    id: "web-1",
+    title: "Official charging report",
+    url: "https://example.org/official",
+    snippet: "Observed public report",
+    retrievedAt: "2026-10-30T00:00:00.000Z",
+  };
+
+  for (const reference of [
+    "web-1",
+    source.url,
+    "citation-task:agent:run-citation:web-1",
+  ]) {
+    const task = freshTask("citation-task", "owner");
+    const ctx = {
+      task,
+      runId: "run-citation",
+      sources: [source],
+      research: { available: false, research: vi.fn() },
+    };
+    const definition = createAgentToolRegistry(ctx).find(
+      (tool) => tool.name === "document.create",
+    );
+    const result = await definition?.execute(
+      {
+        title: "Grounded EV charging memo",
+        content:
+          "An observed charging source exists. Current market figures still require additional verification.",
+        sourceIds: [reference],
+        fulfills: ["memo"],
+      },
+      ctx,
+    );
+
+    expect(result?.status).toBe("ok");
+    expect(task.artifacts[0].evidenceIds).toEqual([
+      "citation-task:agent:run-citation:web-1",
+    ]);
+  }
+
+  const task = freshTask("citation-task", "owner");
+  const ctx = {
+    task,
+    runId: "run-citation",
+    sources: [source],
+    research: { available: false, research: vi.fn() },
+  };
+  const definition = createAgentToolRegistry(ctx).find(
+    (tool) => tool.name === "document.create",
+  );
+  const rejected = await definition?.execute(
+    {
+      title: "Unsupported claim",
+      content:
+        "This statement incorrectly attempts to cite a source that has never been observed.",
+      sourceIds: ["web-999"],
+    },
+    ctx,
+  );
+
+  expect(rejected?.status).toBe("blocked");
+  expect(rejected?.summary).toContain("web-1");
+  expect(task.artifacts).toEqual([]);
+});

@@ -115,7 +115,17 @@ export function runtimeModelProvider(mode: Task["mode"]) {
   }
 
   if (configured.length >= 2) {
-    return new FallbackModel(configured[0].model, configured[1].model);
+    // Use up to three explicitly configured providers, never a fixture.
+    // Nested FallbackModel instances retain their healthy selection for
+    // the remainder of the turn without replaying external tool actions.
+    const choices = configured.slice(0, 3).map((item) => item.model);
+    let fallback = choices[choices.length - 1];
+
+    for (let i = choices.length - 2; i >= 0; i--) {
+      fallback = new FallbackModel(choices[i], fallback);
+    }
+
+    return fallback;
   }
 
   if (configured.length === 1) {

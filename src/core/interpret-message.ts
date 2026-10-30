@@ -115,17 +115,15 @@ export async function interpretMessage(
   // falling through the legacy planner into a harmless-looking, unsaved reply.
   // This guard only redirects the turn; tool selection, evidence checks,
   // protected edits and external permissions remain enforced by the agent.
-  const agentWorkExists =
-    context.artifacts.some(
-      (artifact) =>
-        artifact.id.startsWith("agent-doc-") &&
-        artifact.freshness === "current",
-    ) ||
-    (context.work?.documents ?? []).some(
-      (document) =>
-        document.id.startsWith("agent-") &&
-        document.freshness === "current",
-    );
+  const hasAgentArtifact = context.artifacts.some(
+    (artifact) =>
+      artifact.id.startsWith("agent-doc-") && artifact.freshness === "current",
+  );
+  const hasAgentDocument = (context.work?.documents ?? []).some(
+    (document) =>
+      document.id.startsWith("agent-") && document.freshness === "current",
+  );
+  const agentWorkExists = hasAgentArtifact || hasAgentDocument;
   const requestedRevision =
     /\b(?:revise|revision|rewrite|edit|update|refine|modify|replace|swap|change)\b/i.test(
       input.text,

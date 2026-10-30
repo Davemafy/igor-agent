@@ -90,3 +90,68 @@ it("research tasks require an observed public source before document creation", 
     store.close();
   }
 });
+
+it("does not retry indefinitely when a public research provider fails", async () => {
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("research-unavailable", "owner");
+  store.create(task);
+  const search = vi.fn(async () => ({
+    status: "error" as const,
+    requests: 1,
+    sources: [],
+    warning: "Research source unavailable",
+  }));
+  const choose = vi.fn(async (
+    _goal: string,
+    tools: { name: string }[],
+    observations: { tool: string }[],
+  ) => {
+    const canSearch = tools.some((tool) => tool.name === "web.search");
+
+    if (observations.length < 2) {
+      expect(canSearch).toBe(true);
+
+      return { name: "web.search", arguments: { query: "charging market" } };
+    }
+
+    expect(canSearch).toBe(false);
+
+    return {
+      name: "document.create",
+      arguments: {
+        title: "Unverified market notes",
+        content:
+          "The live research provider was unavailable. These notes contain no sourced market assertions. Research must continue later.",
+        fulfills: ["report"],
+      },
+    };
+  });
+
+  try {
+    await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Research the charging market and save a report.",
+      model: {
+        interpret: vi.fn(),
+        interpretAgentRequirements: async () => ({
+          culturalDecision: false,
+          culturalReferences: [],
+          deliverables: ["report"],
+        }),
+        chooseAgentAction: choose,
+      },
+      research: { available: true, research: vi.fn(), searchOnce: search },
+      trace: vi.fn(),
+    });
+
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(task.agentRun?.acceptance?.status).not.toBe("satisfied");
+    expect(store.load(task.id, "owner").agentRun?.status).toBe(
+      "partially_completed",
+    );
+  } finally {
+    store.close();
+  }
+});

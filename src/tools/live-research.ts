@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 import { z } from "zod";
 import { readResponseText } from "./response-body";
 import { XaiWebResearchProvider } from "./xai-web-research";
+import { GeminiWebResearchProvider } from "./gemini-web-research";
 
 export const ResearchQuerySchema = z.string().trim().min(3).max(300);
 
@@ -475,6 +476,20 @@ export function runtimeResearchProvider(): ResearchProvider {
 
   if (bright.available) {
     return bright;
+  }
+
+  // Google Search grounding uses an independently verified entitlement.
+  // Do not equate access to Gemini function calling with search access.
+  const geminiKey =
+    process.env.IGOR_GEMINI_WEB_SEARCH_ENABLED === "1"
+      ? process.env.GEMINI_API_KEY || ""
+      : "";
+
+  if (geminiKey) {
+    return new GeminiWebResearchProvider(
+      geminiKey,
+      process.env.GEMINI_SEARCH_MODEL || "gemini-2.5-flash",
+    );
   }
 
   // Only advertise xAI search after its server-side web_search entitlement

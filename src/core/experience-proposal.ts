@@ -203,15 +203,9 @@ export function saveExperienceProposal(
   const actions: WorkAction[] = previousGoal
     ? []
     : [{ kind: "goal", id: goalId, title: parsed.title }];
-  const userText =
-    task.messages.filter((message) => message.role === "user").at(-1)?.text ??
-    task.agentRun?.goal ??
-    "";
-  const budget = task.agentRun?.requirements?.budget;
-
   if (
     budget &&
-    userText.includes(budget.sourceText) &&
+    latestRequest.includes(budget.sourceText) &&
     task.work?.budget?.amount !== budget.amount
   ) {
     actions.push({ kind: "budget", amount: budget.amount });
@@ -264,7 +258,7 @@ export function saveExperienceProposal(
     artifactIds.push(`document:${id}`);
   }
 
-  const summary = applyWorkActions(task, actions, userText);
+  const summary = applyWorkActions(task, actions, latestRequest);
   task.work!.critique = critiqueExperience(task);
 
   return {

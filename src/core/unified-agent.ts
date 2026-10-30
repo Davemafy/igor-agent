@@ -446,9 +446,20 @@ export async function runUnifiedAgent(
               const personCue =
                 /^\s+(?:films?|movies?)\b/i.test(after) ||
                 /\bfilms?\s+(?:by|from)\s+$/i.test(before);
+              const knownArtistReference = task.entities.some(
+                (saved) =>
+                  saved.status === "resolved" &&
+                  saved.type === "artist" &&
+                  references.some(
+                    (reference) =>
+                      reference.toLocaleLowerCase() ===
+                      saved.name.toLocaleLowerCase(),
+                  ),
+              );
               const musicContext =
-                run.requirements?.experienceDomains?.includes("music") &&
-                !personCue;
+                !personCue &&
+                (run.requirements?.experienceDomains?.includes("music") ||
+                  knownArtistReference);
               const type = personCue
                 ? "person"
                 : musicContext

@@ -284,11 +284,21 @@ it("falls back on a malformed SDK function decision without replaying tools", as
     interpret: vi.fn(async () => reply),
     chooseAgentAction: vi.fn(async () => ({
       name: "document.revise",
-      arguments: { artifactId: "saved-id", title: "Revised", content: "Evidence retained." },
+      arguments: {
+        artifactId: "saved-id",
+        title: "Revised",
+        content: "Evidence retained.",
+      },
     })),
   };
   const model = new FallbackModel(primary, backup);
-  const choices = [{ name: "document.revise", description: "Revise a saved artifact", permission: "internal" as const }];
+  const choices = [
+    {
+      name: "document.revise",
+      description: "Revise a saved artifact",
+      permission: "internal" as const,
+    },
+  ];
 
   const decision = await model.chooseAgentAction(
     "Revise the saved memo",
@@ -301,7 +311,9 @@ it("falls back on a malformed SDK function decision without replaying tools", as
   expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
   expect(backup.chooseAgentAction).toHaveBeenCalledOnce();
   expect(backup.interpret).not.toHaveBeenCalled();
-  expect(await model.chooseAgentAction("Continue", choices, [], task)).toEqual(decision);
+  expect(await model.chooseAgentAction("Continue", choices, [], task)).toEqual(
+    decision,
+  );
   expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
   expect(backup.chooseAgentAction).toHaveBeenCalledTimes(2);
 });

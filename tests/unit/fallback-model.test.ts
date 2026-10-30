@@ -1,5 +1,7 @@
 import { expect, it, vi } from "vitest";
 import { FallbackModel } from "../../src/tools/fallback-model";
+import { runtimeModelProvider } from "../../src/tools/runtime";
+import { ResponsiveGeminiModel } from "../../src/tools/responsive-gemini";
 import { ProviderHttpError } from "../../src/core/interpretation-failure";
 import { LiveDecisionSchema } from "../../src/core/contracts";
 import { freshTask } from "../../src/data/fixtures";
@@ -215,4 +217,60 @@ it("uses a third authorized model when the first two independently fail", async 
   expect(first.interpret).toHaveBeenCalledOnce();
   expect(second.interpret).toHaveBeenCalledOnce();
   expect(third.interpret).toHaveBeenCalledTimes(2);
+});
+
+it("prefers the explicitly enabled alternate Gemini model before unverified Grok", () => {
+  const keys = [
+    "GEMINI_API_KEY",
+    "GEMINI_MODEL",
+    "GEMINI_FALLBACK_MODEL",
+    "IGOR_MODEL_PROVIDER",
+    "GROK_API_KEY",
+    "XAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "LLM_API_KEY",
+    "LLM_MODEL",
+  ];
+  const previous = new Map(keys.map((key) => [key, process.env[key]]));
+
+  try {
+    process.env.GEMINI_API_KEY = "unit-only-key";
+    process.env.GEMINI_MODEL = "gemini-3.1-flash-lite";
+    process.env.GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite";
+    process.env.IGOR_MODEL_PROVIDER = "gemini";
+    process.env.GROK_API_KEY = "unit-only-grok-key";
+    delete process.env.XAI_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.LLM_API_KEY;
+    delete process.env.LLM_MODEL;
+
+    const model = runtimeModelProvider(
+      freshTask("alternate-routing", "owner").mode,
+    );
+    expect(model).toBeInstanceOf(FallbackModel);
+    const first = model as unknown as {
+      primary: ResponsiveGeminiModel;
+      backup: FallbackModel;
+    };
+    expect(first.primary).toBeInstanceOf(ResponsiveGeminiModel);
+    expect(first.backup).toBeInstanceOf(FallbackModel);
+    const second = first.backup as unknown as {
+      primary: ResponsiveGeminiModel;
+    };
+    expect(second.primary).toBeInstanceOf(ResponsiveGeminiModel);
+    expect(
+      (first.primary as unknown as { model: string }).model,
+    ).toBe("gemini-3.1-flash-lite");
+    expect(
+      (second.primary as unknown as { model: string }).model,
+    ).toBe("gemini-3.5-flash-lite");
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
 });

@@ -635,12 +635,25 @@ export async function runUnifiedAgent(
         normalizeAgentArguments(selected.name, selection.arguments),
       );
     } catch (error) {
-      // Only Zod issue codes are reported, never the provider's raw content.
+      // Report only declared schema field names and issue codes, never
+      // untrusted model values or arbitrary object keys.
+      const safeFields = new Set([
+        "title", "content", "sourceIds", "evidenceIds", "candidateIds",
+        "fulfills", "actions", "artifactId", "kind", "id", "dependencies",
+        "domain", "rationale", "estimatedCost",
+      ]);
       const schemaIssues =
         error instanceof z.ZodError
           ? error.issues
               .slice(0, 6)
-              .map((issue) => issue.code)
+              .map((issue) => {
+                const fields = issue.path.filter(
+                  (part) => typeof part === "string" && safeFields.has(part),
+                );
+                const path = fields.join(".");
+
+                return `${path || "arguments"}:${issue.code}`;
+              })
               .join(", ")
           : "unclassified";
 

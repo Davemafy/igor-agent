@@ -97,12 +97,22 @@ export class XaiWebResearchProvider implements ResearchProvider {
       }
 
       const seen = new Set<string>();
-      const urls = (json.citations ?? []).flatMap((rawUrl) => {
+      const urls: string[] = [];
+
+      for (const rawUrl of json.citations ?? []) {
         const url = publicResearchUrl(rawUrl);
-        if (!url || seen.has(url)) return [];
+
+        if (!url || seen.has(url)) {
+          continue;
+        }
+
         seen.add(url);
-        return [url];
-      }).slice(0, 8);
+        urls.push(url);
+
+        if (urls.length === 8) {
+          break;
+        }
+      }
 
       return {
         status: urls.length > 0 ? "partial" : "blocked",

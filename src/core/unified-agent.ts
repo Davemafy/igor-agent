@@ -379,7 +379,7 @@ export async function runUnifiedAgent(
     // treat a hypothetical memo as completed external investigation.
     const researchFirst =
       !run.requirements?.culturalDecision &&
-      /\\b(?:research|investigate|fact[ -]?check|source[ -]?backed|verify)\\b/i.test(
+      /\b(?:research|investigate|fact[ -]?check|source[ -]?backed|verify)\b/i.test(
         input.goal,
       ) &&
       input.research.available !== false &&

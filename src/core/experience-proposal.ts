@@ -88,10 +88,9 @@ export function saveExperienceProposal(
   // Qloo seed informs at least one model-chosen, evidence-backed decision.
   // Do not manufacture decisions or weaken acceptance; instead return the
   // exact eligible candidate IDs so the model can repair its proposal.
-  const requiredReferences =
-    task.agentRun?.requirements?.culturalDecision
-      ? (task.agentRun.requirements.culturalReferences ?? [])
-      : [];
+  const requiredReferences = task.agentRun?.requirements?.culturalDecision
+    ? (task.agentRun.requirements.culturalReferences ?? [])
+    : [];
   const missingReferences: string[] = [];
 
   for (const name of requiredReferences) {
@@ -101,31 +100,41 @@ export function saveExperienceProposal(
         entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
     );
     const seedId = seed?.providerId;
-    const eligible = task.catalogue
-      .filter(
-        (candidate) =>
-          !candidate.sample &&
-          Object.entries(candidate.cultural ?? {}).some(([scope, signal]) => {
-            const citedEvidenceId = culturalEvidenceId(candidate, scope, signal);
+    const eligible: string[] = [];
 
-            return (
-              typeof seedId === "string" &&
-              signal.seedIds.includes(seedId) &&
-              task.evidence.some(
-                (evidence) =>
-                  evidence.id === citedEvidenceId &&
-                  evidence.kind === "cultural" &&
-                  evidence.source === "provider-returned" &&
-                  evidence.freshness === "current",
-              )
-            );
-          }),
-      )
-      .map((candidate) => candidate.id);
+    if (seedId) {
+      for (const candidate of task.catalogue) {
+        if (candidate.sample) {
+          continue;
+        }
 
-    if (!parsed.decisions.some((decision) =>
+        for (const [scope, signal] of Object.entries(candidate.cultural ?? {})) {
+          if (!signal.seedIds.includes(seedId)) {
+            continue;
+          }
+
+          const id = culturalEvidenceId(candidate, scope, signal);
+          const grounded = task.evidence.some(
+            (evidence) =>
+              evidence.id === id &&
+              evidence.kind === "cultural" &&
+              evidence.source === "provider-returned" &&
+              evidence.freshness === "current",
+          );
+
+          if (grounded) {
+            eligible.push(candidate.id);
+            break;
+          }
+        }
+      }
+    }
+
+    const covered = parsed.decisions.some((decision) =>
       eligible.includes(decision.candidateId ?? ""),
-    )) {
+    );
+
+    if (!covered) {
       missingReferences.push(
         `${name}: ${eligible.slice(0, 4).join(", ") || "no observed candidates"}`,
       );

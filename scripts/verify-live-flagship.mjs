@@ -56,7 +56,11 @@ try {
     const done = events.findLast((e) => e.type === "done");
 
     if (!done) {
-      throw Error("turn_incomplete");
+      const problem = events.findLast((event) => event.type === "error");
+      const terminalCode = String(problem?.code ?? "stream-ended")
+        .replace(/[^a-z-]/g, "")
+        .slice(0, 60);
+      throw Error(`turn_${terminalCode}_after_${events.length}_events`);
     }
 
     task = done.task;
@@ -75,6 +79,9 @@ try {
     status: t.agentRun?.status ?? t.status,
     acceptance: t.agentRun?.acceptance?.status ?? null,
     usage: t.agentRun?.usage ?? null,
+    warnings: (t.agentRun?.warnings ?? []).slice(-6).map((value) =>
+      value.slice(0, 240),
+    ),
     resolvedEntities: t.entities
       .filter((e) => e.status === "resolved")
       .map(({ name, type, providerId }) => ({ name, type, providerId })),

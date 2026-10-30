@@ -638,9 +638,20 @@ export async function runUnifiedAgent(
       // Report only declared schema field names and issue codes, never
       // untrusted model values or arbitrary object keys.
       const safeFields = new Set([
-        "title", "content", "sourceIds", "evidenceIds", "candidateIds",
-        "fulfills", "actions", "artifactId", "kind", "id", "dependencies",
-        "domain", "rationale", "estimatedCost",
+        "title",
+        "content",
+        "sourceIds",
+        "evidenceIds",
+        "candidateIds",
+        "fulfills",
+        "actions",
+        "artifactId",
+        "kind",
+        "id",
+        "dependencies",
+        "domain",
+        "rationale",
+        "estimatedCost",
       ]);
       const schemaIssues =
         error instanceof z.ZodError

@@ -152,3 +152,76 @@ it("uses user-context entity types for mixed music and filmmaker references", as
     store.close();
   }
 });
+
+it("retries a transient failed Qloo read exactly once without repeating writes", async () => {
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("transient-qloo", "owner");
+  task.mode = "qloo-live";
+  store.create(task);
+  let attempts = 0;
+  const resolve = vi.fn(async (name: string) => {
+    attempts++;
+
+    return {
+      status: attempts === 1 ? ("partial" as const) : ("ok" as const),
+      evidenceIds: [],
+      retry: "never" as const,
+      requestCount: 1,
+      warnings:
+        attempts === 1 ? ["Qloo request failed or timed out"] : [],
+      data: {
+        id: `seed:${name}`,
+        original: name,
+        name,
+        type: "artist" as const,
+        providerId: attempts === 1 ? undefined : "qloo-provider-artist",
+        status: attempts === 1 ? ("unresolved" as const) : ("resolved" as const),
+        metadata: "Tested read-only provider",
+        choices: [],
+      },
+    };
+  });
+  const discover = vi.fn(async () => ({
+    status: "ok" as const,
+    evidenceIds: [],
+    retry: "never" as const,
+    requestCount: 1,
+    warnings: [],
+    data: { options: [], evidence: [] },
+  }));
+
+  try {
+    await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Plan a music evening for fans of Sade.",
+      requirements: {
+        culturalDecision: true,
+        culturalReferences: ["Sade"],
+        deliverables: [],
+      },
+      cultural: { resolve, discover },
+      research: { available: false, research: vi.fn() },
+      model: {
+        interpret: vi.fn(),
+        chooseAgentAction: async () => {
+          throw Error("Model unavailable after Qloo reads");
+        },
+      },
+      trace: vi.fn(),
+    });
+
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(discover).toHaveBeenCalledTimes(1);
+    expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
+      "qloo.resolve_entity",
+      "qloo.resolve_entity",
+      "qloo.discover",
+    ]);
+    expect(task.agentRun?.requests).toBe(3);
+    expect(store.load(task.id, "owner").entities).toHaveLength(1);
+  } finally {
+    store.close();
+  }
+});

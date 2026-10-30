@@ -167,15 +167,15 @@ it("retries a transient failed Qloo read exactly once without repeating writes",
       evidenceIds: [],
       retry: "never" as const,
       requestCount: 1,
-      warnings:
-        attempts === 1 ? ["Qloo request failed or timed out"] : [],
+      warnings: attempts === 1 ? ["Qloo request failed or timed out"] : [],
       data: {
         id: `seed:${name}`,
         original: name,
         name,
         type: "artist" as const,
         providerId: attempts === 1 ? null : "qloo-provider-artist",
-        status: attempts === 1 ? ("unresolved" as const) : ("resolved" as const),
+        status:
+          attempts === 1 ? ("unresolved" as const) : ("resolved" as const),
         metadata: "Tested read-only provider",
         choices: [],
       },

@@ -94,9 +94,7 @@ describe("compact general-purpose experience composition", () => {
     expect(task.work?.documents[0].dependencies).toContain(
       "decision:agent-run-proposal-d1",
     );
-    expect(result.artifactIds).toContain(
-      "document:agent-run-proposal-doc-1",
-    );
+    expect(result.artifactIds).toContain("document:agent-run-proposal-doc-1");
     expect(task.work?.documents[0].status).toBe("proposed");
   });
 

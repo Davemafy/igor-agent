@@ -177,6 +177,7 @@ export async function runUnifiedAgent(
     { status: string; summary: string }
   >();
   const retriedReadOnly = new Set<string>();
+
   const retryableQlooObservation = (fingerprint: string, name: string) => {
     const prior = outcomesByFingerprint.get(fingerprint);
 
@@ -188,6 +189,7 @@ export async function runUnifiedAgent(
       !retriedReadOnly.has(fingerprint)
     );
   };
+
   let modelFinished = false;
   let decisionFailed = false;
   const argumentRepairs = new Map<string, number>();

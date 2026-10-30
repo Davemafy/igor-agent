@@ -782,15 +782,35 @@ export function createAgentToolRegistry(
           };
         }
 
-        const observed = new Set(ctx.sources.map((s) => s.id));
+        // Models may echo a server-owned evidence ID or a retrieved URL
+        // instead of the short web source ID. Accept only exact references
+        // to sources observed in THIS run; never resolve guessed citations.
+        const sourceReferences = sourceIds.map((reference) =>
+          ctx.sources.find(
+            (source) =>
+              reference === source.id ||
+              reference === source.url ||
+              reference ===
+                `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
+          )?.id,
+        );
 
-        if (sourceIds.some((id) => !observed.has(id))) {
+        if (sourceReferences.some((id) => !id)) {
+          const allowed = ctx.sources
+            .map((source) => source.id)
+            .slice(-12)
+            .join(", ");
+
           return {
             status: "blocked",
             requests: 0,
-            summary: "Document cited an unobserved source.",
+            summary: `Document cited an unobserved source. Valid sourceIds: ${allowed || "none"}. Use exact observed IDs, not titles or invented numbers.`,
           };
         }
+
+        const groundedSourceIds = [
+          ...new Set(sourceReferences.filter((id): id is string => !!id)),
+        ];
 
         if (
           culturalIds.some(
@@ -809,7 +829,9 @@ export function createAgentToolRegistry(
 
         const evidenceIds = [
           ...culturalIds,
-          ...sourceIds.map((id) => `${ctx.task.id}:agent:${ctx.runId}:${id}`),
+          ...groundedSourceIds.map(
+            (id) => `${ctx.task.id}:agent:${ctx.runId}:${id}`,
+          ),
         ];
         const count = ctx.task.artifacts.filter((artifact) =>
           artifact.id.startsWith(`agent-doc-${ctx.runId}-`),
@@ -843,7 +865,7 @@ export function createAgentToolRegistry(
         return {
           status: "ok",
           requests: 0,
-          summary: `Saved editable document ${title} with ${sourceIds.length} observed source IDs.`,
+          summary: `Saved editable document ${title} with ${groundedSourceIds.length} observed source IDs.`,
           artifactIds: [`agent-doc-${ctx.runId}-${count + 1}`],
         };
       },

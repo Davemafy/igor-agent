@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ModelToolProtocolError } from "./model-tool-protocol-error";
 import {
   ModelOutputFormatError,
   ProviderHttpError,
@@ -15,6 +16,7 @@ import type {
 function recoverableModelError(error: unknown) {
   return (
     error instanceof ModelOutputFormatError ||
+    error instanceof ModelToolProtocolError ||
     error instanceof z.ZodError ||
     error instanceof SyntaxError ||
     (error instanceof ProviderHttpError &&

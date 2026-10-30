@@ -415,12 +415,9 @@ export async function runUnifiedAgent(
           !artifact.locked &&
           !artifact.edited,
       ) &&
-      tools.some(
-        (tool) => tool.name === "document.revise" && tool.available,
-      );
+      tools.some((tool) => tool.name === "document.revise" && tool.available);
     const rejectedProposals = run.steps.filter(
-      (step) =>
-        step.tool === "experience.propose" && step.status === "blocked",
+      (step) => step.tool === "experience.propose" && step.status === "blocked",
     ).length;
     const mustPropose =
       canProposeExperience &&

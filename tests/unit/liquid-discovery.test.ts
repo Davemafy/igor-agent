@@ -669,7 +669,9 @@ it("executes revisions of saved agent-created documents instead of swallowing th
         throw new Error("The legacy interpretation path must not execute.");
       },
       routeConversation: async () => {
-        throw new Error("A read-only route cannot swallow this saved revision.");
+        throw new Error(
+          "A read-only route cannot swallow this saved revision.",
+        );
       },
     },
     new ExecutionBudget(),

@@ -74,10 +74,14 @@ describe("live Qloo discovery identity handoff", () => {
       "65726539-EA36-4283-914C-6EC71001F1F1",
     ]);
     expect(discover).toHaveBeenCalledOnce();
-    expect(discover.mock.calls[0][0].anchor).toMatchObject({
-      name: "Sade",
-      providerId: "65726539-EA36-4283-914C-6EC71001F1F1",
-    });
+    expect(discover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        anchor: expect.objectContaining({
+          name: "Sade",
+          providerId: "65726539-EA36-4283-914C-6EC71001F1F1",
+        }),
+      }),
+    );
   });
 
   it("rejects unobserved identity without issuing a Qloo request", async () => {

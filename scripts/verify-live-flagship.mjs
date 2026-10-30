@@ -79,9 +79,9 @@ try {
     status: t.agentRun?.status ?? t.status,
     acceptance: t.agentRun?.acceptance?.status ?? null,
     usage: t.agentRun?.usage ?? null,
-    warnings: (t.agentRun?.warnings ?? []).slice(-6).map((value) =>
-      value.slice(0, 240),
-    ),
+    warnings: (t.agentRun?.warnings ?? [])
+      .slice(-6)
+      .map((value) => value.slice(0, 240)),
     resolvedEntities: t.entities
       .filter((e) => e.status === "resolved")
       .map(({ name, type, providerId }) => ({ name, type, providerId })),

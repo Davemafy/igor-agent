@@ -901,26 +901,61 @@ export class ToolCallingModel implements ModelProvider {
       },
     ];
 
-    return this.callWithSchemaRepair(
-      input,
-      decisionTools,
-      "agent.decision",
-      (call) => {
-        if (call.call.name !== "choose_agent_action") {
-          throw new Error("Unauthorized general-agent decision.");
-        }
+    const parseDecision = (
+      call: Awaited<ReturnType<ToolCallingModel["call"]>>,
+    ) => {
+      if (call.call.name !== "choose_agent_action") {
+        throw new Error("Unauthorized general-agent decision.");
+      }
 
-        const proposal = z
-          .object({
-            name: z.enum(allowed as [string, ...string[]]),
-            arguments: z.record(z.string(), z.unknown()),
-          })
-          .parse(JSON.parse(call.call.arguments ?? "{}"));
+      const proposal = z
+        .object({
+          name: z.enum(allowed as [string, ...string[]]),
+          arguments: z.record(z.string(), z.unknown()),
+        })
+        .parse(JSON.parse(call.call.arguments ?? "{}"));
 
-        return { name: proposal.name, arguments: proposal.arguments };
-      },
-      Math.max(1000, this.timeoutMs - 5000),
-    );
+      return { name: proposal.name, arguments: proposal.arguments };
+    };
+    const deadline = Math.max(1000, this.timeoutMs - 5000);
+
+    try {
+      return await this.callWithSchemaRepair(
+        input,
+        decisionTools,
+        "agent.decision",
+        parseDecision,
+        deadline,
+      );
+    } catch (error) {
+      if (
+        !soleTool ||
+        argumentParameters.additionalProperties !== false ||
+        !(error instanceof ProviderHttpError) ||
+        error.status !== 400 ||
+        error.category !== "request-schema"
+      ) {
+        throw error;
+      }
+
+      // Provider rejected the generated document JSON schema, not a tool
+      // observation. Retry this READ-ONLY model decision once with a portable
+      // argument envelope. The selected tool's original Zod contract still
+      // validates all arguments before anything executes.
+      const portableTools = structuredClone(decisionTools);
+      portableTools[0].parameters.properties.arguments = {
+        type: "object",
+        additionalProperties: true,
+      };
+
+      return this.callWithSchemaRepair(
+        input,
+        portableTools,
+        "agent.decision",
+        parseDecision,
+        deadline,
+      );
+    }
   }
 
   async chooseResearchStep(

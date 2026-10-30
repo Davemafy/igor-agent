@@ -843,6 +843,7 @@ export class ToolCallingModel implements ModelProvider {
     ) {
       const exactSchema = structuredClone(soleTool.inputSchema);
       delete exactSchema.$schema;
+      exactSchema.additionalProperties = false;
       const properties = exactSchema.properties;
 
       if (
@@ -861,7 +862,9 @@ export class ToolCallingModel implements ModelProvider {
             .filter((evidence) => evidence.freshness === "current")
             .slice(-60)
             .map((evidence) => evidence.id),
-          candidateIds: context.catalogue.slice(-40).map((candidate) => candidate.id),
+          candidateIds: context.catalogue
+            .slice(-40)
+            .map((candidate) => candidate.id),
           fulfills: context.agentRun?.requirements?.deliverables ?? [],
         };
 

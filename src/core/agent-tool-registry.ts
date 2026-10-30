@@ -785,15 +785,15 @@ export function createAgentToolRegistry(
         // Models may echo a server-owned evidence ID or a retrieved URL
         // instead of the short web source ID. Accept only exact references
         // to sources observed in THIS run; never resolve guessed citations.
-        const sourceReferences = sourceIds.map((reference) =>
-          ctx.sources.find(
-            (source) =>
-              reference === source.id ||
-              reference === source.url ||
-              reference ===
-                `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
-          )?.id,
-        );
+        const sourceReferences = sourceIds.map((reference) => {
+          const observed = ctx.sources.find((source) => {
+            const evidenceId = `${ctx.task.id}:agent:${ctx.runId}:${source.id}`;
+
+            return [source.id, source.url, evidenceId].includes(reference);
+          });
+
+          return observed?.id;
+        });
 
         if (sourceReferences.some((id) => !id)) {
           const allowed = ctx.sources

@@ -115,13 +115,17 @@ it("repairs invalid document arguments without discarding observed research", as
       }
 
       if (observed.length === 1) {
-        expect(offered.some((tool) => tool.name === "document.create")).toBe(true);
+        expect(
+          offered.some((tool) => tool.name === "document.create"),
+        ).toBe(true);
 
         return { name: "document.create", arguments: {} };
       }
 
       if (observed.length === 2) {
-        expect(offered.some((tool) => tool.name === "document.create")).toBe(true);
+        expect(
+          offered.some((tool) => tool.name === "document.create"),
+        ).toBe(true);
 
         return {
           name: "document.create",

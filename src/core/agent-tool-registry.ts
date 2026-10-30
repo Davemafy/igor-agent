@@ -106,7 +106,7 @@ const documentArguments = z.strictObject({
   candidateIds: z.array(z.string()).max(12).optional(),
   title: z.string().trim().min(3).max(160),
   content: z.string().trim().min(30).max(10000),
-  sourceIds: z.array(z.string()).max(12),
+  sourceIds: z.array(z.string()).max(12).default([]),
   evidenceIds: z.array(z.string()).max(30).optional(),
 });
 const reviseArguments = documentArguments.extend({

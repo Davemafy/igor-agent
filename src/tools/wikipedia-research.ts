@@ -48,6 +48,7 @@ export class WikipediaResearchProvider implements ResearchProvider {
       const response = await this.transport(url.toString(), {
         headers: {
           Accept: "application/json",
+          "User-Agent": "Igor/0.1 (https://github.com/Davemafy/igor)",
           "Api-User-Agent": "Igor/0.1 (https://github.com/Davemafy/igor)",
         },
         redirect: "error",

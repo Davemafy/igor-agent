@@ -95,25 +95,27 @@ describe("versioned workspace snapshot integration contract", () => {
     expect(snapshot.spatial.places[2].place?.latitude).toBeNull();
   });
 
-  it("displays unevaluated Qloo catalogue places without inventing fit or availability", () => {
+  it("exposes Qloo catalogue places before candidate evaluation", () => {
     const task = freshTask("task-map", "owner");
-    const place = makePlace("newly-discovered", false, 40.70);
+    const place = makePlace("newly-discovered", false, 40.7);
     task.candidates = [];
-    task.catalogue = [{
-      id: place.id,
-      providerId: place.providerId,
-      name: place.name,
-      type: "place",
-      tags: [],
-      description: "Provider-discovered place",
-      cost: place.cost,
-      duration: place.duration,
-      available: null,
-      availabilitySource: "provider-returned",
-      location: "New York",
-      sample: false,
-      place: place.place,
-    }];
+    task.catalogue = [
+      {
+        id: place.id,
+        providerId: place.providerId,
+        name: place.name,
+        type: "place",
+        tags: [],
+        description: "Provider-discovered place",
+        cost: place.cost,
+        duration: place.duration,
+        available: null,
+        availabilitySource: "provider-returned",
+        location: "New York",
+        sample: false,
+        place: place.place,
+      },
+    ];
 
     const snapshot = projectWorkspace(task);
     expect(snapshot.discovery.catalogue).toHaveLength(1);

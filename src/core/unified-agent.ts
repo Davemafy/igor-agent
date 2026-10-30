@@ -172,6 +172,22 @@ export async function runUnifiedAgent(
   };
 
   const attempted = new Set<string>();
+  const outcomesByFingerprint = new Map<
+    string,
+    { status: string; summary: string }
+  >();
+  const retriedReadOnly = new Set<string>();
+  const retryableQlooObservation = (fingerprint: string, name: string) => {
+    const prior = outcomesByFingerprint.get(fingerprint);
+
+    return (
+      ["qloo.resolve_entity", "qloo.discover"].includes(name) &&
+      !!prior &&
+      ["error", "partial"].includes(prior.status) &&
+      /request failed|timed out|timeout/i.test(prior.summary) &&
+      !retriedReadOnly.has(fingerprint)
+    );
+  };
   let modelFinished = false;
   let decisionFailed = false;
   const argumentRepairs = new Map<string, number>();
@@ -520,7 +536,8 @@ export async function runUnifiedAgent(
 
             return (
               available.some((tool) => tool.name === choice.name) &&
-              !attempted.has(fingerprint)
+              (!attempted.has(fingerprint) ||
+                retryableQlooObservation(fingerprint, choice.name))
             );
           })
       : undefined;
@@ -714,9 +731,15 @@ export async function runUnifiedAgent(
     const fingerprint = selected.name + ":" + JSON.stringify(args);
 
     if (attempted.has(fingerprint)) {
-      run.warnings.push("Repeated tool invocation rejected.");
-      trace("agent.action.blocked", "A duplicate tool call was blocked.");
-      break;
+      if (!retryableQlooObservation(fingerprint, selected.name)) {
+        run.warnings.push("Repeated tool invocation rejected.");
+        trace("agent.action.blocked", "A duplicate tool call was blocked.");
+        break;
+      }
+
+      // This is a single fresh READ of a transiently failed Qloo request.
+      // No write, approval, booking, or uncertain side effect can replay.
+      retriedReadOnly.add(fingerprint);
     }
 
     attempted.add(fingerprint);
@@ -783,6 +806,10 @@ export async function runUnifiedAgent(
       ]),
     ].slice(-12);
     run.requests += outcome.requests;
+    outcomesByFingerprint.set(fingerprint, {
+      status: outcome.status,
+      summary: outcome.summary,
+    });
     run.steps.push({
       id: randomUUID(),
       tool: selected.name,

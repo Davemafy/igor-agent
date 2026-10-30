@@ -1,0 +1,133 @@
+import { describe, expect, it } from "vitest";
+import { freshTask, sampleCatalogue } from "../../src/data/fixtures";
+import { culturalEvidenceId } from "../../src/core/cultural-evidence";
+import { saveExperienceProposal } from "../../src/core/experience-proposal";
+
+function groundedTask() {
+  const task = freshTask("experience-proposal", "owner");
+  const candidate = {
+    ...sampleCatalogue()[0],
+    id: "observed-artist",
+    providerId: "qloo-artist",
+    sample: false,
+    cultural: {
+      context: {
+        signalScope: "context" as const,
+        affinity: null,
+        rank: 1,
+        queryId: "real-query",
+        seedIds: ["seed-artist"],
+        delivery: "LIVE" as const,
+        retrievedAt: "2026-10-30T00:00:00Z",
+        explanationEntities: [],
+      },
+    },
+  };
+  const evidenceId = culturalEvidenceId(
+    candidate,
+    "context",
+    candidate.cultural.context,
+  );
+  task.catalogue = [candidate];
+  task.evidence.push({
+    id: evidenceId,
+    source: "provider-returned",
+    kind: "cultural",
+    delivery: "LIVE",
+    at: "2026-10-30T00:00:00Z",
+    entityIds: ["qloo-artist"],
+    reference: "qloo:real-query",
+    summary: "Actual provider observation",
+    limitations: [],
+    explanation: null,
+    dependencies: [],
+    freshness: "current",
+  });
+
+  return { task, evidenceId };
+}
+
+describe("compact general-purpose experience composition", () => {
+  it("creates linked decisions and editable documents using only actual evidence", () => {
+    const { task, evidenceId } = groundedTask();
+    const result = saveExperienceProposal(
+      task,
+      {
+        title: "Friday community music night",
+        decisions: [
+          {
+            domain: "music",
+            value: "Listening session with a live jazz-influenced playlist",
+            rationale: "The observed artist is a relevant cultural reference",
+            candidateId: "observed-artist",
+            estimatedCost: null,
+          },
+          {
+            domain: "risk",
+            value: "Verify capacity, insurance and practical venue terms",
+            rationale: "Practical facts have not been independently checked",
+          },
+        ],
+        documents: [
+          {
+            title: "Editable experience proposal",
+            content:
+              "Proposed listening session with audience discussion and an accessible event flow. Venue, capacity and available performers require verification.",
+            fulfills: ["proposal"],
+          },
+          {
+            title: "Partner-facing pitch",
+            content:
+              "A culture-led listening evening with local partners and a carefully considered soundtrack. Costs, accessibility and availability remain subject to partner verification.",
+            fulfills: ["partner-pitch"],
+          },
+        ],
+      },
+      "run-proposal",
+    );
+
+    expect(result.status).not.toBe("blocked");
+    expect(task.work?.decisions).toHaveLength(2);
+    expect(task.work?.documents).toHaveLength(2);
+    expect(task.work?.documents[0].candidateIds).toEqual(["observed-artist"]);
+    expect(task.work?.documents[0].evidenceIds).toContain(evidenceId);
+    expect(task.work?.documents[0].dependencies).toContain(
+      "decision:agent-run-proposal-d1",
+    );
+    expect(result.artifactIds).toContain(
+      "document:agent-run-proposal-doc-1",
+    );
+    expect(task.work?.documents[0].status).toBe("proposed");
+  });
+
+  it("blocks invented cultural selections without changing saved work", () => {
+    const { task } = groundedTask();
+    const result = saveExperienceProposal(
+      task,
+      {
+        title: "Unsupported event",
+        decisions: [
+          {
+            domain: "music",
+            value: "Unknown music recommendation",
+            rationale: "Invented candidate cannot be sourced",
+            candidateId: "not-observed",
+          },
+        ],
+        documents: [
+          {
+            title: "Unverified proposal",
+            content:
+              "This proposal must never be saved because its supposed cultural reference was invented rather than observed from the configured provider.",
+            fulfills: ["proposal"],
+          },
+        ],
+      },
+      "run-blocked",
+    );
+
+    expect(result.status).toBe("blocked");
+    expect(task.work?.decisions ?? []).toEqual([]);
+    expect(task.work?.documents ?? []).toEqual([]);
+  });
+});

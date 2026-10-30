@@ -192,3 +192,30 @@ it("uses a separately configured backup for the observed Grok credential rejecti
   expect(primary.interpret).toHaveBeenCalledOnce();
   expect(backup.interpret).toHaveBeenCalledTimes(2);
 });
+
+it("uses a third authorized model when the first two independently fail", async () => {
+  const first = {
+    interpret: vi.fn(async () => {
+      throw new ProviderHttpError("Gemini", 503, "");
+    }),
+  };
+  const second = {
+    interpret: vi.fn(async () => {
+      throw new ProviderHttpError("Grok", 400, "Incorrect API key supplied");
+    }),
+  };
+  const third = { interpret: vi.fn(async () => reply) };
+  const model = new FallbackModel(
+    first,
+    new FallbackModel(second, third),
+  );
+
+  expect(await model.interpret("Plan an experience")).toEqual(reply);
+  expect(first.interpret).toHaveBeenCalledOnce();
+  expect(second.interpret).toHaveBeenCalledOnce();
+  expect(third.interpret).toHaveBeenCalledOnce();
+  expect(await model.interpret("Continue the existing work")).toEqual(reply);
+  expect(first.interpret).toHaveBeenCalledOnce();
+  expect(second.interpret).toHaveBeenCalledOnce();
+  expect(third.interpret).toHaveBeenCalledTimes(2);
+});

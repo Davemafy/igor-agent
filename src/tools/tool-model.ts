@@ -839,7 +839,9 @@ export class ToolCallingModel implements ModelProvider {
 
     if (
       soleTool?.inputSchema?.type === "object" &&
-      ["document.create", "document.revise"].includes(soleTool.name)
+      ["document.create", "document.revise", "experience.propose"].includes(
+        soleTool.name,
+      )
     ) {
       const exactSchema = structuredClone(soleTool.inputSchema);
       delete exactSchema.$schema;

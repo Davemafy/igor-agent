@@ -357,14 +357,9 @@ export async function runUnifiedAgent(
         (tool) => tool.name === "experience.propose" && tool.available,
       );
 
-    // Before the first connected experience exists, use the compact
-    // evidence-bound compiler instead of a deeply nested action graph.
-    // Follow-ups with existing connected work retain granular revision tools.
-    const firstExperienceProposal =
-      canProposeExperience &&
-      !task.work?.activeGoalId &&
-      !hasRequestedOutput &&
-      !run.steps.some((step) => step.tool === "experience.propose");
+    // Keep both compatible creation paths available. The model prefers
+    // the compact proposal for new work; existing granular composition and
+    // selective revision remain usable without changing caller contracts.
     const savePlainDocument =
       !hasRequestedOutput &&
       needsDeliverable &&
@@ -423,7 +418,6 @@ export async function runUnifiedAgent(
           ].includes(t.name)
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
-        (!firstExperienceProposal || t.name === "experience.propose") &&
         !(researchFirst && t.name !== "web.search") &&
         !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
         !(mustContinue && t.name === "agent.finish"),

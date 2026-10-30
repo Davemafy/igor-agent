@@ -12,6 +12,42 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
   }
 
   if (
+    tool === "experience.compose" &&
+    raw &&
+    typeof raw === "object" &&
+    !Array.isArray(raw)
+  ) {
+    const outer = raw as Record<string, unknown>;
+    const keys = Object.keys(outer);
+
+    // Only unwrap a single recognized wrapper or singleton action.
+    // The unchanged strict WorkActionSchema validates every resulting action,
+    // including denial of model-initiated approval and external writes.
+    if (keys.length === 1) {
+      const key = keys[0];
+      const value = outer[key];
+
+      if (key === "actions" && value && typeof value === "object" && !Array.isArray(value)) {
+        return { actions: [value] };
+      }
+
+      if ((key === "workActions" || key === "operations") && Array.isArray(value)) {
+        return { actions: value };
+      }
+
+      if ((key === "payload" || key === "input") && value && typeof value === "object" && !Array.isArray(value)) {
+        const nested = value as Record<string, unknown>;
+
+        if (Array.isArray(nested.actions) && Object.keys(nested).length === 1) {
+          return { actions: nested.actions };
+        }
+      }
+    }
+
+    return raw;
+  }
+
+  if (
     (tool !== "document.create" && tool !== "document.revise") ||
     !raw ||
     typeof raw !== "object" ||

@@ -3,6 +3,7 @@ import { GeminiWebResearchProvider } from "../../src/tools/gemini-web-research";
 
 describe("Gemini grounded web research provider", () => {
   it("returns only structured grounding URLs, never free-text model links", async () => {
+    const sourceUrl = "https://www.iea.org/reports/global-ev-outlook-2026";
     const transport = vi.fn<typeof fetch>(async () =>
       Response.json({
         candidates: [
@@ -18,12 +19,12 @@ describe("Gemini grounded web research provider", () => {
               groundingChunks: [
                 {
                   web: {
-                    uri: "https://www.iea.org/reports/global-ev-outlook-2026",
+                    uri: sourceUrl,
                     title: "IEA report",
                   },
                 },
-                { web: { uri: "https://localhost/private", title: "Internal" } },
-                { web: { uri: "https://www.iea.org/reports/global-ev-outlook-2026" } },
+                { web: { uri: "https://localhost/private" } },
+                { web: { uri: sourceUrl } },
               ],
             },
           },
@@ -40,7 +41,7 @@ describe("Gemini grounded web research provider", () => {
     expect(response.status).toBe("partial");
     expect(response.sources).toHaveLength(1);
     expect(response.sources[0].url).toBe(
-      "https://www.iea.org/reports/global-ev-outlook-2026",
+      sourceUrl,
     );
     expect(response.sources[0].title).toBe("IEA report");
     const [endpoint, options] = transport.mock.calls[0];

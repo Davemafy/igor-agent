@@ -172,6 +172,11 @@ describe("compact general-purpose experience composition", () => {
 
   it("rejects budget-violating estimates without saving unsupported experience work", () => {
     const { task } = groundedTask();
+    task.messages.push({
+      role: "user",
+      text: "Host a listening evening under $50 with an editable proposal",
+      at: "2026-10-30T00:00:00.000Z",
+    });
     task.agentRun = {
       goal: "Host a listening evening under $50 with an editable proposal",
       requirements: {

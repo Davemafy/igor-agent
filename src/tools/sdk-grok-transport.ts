@@ -194,6 +194,23 @@ export function sdkToolTransport(
         })),
       });
     } catch (error) {
+      // Some AI SDK providers throw structured no-output/invalid-tool errors
+      // before Igor receives a native tool choice. This decision is read-only:
+      // classify it so one independently configured model can take over.
+      // Never expose the SDK's raw tool inputs, prompts, or provider response.
+      const sdkProtocolNames = new Set([
+        "AI_NoOutputGeneratedError",
+        "AI_NoContentGeneratedError",
+        "AI_InvalidToolInputError",
+        "AI_NoSuchToolError",
+        "AI_ToolCallRepairError",
+        "AI_ToolChoiceViolationError",
+      ]);
+
+      if (error instanceof Error && sdkProtocolNames.has(error.name)) {
+        throw new ModelToolProtocolError("missing-or-multiple");
+      }
+
       if (
         APICallError.isInstance(error) &&
         error.statusCode &&

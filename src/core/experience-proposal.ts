@@ -53,10 +53,17 @@ export function saveExperienceProposal(
   task: Task,
   input: z.infer<typeof ExperienceProposalArguments>,
   runId: string,
-): { status: "ok" | "partial" | "blocked"; summary: string; artifactIds: string[] } {
+): {
+  status: "ok" | "partial" | "blocked";
+  summary: string;
+  artifactIds: string[];
+} {
   const parsed = ExperienceProposalArguments.parse(input);
+
   const evidenceForCandidate = (id: string) => {
-    const candidate = task.catalogue.find((item) => item.id === id && !item.sample);
+    const candidate = task.catalogue.find(
+      (item) => item.id === id && !item.sample,
+    );
 
     if (!candidate) {
       return null;
@@ -88,7 +95,8 @@ export function saveExperienceProposal(
     if (!evidence) {
       return {
         status: "blocked",
-        summary: "Proposal references a cultural candidate without current Qloo evidence.",
+        summary:
+          "Proposal references a cultural candidate without current Qloo evidence.",
         artifactIds: [],
       };
     }
@@ -122,6 +130,7 @@ export function saveExperienceProposal(
   for (const [index, decision] of parsed.decisions.entries()) {
     const id = `agent-${runId}-d${index + 1}`;
     decisionIds.push(id);
+
     const evidenceIds = decision.candidateId
       ? (evidenceByCandidate.get(decision.candidateId) ?? [])
       : [];
@@ -155,6 +164,7 @@ export function saveExperienceProposal(
       fulfills: document.fulfills,
       dependencies: decisionIds.map((item) => `decision:${item}`),
     });
+
     artifactIds.push(`document:${id}`);
   }
 

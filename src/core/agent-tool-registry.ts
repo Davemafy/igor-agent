@@ -162,7 +162,14 @@ export function createAgentToolRegistry(
     context.task.artifacts.length > 0 ||
     (context.task.agentRunHistory?.length ?? 0) > 0;
   const experienceRequired = () =>
-    (context.task.agentRun?.requirements?.experienceDomains?.length ?? 0) > 0 ||
+    Boolean(context.task.agentRun?.requirements?.culturalDecision) ||
+    (context.task.agentRun?.requirements?.experienceDomains ?? []).some(
+      (domain) =>
+        ["audience", "culture", "music", "food", "atmosphere", "venue"].includes(
+          domain,
+        ),
+    ) ||
+    Boolean(context.task.work?.activeGoalId) ||
     (context.task.work?.decisions.length ?? 0) > 0 ||
     (context.task.work?.documents.length ?? 0) > 0;
 

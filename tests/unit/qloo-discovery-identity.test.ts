@@ -58,30 +58,34 @@ function setup() {
 }
 
 describe("live Qloo discovery identity handoff", () => {
-  it.each([
-    ["seed:sade"],
-    ["65726539-EA36-4283-914C-6EC71001F1F1"],
-    ["sAdE"],
-  ])("accepts only an already resolved Sade reference: %s", async (id) => {
-    const { context, tool, discover } = setup();
-    const result = await tool.execute(
-      { entityId: id, targetType: "movie" },
-      context,
-    );
-
-    expect(result.status).toBe("ok");
-    expect(result.culturalSeedIds).toEqual([
+  it("accepts exact saved IDs, provider IDs, and unique names", async () => {
+    const aliases = [
+      "seed:sade",
       "65726539-EA36-4283-914C-6EC71001F1F1",
-    ]);
-    expect(discover).toHaveBeenCalledOnce();
-    expect(discover).toHaveBeenCalledWith(
-      expect.objectContaining({
-        anchor: expect.objectContaining({
-          name: "Sade",
-          providerId: "65726539-EA36-4283-914C-6EC71001F1F1",
+      "sAdE",
+    ];
+
+    for (const entityId of aliases) {
+      const { context, tool, discover } = setup();
+      const result = await tool.execute(
+        { entityId, targetType: "movie" },
+        context,
+      );
+
+      expect(result.status).toBe("ok");
+      expect(result.culturalSeedIds).toEqual([
+        "65726539-EA36-4283-914C-6EC71001F1F1",
+      ]);
+      expect(discover).toHaveBeenCalledOnce();
+      expect(discover).toHaveBeenCalledWith(
+        expect.objectContaining({
+          anchor: expect.objectContaining({
+            name: "Sade",
+            providerId: "65726539-EA36-4283-914C-6EC71001F1F1",
+          }),
         }),
-      }),
-    );
+      );
+    }
   });
 
   it("rejects unobserved identity without issuing a Qloo request", async () => {

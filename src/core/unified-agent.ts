@@ -421,8 +421,13 @@ export async function runUnifiedAgent(
     );
 
     if (!selected) {
-      if (selection.name === "agent.finish" && mustContinue && finishRepairs++ < 2) {
-        const missing = run.requirements?.deliverables.join(", ") || "required work";
+      if (
+        selection.name === "agent.finish" &&
+        mustContinue &&
+        finishRepairs++ < 2
+      ) {
+        const missing =
+          run.requirements?.deliverables.join(", ") || "required work";
         run.steps.push({
           id: randomUUID(),
           tool: "agent.finish",

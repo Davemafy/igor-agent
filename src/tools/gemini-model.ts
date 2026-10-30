@@ -1,4 +1,5 @@
 import { ModelRequestBudgetError } from "./model-budget";
+import { ModelToolProtocolError } from "./model-tool-protocol-error";
 import { ProviderHttpError } from "../core/interpretation-failure";
 import { readModelResponse } from "./response-body";
 import { z } from "zod";
@@ -201,7 +202,7 @@ export class GeminiModel extends ToolCallingModel {
     );
 
     if (calls.length !== 1 || calls[0].name !== functions[0].name) {
-      throw new Error("Unauthorized model tool.");
+      throw new ModelToolProtocolError("unexpected");
     }
 
     const selected = calls[0];

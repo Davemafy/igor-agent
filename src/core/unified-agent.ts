@@ -325,11 +325,6 @@ export async function runUnifiedAgent(
         evidence.freshness === "current",
     );
     const culturalObserved = !!hasObservedSeed && hasCurrentCulturalEvidence;
-    const waitingForCulture =
-      run.requirements?.culturalDecision &&
-      !culturalReady &&
-      !culturalObserved &&
-      !discoveryFailed;
     const hasRequestedOutput =
       (run.outputArtifactIds?.length ?? 0) > 0 ||
       task.artifacts.some((artifact) =>
@@ -359,6 +354,15 @@ export async function runUnifiedAgent(
     const savingTools = savePlainDocument
       ? ["document.create"]
       : ["document.create", "experience.compose"];
+    // One successful cultural seed is not evidence for the other named seeds.
+    // Permit a provisional draft only when further discovery failed or the
+    // bounded run must save actual observations before the step budget ends.
+    const waitingForCulture =
+      Boolean(run.requirements?.culturalDecision) &&
+      !culturalReady &&
+      !discoveryFailed &&
+      !saveBeforeLimit &&
+      !failedComplexComposition;
 
     const available = tools.filter(
       (t) =>

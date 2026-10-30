@@ -107,7 +107,10 @@ export class GeminiWebResearchProvider implements ResearchProvider {
       const seen = new Set<string>();
       const sources: ResearchResult["sources"] = [];
 
-      for (const chunk of json.candidates?.[0]?.groundingMetadata?.groundingChunks ?? []) {
+      const groundingChunks =
+        json.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
+
+      for (const chunk of groundingChunks) {
         const rawUrl = chunk.web?.uri;
         const url = rawUrl ? publicResearchUrl(rawUrl) : null;
 
@@ -118,7 +121,8 @@ export class GeminiWebResearchProvider implements ResearchProvider {
         seen.add(url);
         sources.push({
           id: `web-${sources.length + 1}`,
-          title: chunk.web?.title?.trim().slice(0, 160) || new URL(url).hostname,
+          title:
+            chunk.web?.title?.trim().slice(0, 160) || new URL(url).hostname,
           url,
           snippet:
             "Google Search grounding citation. Verify individual claims before treating them as confirmed.",
@@ -143,7 +147,8 @@ export class GeminiWebResearchProvider implements ResearchProvider {
         status: "error",
         sources: [],
         requests: 1,
-        warning: "Google Search grounding failed before returning valid sources.",
+        warning:
+          "Google Search grounding failed before returning valid sources.",
       };
     }
   }

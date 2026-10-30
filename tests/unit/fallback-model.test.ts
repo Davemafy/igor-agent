@@ -3,6 +3,7 @@ import { FallbackModel } from "../../src/tools/fallback-model";
 import { runtimeModelProvider } from "../../src/tools/runtime";
 import { ResponsiveGeminiModel } from "../../src/tools/responsive-gemini";
 import { ProviderHttpError } from "../../src/core/interpretation-failure";
+import { ModelToolProtocolError } from "../../src/tools/model-tool-protocol-error";
 import { LiveDecisionSchema } from "../../src/core/contracts";
 import { freshTask } from "../../src/data/fixtures";
 import { completedTurnAfter } from "../../src/components/workspace-api";
@@ -269,4 +270,38 @@ it("prefers the explicitly enabled alternate Gemini model before unverified Grok
       }
     }
   }
+});
+
+it("falls back on a malformed SDK function decision without replaying tools", async () => {
+  const task = freshTask("sdk-tool-fallback", "owner");
+  const primary = {
+    interpret: vi.fn(async () => reply),
+    chooseAgentAction: vi.fn(async (): Promise<never> => {
+      throw new ModelToolProtocolError("missing-or-multiple");
+    }),
+  };
+  const backup = {
+    interpret: vi.fn(async () => reply),
+    chooseAgentAction: vi.fn(async () => ({
+      name: "document.revise",
+      arguments: { artifactId: "saved-id", title: "Revised", content: "Evidence retained." },
+    })),
+  };
+  const model = new FallbackModel(primary, backup);
+  const choices = [{ name: "document.revise", description: "Revise a saved artifact", permission: "internal" as const }];
+
+  const decision = await model.chooseAgentAction(
+    "Revise the saved memo",
+    choices,
+    [],
+    task,
+  );
+
+  expect(decision?.name).toBe("document.revise");
+  expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
+  expect(backup.chooseAgentAction).toHaveBeenCalledOnce();
+  expect(backup.interpret).not.toHaveBeenCalled();
+  expect(await model.chooseAgentAction("Continue", choices, [], task)).toEqual(decision);
+  expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
+  expect(backup.chooseAgentAction).toHaveBeenCalledTimes(2);
 });

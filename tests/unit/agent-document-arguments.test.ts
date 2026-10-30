@@ -158,3 +158,38 @@ it("accepts only exact citations from the current observed source set", async ()
   expect(rejected?.summary).toContain("web-1");
   expect(task.artifacts).toEqual([]);
 });
+
+it("accepts single-action compose envelopes without discarding unsafe keys", () => {
+  const task = freshTask("compose-variants", "owner");
+  const ctx = {
+    task,
+    runId: "run-compose",
+    sources: [],
+    research: { available: false, research: vi.fn() },
+  };
+  const definition = createAgentToolRegistry(ctx).find(
+    (tool) => tool.name === "experience.compose",
+  );
+  const action = { kind: "goal", id: "gathering", title: "Saturday gathering" };
+
+  for (const proposal of [
+    { actions: action },
+    { operations: [action] },
+    { payload: { actions: [action] } },
+  ]) {
+    expect(
+      definition?.schema.parse(
+        normalizeAgentArguments("experience.compose", proposal),
+      ),
+    ).toEqual({ actions: [action] });
+  }
+
+  expect(() =>
+    definition?.schema.parse(
+      normalizeAgentArguments("experience.compose", {
+        actions: action,
+        privilegedWrite: { sendEmail: true },
+      }),
+    ),
+  ).toThrow();
+});

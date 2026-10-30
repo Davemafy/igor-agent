@@ -17,6 +17,7 @@ export function normalizeAgentArguments(
   }
 
   const value = raw as Record<string, unknown>;
+
   const list = (field: string, maximum: number): unknown => {
     const original = value[field];
 
@@ -28,6 +29,7 @@ export function normalizeAgentArguments(
       ? original.filter((item) => typeof item === "string").slice(0, maximum)
       : [];
   };
+
   const content = value.content;
   const text =
     Array.isArray(content) &&

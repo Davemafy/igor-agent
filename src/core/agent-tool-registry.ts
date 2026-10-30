@@ -161,13 +161,18 @@ export function createAgentToolRegistry(
   const priorWork = () =>
     context.task.artifacts.length > 0 ||
     (context.task.agentRunHistory?.length ?? 0) > 0;
+  const experienceDomainNames = new Set([
+    "audience",
+    "culture",
+    "music",
+    "food",
+    "atmosphere",
+    "venue",
+  ]);
   const experienceRequired = () =>
     Boolean(context.task.agentRun?.requirements?.culturalDecision) ||
     (context.task.agentRun?.requirements?.experienceDomains ?? []).some(
-      (domain) =>
-        ["audience", "culture", "music", "food", "atmosphere", "venue"].includes(
-          domain,
-        ),
+      (domain) => experienceDomainNames.has(domain),
     ) ||
     Boolean(context.task.work?.activeGoalId) ||
     (context.task.work?.decisions.length ?? 0) > 0 ||

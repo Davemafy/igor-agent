@@ -240,7 +240,20 @@ export function verifyAgentOutcome(
     const seedIds = new Set(refs.filter((id): id is string => Boolean(id)));
     const supporting = new Set<string>();
     const covered = new Set<string>();
-    const bindings = documents.filter((a) => a.candidateIds?.length);
+    // A model-selected experience decision is the authoritative cultural
+    // selection. The linked documents are editable presentations of that work.
+    // Verify both against the same persisted Qloo evidence; do not require
+    // every cultural decision to be represented by a document citation alone.
+    const bindings = [
+      ...documents.filter((a) => a.candidateIds?.length),
+      ...(task.work?.decisions ?? []).filter(
+        (decision) =>
+          decision.goalId === task.work?.activeGoalId &&
+          decision.status !== "rejected" &&
+          decision.freshness === "current" &&
+          decision.candidateIds.length > 0,
+      ),
+    ];
 
     for (const doc of bindings) {
       for (const id of doc.candidateIds ?? []) {

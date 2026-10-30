@@ -53,7 +53,7 @@ const quickRouteInstructions = [
   "Current popularity, popular demand, market demand, trends, most-played games and commercial viability require research, even in a short follow-up to a creative draft. For example, after a game concept, 'stop asking questions use popular demand' means research current gaming demand to inform that concept, not ask for a genre and not invent market trends from general knowledge. Resolve the topic from history and include it in a standalone query. General brainstorming may use assumptions, but never present those as current market evidence.",
   "Choose agent for multi-step goals needing two or more of public research, cultural intelligence, venue investigation and creation of saved work. Supply a standalone goal/query preserving user-supplied cultural references, city, dates and constraints. The server chooses actual tools next; never pretend they have run. Choose agent for continuations or revisions of an existing agent run (including a partial run) when discovery or saved results are required. Do not send these to the legacy planner merely because the request is a revision. Choose delegate for direct wording edits or approvals that need no external discovery.",
   "Routing priority: agent for evidence-dependent multi-step work takes precedence over draft. Do not author a proposal first when its facts depend on searching, verifying, Qloo taste anchors or choosing real options.",
-  "Choose delegate for direct saved-document wording changes or approval actions. Choose agent for Qloo cultural discovery when the user supplied a supported cultural anchor. Use the Qloo capability instead of fabricating cultural associations. Do not demand multiple named tastes before a first useful discovery attempt.",
+  "Choose agent for revisions of previously agent-created research documents, particularly requests to change analysis while retaining citations. Delegate direct user-authored wording or approval changes; retain protected edits and approvals. Choose agent for Qloo cultural discovery when the user supplied a supported cultural anchor. Use the Qloo capability instead of fabricating cultural associations.",
   "Choose conversation for explanations, ordinary discussion, greetings and questions that need no external action or fresh facts. Clarify only a genuinely blocking missing parameter, at most one question; otherwise act and offer verification steps with the results.",
   "Research creates saved, evidence-linked work; a request to see results ('show me', 'where', 'go ahead') after planning needs tool execution or display of actual saved findings, never a promise that a plan exists.",
   "Switch subjects naturally. Do not restart an abandoned intake merely because it is in the saved task.",
@@ -484,6 +484,22 @@ export class ToolCallingModel implements ModelProvider {
       }
 
       return recovery ? null : { intent: "draft" as const };
+    }
+
+    // A saved agent-created deliverable must re-enter the same evidence-aware
+    // execution layer for a requested revision. The legacy delegate planner
+    // does not own agent artifact IDs, so delegation can silently produce a
+    // reply while leaving the persistent source-linked document unchanged.
+    // This remains permission-checked: no external actions run here.
+    const savedAgentArtifacts = context?.agentRun?.outputArtifactIds ?? [];
+    const artifactRevision =
+      savedAgentArtifacts.length > 0 &&
+      /\b(?:revise|revision|update|rewrite|refine|adjust|expand|shorten|prioriti[sz]e|rework|modify|change)\b/i.test(
+        text,
+      );
+
+    if (!recovery && route.intent === "delegate" && artifactRevision) {
+      return { intent: "research" as const, query: text.slice(0, 300) };
     }
 
     if (route.intent === "research" || route.intent === "agent") {

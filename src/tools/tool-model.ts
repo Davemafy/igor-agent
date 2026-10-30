@@ -475,17 +475,6 @@ export class ToolCallingModel implements ModelProvider {
       throw error;
     }
 
-    if (route.intent === "draft") {
-      if (!recovery && needsEvidenceDrivenExecution(text)) {
-        // A completed function call is not proof its chosen route was correct.
-        // Execute the authorized research/agent path instead of inventing facts
-        // inside the lightweight document generator.
-        return { intent: "research" as const, query: text.slice(0, 300) };
-      }
-
-      return recovery ? null : { intent: "draft" as const };
-    }
-
     // A saved agent-created deliverable must re-enter the same evidence-aware
     // execution layer for a requested revision. The legacy delegate planner
     // does not own agent artifact IDs, so delegation can silently produce a
@@ -498,8 +487,19 @@ export class ToolCallingModel implements ModelProvider {
         text,
       );
 
-    if (!recovery && route.intent === "delegate" && artifactRevision) {
+    if (!recovery && artifactRevision && route.intent !== "research" && route.intent !== "agent") {
       return { intent: "research" as const, query: text.slice(0, 300) };
+    }
+
+    if (route.intent === "draft") {
+      if (!recovery && needsEvidenceDrivenExecution(text)) {
+        // A completed function call is not proof its chosen route was correct.
+        // Execute the authorized research/agent path instead of inventing facts
+        // inside the lightweight document generator.
+        return { intent: "research" as const, query: text.slice(0, 300) };
+      }
+
+      return recovery ? null : { intent: "draft" as const };
     }
 
     if (route.intent === "research" || route.intent === "agent") {

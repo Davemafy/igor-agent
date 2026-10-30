@@ -794,7 +794,7 @@ export function createAgentToolRegistry(
     ),
     tool(
       "document.create",
-      "Create editable work: {title, content, sourceIds, evidenceIds?}. Use observed web sourceIds and current Qloo evidenceIds. Never overwrite approved or manually edited work.",
+      "Create editable work: {title:string, content:string, sourceIds?:string[], evidenceIds?:string[], candidateIds?:string[], fulfills?:string[]}. For Qloo-only work with NO web.search observation, sourceIds MUST be []. Web source IDs (web-1 etc) and Qloo evidenceIds are different. candidateIds are actual discovery candidate IDs, NEVER resolved seed IDs. All IDs are optional for a clearly provisional draft; do not assert confirmed availability or price. Never overwrite approved or manually edited work.",
       documentArguments,
       "internal",
       true,
@@ -899,6 +899,7 @@ export function createAgentToolRegistry(
           content,
           fulfills,
           ctx.task.agentRun?.requirements?.deliverables ?? [],
+          ctx.task.agentRun?.goal ?? "",
         );
 
         ctx.task.artifacts.push({

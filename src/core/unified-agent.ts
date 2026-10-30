@@ -434,7 +434,10 @@ export async function runUnifiedAgent(
                 position + name.length,
                 position + name.length + 24,
               );
-              const before = userText.slice(Math.max(0, position - 24), position);
+              const before = userText.slice(
+                Math.max(0, position - 24),
+                position,
+              );
               const personCue =
                 /^\s+(?:films?|movies?)\b/i.test(after) ||
                 /\bfilms?\s+(?:by|from)\s+$/i.test(before);

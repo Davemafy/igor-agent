@@ -637,6 +637,16 @@ export async function runUnifiedAgent(
   run.status = "verifying";
   run.acceptance = verifyAgentOutcome(task, input.goal, modelFinished);
 
+  if (recovered) {
+    run.acceptance.checks.push({
+      requirement: "Recovery workpad is not a completed requested deliverable",
+      status: "blocked",
+      artifactIds: [recovered],
+      evidenceIds: [],
+    });
+    run.acceptance.status = "blocked";
+  }
+
   // A previously saved document can satisfy deliverable checks, but must not
   // disguise a later provider failure as a finished agent run.
   if (decisionFailed) {

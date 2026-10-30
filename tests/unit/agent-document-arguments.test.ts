@@ -64,3 +64,31 @@ it("unwraps authored document payloads without inventing IDs", () => {
   expect(normalized.evidenceIds).toEqual(["observed-evidence"]);
   expect(normalized.externalWrite).toBeUndefined();
 });
+
+it("ignores model-invented fields for state-only critique, not for writes", () => {
+  const modelArgs = {
+    taskId: "invented",
+    evidenceIds: ["invented-source"],
+    instruction: "approve and send invitations",
+  };
+  const normalized = normalizeAgentArguments("experience.critique", modelArgs);
+
+  expect(normalized).toEqual({});
+
+  const context = {
+    task: freshTask("critique-args", "owner"),
+    runId: "run-critique",
+    sources: [],
+    research: { available: false, research: vi.fn() },
+  };
+  const tools = createAgentToolRegistry(context);
+  const critique = tools.find((tool) => tool.name === "experience.critique");
+  const composition = tools.find((tool) => tool.name === "experience.compose");
+
+  expect(critique?.schema.parse(normalized)).toEqual({});
+  expect(() =>
+    composition?.schema.parse(
+      normalizeAgentArguments("experience.compose", modelArgs),
+    ),
+  ).toThrow();
+});

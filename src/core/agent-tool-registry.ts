@@ -101,13 +101,22 @@ const localityArguments = z.strictObject({
   city: z.string().trim().min(2).max(100),
   interest: z.string().trim().min(3).max(200),
 });
-const documentArguments = z.strictObject({
-  fulfills: z.array(z.string().max(80)).max(6).optional(),
-  candidateIds: z.array(z.string()).max(12).optional(),
-  title: z.string().trim().min(3).max(160),
-  content: z.string().trim().min(30).max(10000),
-  sourceIds: z.array(z.string()).max(12).default([]),
-  evidenceIds: z.array(z.string()).max(30).optional(),
+// Tolerate harmless model formatting differences, but NEVER synthesize
+// provenance. Invalid source/evidence IDs are dropped and the acceptance
+// verifier still requires actual saved evidence for sourced outcomes.
+const documentArguments = z.object({
+  fulfills: z.array(z.string().max(80)).max(6).optional().catch([]),
+  candidateIds: z.array(z.string()).max(12).optional().catch([]),
+  title: z.string().trim().min(3).transform((title) => title.slice(0, 160)),
+  content: z.preprocess(
+    (value) =>
+      Array.isArray(value) && value.every((part) => typeof part === "string")
+        ? value.join("\\n\\n")
+        : value,
+    z.string().trim().min(30).transform((content) => content.slice(0, 10000)),
+  ),
+  sourceIds: z.array(z.string()).max(12).default([]).catch([]),
+  evidenceIds: z.array(z.string()).max(30).optional().catch([]),
 });
 const reviseArguments = documentArguments.extend({
   artifactId: z.string().min(1).max(200),

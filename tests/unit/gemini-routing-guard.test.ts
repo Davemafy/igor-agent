@@ -54,7 +54,8 @@ describe("Gemini read-only routing safety boundary", () => {
   });
 
   it("keeps sourced vendor investigation on the agent route", async () => {
-    const input = "Research local caterers, compare prices and draft a vendor shortlist.";
+    const input =
+      "Research local caterers, compare prices and draft a vendor shortlist.";
     const { model } = modelProposingDraft();
 
     expect(await model.routeConversation(input, task())).toMatchObject({

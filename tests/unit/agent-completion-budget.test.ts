@@ -126,6 +126,15 @@ it("saves a plain document after a complex composition is rejected", async () =>
 
         return {
           name: "document.create",
+          arguments: { title: "Brief", content: "Too short" },
+        };
+      }
+
+      if (observed.length === 3) {
+        expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
+
+        return {
+          name: "document.create",
           arguments: {
             title: "Provisional EV charging brief",
             content: "Observed source and explicitly unknown market figures.",
@@ -173,12 +182,14 @@ it("saves a plain document after a complex composition is rejected", async () =>
       trace: vi.fn(),
     });
 
-    expect(choose).toHaveBeenCalledTimes(4);
+    expect(choose).toHaveBeenCalledTimes(5);
     expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
       "web.search",
       "experience.compose",
       "document.create",
+      "document.create",
     ]);
+    expect(task.agentRun?.steps[2].summary).toContain("content:too_small");
     expect(result.status).toBe("ok");
     expect(task.artifacts[0].fulfills).toContain("report");
     expect(store.load(task.id, "owner").artifacts).toHaveLength(1);

@@ -18,6 +18,30 @@ describe("requested artifact contract", () => {
     ).toEqual(["proposal", "investment-memo"]);
   });
 
+  it("recognizes a memo from both the user request and the title despite a generic model label", () => {
+    expect(
+      reconcileDeliverableLabels(
+        "EV Charging Market Investment Memo",
+        content,
+        ["proposal"],
+        ["proposal"],
+        "Research EV charging competitors and save an investment memo.",
+      ),
+    ).toEqual(["proposal", "memo"]);
+  });
+
+  it("does not infer memo metadata from the title alone", () => {
+    expect(
+      reconcileDeliverableLabels(
+        "Investment Memo",
+        content,
+        ["proposal"],
+        ["proposal"],
+        "Write a proposal about funding priorities.",
+      ),
+    ).toEqual(["proposal"]);
+  });
+
   it("does not invent an unrelated deliverable", () => {
     expect(
       reconcileDeliverableLabels(

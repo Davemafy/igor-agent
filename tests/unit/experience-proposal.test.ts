@@ -124,7 +124,7 @@ describe("compact general-purpose experience composition", () => {
       sources: [],
       culturalSeedIds: ["seed-artist"],
       outputArtifactIds: [],
-    } as Task["agentRun"];
+    } as unknown as Task["agentRun"];
     const saved = saveExperienceProposal(
       task,
       {

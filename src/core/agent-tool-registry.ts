@@ -352,12 +352,18 @@ export function createAgentToolRegistry(
           ...ctx.task.messages
             .filter((message) => message.role === "user")
             .map((message) => message.text),
-        ].join(" ").toLocaleLowerCase();
+        ]
+          .join(" ")
+          .toLocaleLowerCase();
         const previouslyKnown = ctx.task.entities.some(
-          (entity) => entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+          (entity) =>
+            entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
         );
 
-        if (!supplied.includes(name.trim().toLocaleLowerCase()) && !previouslyKnown) {
+        if (
+          !supplied.includes(name.trim().toLocaleLowerCase()) &&
+          !previouslyKnown
+        ) {
           return {
             status: "blocked",
             requests: 0,

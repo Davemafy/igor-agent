@@ -60,7 +60,7 @@ export class WikipediaResearchProvider implements ResearchProvider {
           status: "error",
           sources: [],
           requests: 1,
-          warning: "Wikipedia background lookup did not succeed.",
+          warning: `Wikipedia background lookup returned HTTP ${response.status}.`,
         };
       }
 
@@ -95,12 +95,15 @@ export class WikipediaResearchProvider implements ResearchProvider {
         warning:
           "Encyclopedic background only: Wikipedia results do not verify current market figures, prices, availability or investment claims.",
       };
-    } catch {
+    } catch (error) {
       return {
         status: "error",
         sources: [],
         requests: 1,
-        warning: "Wikipedia lookup was unavailable; no source was invented.",
+        warning:
+          error instanceof z.ZodError
+            ? "Wikipedia returned an unrecognized result schema."
+            : "Wikipedia lookup was unavailable; no source was invented.",
       };
     }
   }

@@ -385,6 +385,68 @@ describe("unified tool orchestration", () => {
     }
   });
 
+
+  it("preserves a saved artifact but marks provider failure as incomplete", async () => {
+    const store = new SqliteTaskStore(":memory:");
+    const task = freshTask("provider-after-document", "owner");
+    store.create(task);
+    let decisions = 0;
+
+    try {
+      const result = await runUnifiedAgent({
+        task,
+        store,
+        owner: "owner",
+        goal: "Produce an editable proposal",
+        research: { available: false, research: vi.fn() },
+        model: {
+          async interpret() {
+            throw Error("Unused interpreter");
+          },
+          async interpretAgentRequirements() {
+            return {
+              culturalDecision: false,
+              culturalReferences: [],
+              deliverables: ["proposal"],
+            };
+          },
+          async chooseAgentAction() {
+            decisions++;
+            if (decisions === 1) {
+              return {
+                name: "document.create",
+                arguments: {
+                  title: "Useful proposal",
+                  fulfills: ["proposal"],
+                  content: "A useful editable proposal with explicitly unverified assumptions.",
+                  sourceIds: [],
+                },
+              };
+            }
+            throw new Error("Model decision provider returned HTTP 503");
+          },
+        },
+        trace: vi.fn(),
+      });
+
+      expect(decisions).toBe(2);
+      expect(task.artifacts).toHaveLength(1);
+      expect(task.artifacts[0].content).toContain("unverified assumptions");
+      expect(result.status).toBe("partial");
+      expect(task.agentRun?.status).toBe("partially_completed");
+      expect(task.agentRun?.acceptance?.status).toBe("blocked");
+      expect(task.agentRun?.acceptance?.checks.at(-1)).toMatchObject({
+        status: "blocked",
+        requirement: "Agent decision completed without provider failure",
+      });
+      const persisted = store.load(task.id, "owner");
+      expect(persisted.artifacts).toHaveLength(1);
+      expect(persisted.agentRun?.status).toBe("partially_completed");
+    } finally {
+      store.close();
+    }
+  });
+
   it("preserves partial status when a run found sources but exhausted its steps before producing a deliverable", async () => {
     const store = new SqliteTaskStore(":memory:");
     const task = freshTask("partial-discovery", "owner");

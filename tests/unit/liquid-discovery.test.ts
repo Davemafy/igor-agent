@@ -644,3 +644,39 @@ it("preserves view and scheduling through legacy canvas rebinding without keepin
   expect(task.canvas?.comparisonIds).toEqual(["moonrise"]);
   expect(task.canvas?.viewModes.discoveries).toBe("explore");
 });
+
+it("executes revisions of saved agent-created documents instead of swallowing them", async () => {
+  const task = freshTask("agent-memo-revision", "owner");
+  task.artifacts.push({
+    id: "agent-doc-previous-run-1",
+    kind: "research-report",
+    title: "EV charging investment memo",
+    content: "An existing source-cited investment memo to be revised.",
+    version: 1,
+    dependencies: [],
+    evidenceIds: [],
+    assumptions: [],
+    freshness: "current",
+    edited: false,
+  });
+  const text =
+    "Revise the saved investment memo to prioritize charging-network operators. Keep earlier citations.";
+  const updated = await interpretMessage(
+    task,
+    { type: "message", text, version: task.brief.version },
+    {
+      interpret: async () => {
+        throw new Error("The legacy interpretation path must not execute.");
+      },
+      routeConversation: async () => {
+        throw new Error("A read-only route cannot swallow this saved revision.");
+      },
+    },
+    new ExecutionBudget(),
+    () => {},
+  );
+
+  expect(updated.researchQuery).toBe(text);
+  expect(updated.task.artifacts[0].id).toBe("agent-doc-previous-run-1");
+  expect(updated.task.messages.at(-1)?.text).toBe(text);
+});

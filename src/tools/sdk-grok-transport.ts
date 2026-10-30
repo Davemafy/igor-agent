@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { readModelResponse } from "./response-body";
 import { ProviderHttpError } from "../core/interpretation-failure";
+import { ModelToolProtocolError } from "./model-tool-protocol-error";
 
 /** Keep Igor's validated decision protocol while the SDK owns provider I/O. */
 export function sdkGrokTransport(
@@ -180,7 +181,7 @@ export function sdkToolTransport(
       });
 
       if (result.finishReason !== "tool-calls") {
-        throw new Error("Model request failed: incomplete tool response.");
+        throw new ModelToolProtocolError("missing-or-multiple");
       }
 
       return Response.json({

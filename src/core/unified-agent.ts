@@ -363,6 +363,13 @@ export async function runUnifiedAgent(
       !discoveryFailed &&
       !saveBeforeLimit &&
       !failedComplexComposition;
+    const culturalToolsAvailable = tools.some(
+      (tool) => tool.available && tool.name.startsWith("qloo."),
+    );
+    const mustContinue =
+      index < maxSteps - 1 &&
+      ((waitingForCulture && culturalToolsAvailable) ||
+        (needsDeliverable && !hasRequestedOutput && canSave));
 
     const available = tools.filter(
       (t) =>
@@ -373,7 +380,8 @@ export async function runUnifiedAgent(
           waitingForCulture &&
           ["document.create", "experience.compose"].includes(t.name)
         ) &&
-        (!forceSaving || savingTools.includes(t.name)),
+        (!forceSaving || savingTools.includes(t.name)) &&
+        !(mustContinue && t.name === "agent.finish"),
     );
     let selection: Awaited<
       ReturnType<NonNullable<ModelProvider["chooseAgentAction"]>>

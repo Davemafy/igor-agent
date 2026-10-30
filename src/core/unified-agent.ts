@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import type { Task, Event } from "./contracts";
 import { TaskSchema } from "./contracts";
 import type { TaskStore } from "../data/store";
-import type { ModelProvider, CulturalProvider } from "../tools/interfaces";
+import type { AgentToolChoice, ModelProvider, CulturalProvider } from "../tools/interfaces";
 import type {
   ResearchProvider,
   ResearchResult,
@@ -396,7 +396,7 @@ export async function runUnifiedAgent(
       .toLocaleLowerCase();
     const culturalPrerequisite = waitingForCulture
       ? references
-          .flatMap((name) => {
+          .flatMap<AgentToolChoice>((name) => {
             if (!userText.includes(name.toLocaleLowerCase())) {
               return [];
             }
@@ -419,7 +419,10 @@ export async function runUnifiedAgent(
             const targetType =
               entity.type === "person"
                 ? "movie"
-                : ["artist", "movie", "tv_show", "place"].includes(entity.type)
+                : entity.type === "artist" ||
+                    entity.type === "movie" ||
+                    entity.type === "tv_show" ||
+                    entity.type === "place"
                   ? entity.type
                   : null;
 

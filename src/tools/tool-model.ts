@@ -88,7 +88,9 @@ export function needsEvidenceDrivenExecution(text: string): boolean {
       text,
     );
 
-  return explicitDiscovery || (realWorldGoal && planningAction && practicalObligation);
+  return (
+    explicitDiscovery || (realWorldGoal && planningAction && practicalObligation)
+  );
 }
 
 const conversationInstructions = [

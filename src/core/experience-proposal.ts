@@ -101,6 +101,20 @@ export function saveExperienceProposal(
   const actions: WorkAction[] = previousGoal
     ? []
     : [{ kind: "goal", id: goalId, title: parsed.title }];
+  const userText =
+    task.messages.filter((message) => message.role === "user").at(-1)?.text ??
+    task.agentRun?.goal ??
+    "";
+  const budget = task.agentRun?.requirements?.budget;
+
+  if (
+    budget &&
+    userText.includes(budget.sourceText) &&
+    task.work?.budget?.amount !== budget.amount
+  ) {
+    actions.push({ kind: "budget", amount: budget.amount });
+  }
+
   const allEvidence = [...new Set([...evidenceByCandidate.values()].flat())];
   const allCandidates = [...new Set(cited)];
   const decisionIds: string[] = [];
@@ -144,10 +158,6 @@ export function saveExperienceProposal(
     artifactIds.push(`document:${id}`);
   }
 
-  const userText =
-    task.messages.filter((message) => message.role === "user").at(-1)?.text ??
-    task.agentRun?.goal ??
-    "";
   const summary = applyWorkActions(task, actions, userText);
   task.work!.critique = critiqueExperience(task);
 

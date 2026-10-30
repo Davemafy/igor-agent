@@ -310,20 +310,21 @@ export async function runUnifiedAgent(
     // Partial cultural results are still useful evidence for an editable
     // provisional artifact. Missing seeds must remain unsatisfied at acceptance,
     // but should not prevent the user from receiving saved working output.
+    const hasObservedSeed = run.culturalSeedIds?.some((seed) =>
+      task.catalogue.some((candidate) =>
+        Object.values(candidate.cultural ?? {}).some((signal) =>
+          signal.seedIds.includes(seed),
+        ),
+      ),
+    );
+    const hasCurrentCulturalEvidence = task.evidence.some(
+      (evidence) =>
+        evidence.kind === "cultural" &&
+        evidence.source === "provider-returned" &&
+        evidence.freshness === "current",
+    );
     const culturalObserved = Boolean(
-      run.culturalSeedIds?.some((seed) =>
-        task.catalogue.some((candidate) =>
-          Object.values(candidate.cultural ?? {}).some((signal) =>
-            signal.seedIds.includes(seed),
-          ),
-        ),
-      ) &&
-        task.evidence.some(
-          (evidence) =>
-            evidence.kind === "cultural" &&
-            evidence.source === "provider-returned" &&
-            evidence.freshness === "current",
-        ),
+      hasObservedSeed && hasCurrentCulturalEvidence,
     );
     const waitingForCulture =
       run.requirements?.culturalDecision &&

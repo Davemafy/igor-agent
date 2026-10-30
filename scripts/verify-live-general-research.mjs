@@ -29,14 +29,11 @@ try {
   await page.goto(`${root}/app`);
 
   async function turn(text) {
-    const response = await page.request.post(
-      `${root}/api/tasks/${id}/turn`,
-      {
-        headers: { Origin: root },
-        data: { type: "message", text, version: task.brief.version },
-        timeout: 600000,
-      },
-    );
+    const response = await page.request.post(`${root}/api/tasks/${id}/turn`, {
+      headers: { Origin: root },
+      data: { type: "message", text, version: task.brief.version },
+      timeout: 600000,
+    });
 
     if (!response.ok()) {
       throw Error(`turn_http_${response.status()}`);
@@ -128,7 +125,8 @@ try {
   const reloaded = await (
     await page.request.get(`${root}/api/tasks/${id}`)
   ).json();
-  const retained = currentEvidenceIds.size > 0 &&
+  const retained =
+    currentEvidenceIds.size > 0 &&
     [...currentEvidenceIds].every((evidenceId) =>
       reloaded.evidence.some((evidence) => evidence.id === evidenceId),
     );

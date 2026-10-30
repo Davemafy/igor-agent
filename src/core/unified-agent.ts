@@ -429,13 +429,15 @@ export async function runUnifiedAgent(
               // Qloo's broad /search can return a film, artist and person
               // sharing a name. Pass only conservative type hints grounded in
               // the user's phrasing; Qloo still confirms the exact identity.
-              const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\            if (!entity) {
-              return [{ name: "qloo.resolve_entity", arguments: { name } }];
-            }");
-              const personCue = new RegExp(
-                `\\b${escaped}\\s+(?:films?|movies?)\\b|\\bfilms?\\s+(?:by|from)\\s+${escaped}\\b`,
-                "i",
-              ).test(userText);
+              const position = userText.indexOf(name.toLocaleLowerCase());
+              const after = userText.slice(
+                position + name.length,
+                position + name.length + 24,
+              );
+              const before = userText.slice(Math.max(0, position - 24), position);
+              const personCue =
+                /^\s+(?:films?|movies?)\b/i.test(after) ||
+                /\bfilms?\s+(?:by|from)\s+$/i.test(before);
               const musicContext =
                 run.requirements?.experienceDomains?.includes("music") &&
                 !personCue;

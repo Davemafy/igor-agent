@@ -256,12 +256,10 @@ it("prefers the explicitly enabled alternate Gemini model before unverified Grok
       primary: ResponsiveGeminiModel;
     };
     expect(second.primary).toBeInstanceOf(ResponsiveGeminiModel);
-    expect(
-      (first.primary as unknown as { model: string }).model,
-    ).toBe("gemini-3.1-flash-lite");
-    expect(
-      (second.primary as unknown as { model: string }).model,
-    ).toBe("gemini-3.5-flash-lite");
+    const primaryModel = (first.primary as unknown as { model: string }).model;
+    const backupModel = (second.primary as unknown as { model: string }).model;
+    expect(primaryModel).toBe("gemini-3.1-flash-lite");
+    expect(backupModel).toBe("gemini-3.5-flash-lite");
   } finally {
     for (const [key, value] of previous) {
       if (value === undefined) {

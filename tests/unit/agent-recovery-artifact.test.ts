@@ -79,6 +79,63 @@ describe("agent evidence survival after a failed model decision", () => {
     }
   });
 
+  it("never certifies a source-free public research memo", async () => {
+    const store = new SqliteTaskStore(":memory:");
+    const task = freshTask("source-free", "owner");
+    store.create(task);
+    let decisions = 0;
+
+    try {
+      const result = await runUnifiedAgent({
+        task,
+        store,
+        owner: "owner",
+        goal: "Research the EV charging market and save an investment memo",
+        model: {
+          async interpret() {
+            throw Error("Unused");
+          },
+          async interpretAgentRequirements() {
+            return {
+              culturalDecision: false,
+              culturalReferences: [],
+              deliverables: ["memo"],
+            };
+          },
+          async chooseAgentAction() {
+            decisions++;
+
+            return decisions === 1
+              ? {
+                  name: "document.create",
+                  arguments: {
+                    title: "Provisional market memo",
+                    content:
+                      "This is a hypothesis-only memo. No current market sources or figures were retrieved.",
+                    fulfills: ["memo"],
+                  },
+                }
+              : { name: "agent.finish", arguments: {} };
+          },
+        },
+        research: { available: false, research: vi.fn() },
+        trace: vi.fn(),
+      });
+
+      expect(task.artifacts).toHaveLength(1);
+      expect(task.artifacts[0].evidenceIds).toEqual([]);
+      expect(result.status).toBe("partial");
+      expect(task.agentRun?.acceptance?.status).toBe("unknown");
+      expect(
+        task.agentRun?.acceptance?.checks.find((check) =>
+          check.requirement.includes("Public research is grounded"),
+        )?.status,
+      ).toBe("unknown");
+    } finally {
+      store.close();
+    }
+  });
+
   it("never fabricates an artifact without actual observations", async () => {
     const store = new SqliteTaskStore(":memory:");
     const task = freshTask("no-observations", "owner");

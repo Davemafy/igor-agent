@@ -147,6 +147,21 @@ export function createAgentToolRegistry(
   // The harness is opt-in. It adds a delegated research/planning capability,
   // not a second Qloo source or a replacement for Igor's approved artifacts.
   const trueforge = trueForgeConfig();
+  // Do not spend scarce model steps on actions the current workspace cannot
+  // perform. The executor still validates permissions and protected edits.
+  const revisableDocument = context.task.artifacts.some(
+    (artifact) =>
+      artifact.id.startsWith("agent-doc-") &&
+      !artifact.edited &&
+      !artifact.locked,
+  );
+  const priorWork =
+    context.task.artifacts.length > 0 ||
+    (context.task.agentRunHistory?.length ?? 0) > 0;
+  const experienceRequired =
+    (context.task.agentRun?.requirements?.experienceDomains?.length ?? 0) > 0 ||
+    (context.task.work?.decisions.length ?? 0) > 0 ||
+    (context.task.work?.documents.length ?? 0) > 0;
 
   return [
     tool(
@@ -632,7 +647,7 @@ export function createAgentToolRegistry(
       "Read current saved goal, relevant artifacts and prior evidence without modifying work.",
       empty,
       "read",
-      true,
+      priorWork,
       async (_args, ctx) => ({
         status: "ok",
         requests: 0,
@@ -653,7 +668,7 @@ export function createAgentToolRegistry(
       "Compose or selectively revise linked experience work in the existing task. Supply actions for goal, typed decisions (domain, rationaleKind, candidateIds, evidenceIds, dependencies, alternatives, estimatedCost or null), documents (fulfills and candidateIds), grounded budget/reduce-budget or alcohol-free restriction. Connect food/atmosphere/space to audience/music decisions. Never approve, reject, edit protected work or execute external actions. Independent critique runs automatically. Reuse current Qloo observations for budget-only changes.",
       experienceArguments,
       "internal",
-      true,
+      experienceRequired,
       async (args, ctx) => {
         const { actions } = experienceArguments.parse(args);
 
@@ -835,7 +850,7 @@ export function createAgentToolRegistry(
       "Revise an agent-created document by artifactId. Arguments: {artifactId,title,content,sourceIds,evidenceIds?}. Locked or manually edited work is protected.",
       reviseArguments,
       "internal",
-      true,
+      revisableDocument,
       async (args, ctx) => {
         const {
           artifactId,

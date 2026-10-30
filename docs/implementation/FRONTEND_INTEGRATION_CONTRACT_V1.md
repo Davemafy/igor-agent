@@ -1,93 +1,89 @@
-# Engine-to-frontend integration contract (v1)
+# Engine and frontend integration contract v1
 
-**Status:** implementation candidate, not a claim of live provider acceptance.
+**Status:** Implemented read-only contract. Live provider acceptance is pending.
 
-The new Igor frontend is developed independently from the agent branch. This
-contract exposes one **derived, owner-scoped read model** for the work the engine
-has *actually persisted*. It neither replaces the existing Task/WorkState
-schema nor introduces a new write path.
+Igor's frontend is developed independently from the engine.
+This contract exposes existing persisted work without a second state store.
+The server owns all IDs, revisions, authorization, evidence and execution.
 
 ## Read a workspace
 
-Authenticated endpoint:
+Endpoint: `GET /api/tasks/:workspaceId/snapshot`
 
-`GET /api/tasks/:workspaceId/snapshot`
+- Authentication: existing session cookie.
+- Missing session: HTTP 401.
+- Missing or inaccessible workspace: HTTP 404.
+- Content: `WorkspaceSnapshotSchema` from `src/core/workspace-snapshot.ts`.
+- Version: `schemaVersion: 1` and `X-Igor-Contract-Version: 1`.
+- Cache policy: `private, no-store`.
+- Concurrency: `revision` equals the canonical `task.brief.version`.
 
-- Existing session cookie required; 401 for missing session, 404 for an
-  inaccessible or missing workspace.
-- Response: `WorkspaceSnapshotSchema` in
-  `src/core/workspace-snapshot.ts`, `schemaVersion: 1`.
-- `Cache-Control: private, no-store`; `X-Igor-Contract-Version: 1`.
-- `revision` is the same authoritative optimistic concurrency version as
-  `task.brief.version`.
-- IDs are server-owned and unchanged from the canonical Task. A frontend must
-  not invent candidate IDs, evidence IDs, tool states or scores.
+## Semantic data
 
-The response contains these *semantic* sections, not screen-specific payloads:
-
-- `conversation`: canonical messages and focus for chat and recovery.
-- `participants`: brief-owned people and consented preferences.
+- `conversation`: saved messages and current conversation focus.
+- `participants`: brief-owned people and explicit preferences.
 - `discovery`: raw catalogue, evaluated candidates, entities and evidence.
-- `spatial`: grounded places and geocoded IDs for 2D/3D maps.
-- `plan`: selected candidates, schedule, and canonical WorkState.
-- `artifacts`: current documents and version history.
-- `execution`: agent run, history, trace, failures, and partial work.
+- `spatial`: real place candidates and geocoded place identifiers.
+- `plan`: current selections, schedule and canonical WorkState.
+- `artifacts`: editable outputs and historic versions.
+- `execution`: current run, archived runs, trace, warnings and errors.
 
-For maps, only IDs in `spatial.geocodedPlaceIds` are eligible to become real
-pins. Items with no coordinates, or illustrative sample items, must not become
-real-world map markers. An item with coordinates is **not** proof of opening
-hours, booking availability or price.
+Use the same snapshot across Home, Discover, Conversation, Plan, Maps,
+Create, Compare, Library, Details, Revise and Mobile.
+The server does not route by screen or output JSX.
 
-Cultural affinities, ranks and explanations retain their **original
-query/participant scope**. Do not promote aggregate query results into
-per-person scores. Evidence records include provenance and limitations.
-Likewise `plan.work.externalActions` currently contains **blocked**
-operations, not successful messages or bookings.
+## Evidence rules
 
-## Streaming and writes remain on the existing API
+- Never invent affinity, ratings, source IDs, prices or availability.
+- Cultural signals retain the provider's real query or participant scope.
+- An aggregate result is not a per-person taste score.
+- Evidence includes provenance, freshness and source limitations.
+- Only IDs in `spatial.geocodedPlaceIds` qualify as map pins.
+- A real coordinate does not prove opening hours or a bookable slot.
+- Illustrative sample places are not eligible as real map pins.
+- `plan.work.externalActions` currently records blocked actions.
+- A blocked action is not proof of a sent email or reservation.
 
-The snapshot is a read projection; it never executes the agent.
+## Streaming and mutations
 
-1. Use the existing authenticated `POST /api/tasks/:id/turn`, with a stable
-   `clientTurnId`, expected version, and user action.
-2. Consume SSE messages (`state`, `action`, `done`, `error`) and persist
-   the returned event cursor. Do not treat a transient stream frame as a
-   committed final artifact.
-3. After an interrupted connection, use the existing **GET** turn-journal
-   endpoint with `turnId` and `after` cursor. Do **not** resubmit the POST to
-   recover a completed action.
-4. Refresh this snapshot after a saved state change, including a revision.
-   Use `revision` to reject stale visual updates.
-5. Existing `work` and `artifact` turns remain authoritative for approvals,
-   edits and revisions. This snapshot is not a second client-side state store.
+Keep all writes on the existing authenticated task-turn endpoints.
+The snapshot is strictly read-only.
 
-## Compatibility guarantees
+1. POST to `/api/tasks/:id/turn` with a stable `clientTurnId`.
+2. Include the current optimistic concurrency version.
+3. Consume validated `state`, `action`, `done` and `error` SSE events.
+4. Retain the event cursor and follow saved state after revisions.
+5. On disconnection, GET the existing turn journal by ID and cursor.
+6. Never repeat the POST to recover a completed external operation.
 
-- This is additive. Existing `/api/tasks/:id` and turn endpoints remain
-  unchanged, as do the independent UI branch and persistence layout.
-- If the response evolves incompatibly, increment `schemaVersion` and retain
-  a v1 compatibility path or coordinate frontend adoption.
-- Do not remove fields from canonical provider evidence to make prettier cards.
-- The frontend renders semantic data with its own responsive components; the
-  engine does not generate JSX or route by screenshot/screen number.
-- Never infer that a feature is live merely because a suitable component can
-  render its record.
+Approvals, edits and revisions stay in the existing work and artifact turns.
+Reject stale visual updates based on the canonical revision.
+Keep evidence and artifacts linked by their existing identifiers.
 
-## Verification and remaining work
+## Compatibility
 
-`tests/unit/workspace-snapshot.test.ts` covers version compatibility,
-canonical version/ID retention, edited artifact stability, sample/unknown
-coordinates, empty evidence and blocked external actions.
+The contract is additive and leaves these APIs unchanged:
 
-This contract **does not** prove:
+- `/api/tasks/:id`
+- `/api/tasks/:id/turn`
 
-- Live Qloo-to-composed-artifact completion.
-- Healthy model/provider decisions.
-- External email sending or signed asynchronous inbound reply handling.
-- Google Maps/3D renderer implementation.
-- Authenticated end-to-end browser integration of the separate UI.
-- Railway storage and restoration behavior.
+An incompatible snapshot change requires a new schema version.
+Maintain v1 compatibility or coordinate adoption with the UI team.
+Neither the independent UI branch nor the SQLite store is changed.
 
-These require separate exact-commit deterministic CI, authorized live-provider
-runs and eventual frontend integration tests. Do not merge or deploy before
-those gates and owner review.
+## Verification
+
+See `tests/unit/workspace-snapshot.test.ts` for projection regressions.
+Tests cover versions, canonical IDs, edited artifacts, evidence provenance,
+unknown availability, raw place candidates and grounded map pins.
+
+Separate acceptance is still required for:
+
+- Live Qloo discovery through saved documents and revision.
+- Healthy real-model decisions and source-grounded research.
+- Authorized external writes, AgentMail delivery and inbound replies.
+- Authenticated browser integration with the independent UI.
+- Railway persistence, backups, rollback and production revision.
+
+Do not merge or deploy before exact-commit CI and owner review.
+Deterministic tests do not establish live provider or production readiness.

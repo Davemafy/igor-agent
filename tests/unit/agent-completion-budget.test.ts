@@ -16,33 +16,33 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
       offered: { name: string }[],
       observed: { tool: string }[],
     ) => {
-    if (observed.length === 0) {
-      return {
-        name: "web.search",
-        arguments: { query: "EV charging industry report" },
-      };
-    }
+      if (observed.length === 0) {
+        return {
+          name: "web.search",
+          arguments: { query: "EV charging industry report" },
+        };
+      }
 
-    if (observed.length === 1) {
-      expect(offered.map((tool) => tool.name).sort()).toEqual([
-        "document.create",
-        "experience.compose",
-      ]);
+      if (observed.length === 1) {
+        expect(offered.map((tool) => tool.name).sort()).toEqual([
+          "document.create",
+          "experience.compose",
+        ]);
 
-      return {
-        name: "document.create",
-        arguments: {
-          title: "EV charging industry report",
-          content:
-            "A provisional research brief using the observed source. " +
-            "Market figures and company claims require further verification.",
-          sourceIds: ["web-1"],
-          fulfills: ["report"],
-        },
-      };
-    }
+        return {
+          name: "document.create",
+          arguments: {
+            title: "EV charging industry report",
+            content:
+              "A provisional research brief using the observed source. " +
+              "Market figures and company claims require further verification.",
+            sourceIds: ["web-1"],
+            fulfills: ["report"],
+          },
+        };
+      }
 
-    return { name: "agent.finish", arguments: {} };
+      return { name: "agent.finish", arguments: {} };
     },
   );
 

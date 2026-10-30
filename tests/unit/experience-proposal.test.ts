@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { freshTask, sampleCatalogue } from "../../src/data/fixtures";
 import { culturalEvidenceId } from "../../src/core/cultural-evidence";
 import { saveExperienceProposal } from "../../src/core/experience-proposal";
+import { verifyAgentOutcome } from "../../src/core/agent-acceptance";
 import type { Task } from "../../src/core/contracts";
 
 function groundedTask() {
@@ -97,6 +98,69 @@ describe("compact general-purpose experience composition", () => {
     );
     expect(result.artifactIds).toContain("document:agent-run-proposal-doc-1");
     expect(task.work?.documents[0].status).toBe("proposed");
+  });
+
+  it("accepts Qloo-backed model decisions independently of document presentation links", () => {
+    const { task, evidenceId } = groundedTask();
+    task.entities.push({
+      id: "seed-artist",
+      original: "Seed Artist",
+      name: "Seed Artist",
+      type: "artist",
+      providerId: "seed-artist",
+      status: "resolved",
+      metadata: "Observed Qloo seed",
+      choices: [],
+    });
+    task.agentRun = {
+      id: "run-decision-coverage",
+      goal: "Plan an evidence-linked listening evening and save a proposal",
+      requirements: {
+        culturalDecision: true,
+        culturalReferences: ["Seed Artist"],
+        experienceDomains: ["music"],
+        deliverables: ["proposal"],
+      },
+      sources: [],
+      culturalSeedIds: ["seed-artist"],
+      outputArtifactIds: [],
+    } as Task["agentRun"];
+    const saved = saveExperienceProposal(
+      task,
+      {
+        title: "Cultural listening evening",
+        decisions: [
+          {
+            domain: "music",
+            value: "Invite listeners to explore the Qloo-associated artist",
+            rationale: "Selected from actual current Qloo observations",
+            candidateId: "observed-artist",
+          },
+        ],
+        documents: [
+          {
+            title: "Editable evening proposal",
+            content:
+              "A source-grounded listening proposal with discussion and an editable run of show. Actual prices, bookings and capacity remain unverified.",
+            fulfills: ["proposal"],
+          },
+        ],
+      },
+      "run-decision-coverage",
+    );
+    expect(saved.status).toBe("ok");
+    task.agentRun!.outputArtifactIds = saved.artifactIds;
+    // A document can be a presentation of a decision without duplicating
+    // candidate IDs: the model-chosen decision retains authoritative provenance.
+    task.work!.documents[0].candidateIds = [];
+    const result = verifyAgentOutcome(task, task.agentRun!.goal, true);
+    const cultural = result.checks.find((check) =>
+      check.requirement.startsWith("Current cultural decision"),
+    );
+
+    expect(task.work!.decisions[0].evidenceIds).toContain(evidenceId);
+    expect(cultural?.status).toBe("satisfied");
+    expect(result.status).toBe("satisfied");
   });
 
   it("requires model-selected evidence for each named cultural seed", () => {

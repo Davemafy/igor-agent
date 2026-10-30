@@ -123,6 +123,54 @@ it("repairs malformed proposals without repeating research", async () => {
   // The model read-only proposal was repeated; no research tool was invoked.
 });
 
+it("repairs a successful response with no native tool call once", async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({ status: "completed", output: [] }))
+    .mockResolvedValueOnce(
+      result("choose_agent_action", {
+        name: "web.search",
+        arguments: { query: "Current New York venues" },
+      }),
+    );
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+
+  const decision = await model.chooseAgentAction(
+    "Find real venues",
+    options,
+    [],
+    freshTask("empty-tool-repair", "owner"),
+  );
+
+  expect(decision).toEqual({
+    name: "web.search",
+    arguments: { query: "Current New York venues" },
+  });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  const repaired = JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(repaired.input.at(-1).content).toContain("exactly one valid tool");
+});
+
+it("stops after one native tool-call repair with no external action", async () => {
+  const fetcher = vi.fn<typeof fetch>(async () =>
+    Response.json({ status: "completed", output: [] }),
+  );
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+
+  await expect(
+    model.chooseAgentAction(
+      "Find real venues",
+      options,
+      [],
+      freshTask("empty-tool-blocked", "owner"),
+    ),
+  ).rejects.toMatchObject({
+    stage: "agent.decision",
+    reason: "invalid schema",
+  } satisfies Partial<ModelOutputFormatError>);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+
 it("classifies malformed proposals without recording raw output", async () => {
   const fetcher = vi.fn<typeof fetch>(async () =>
     result("choose_agent_action", "{truncated sensitive source contents"),

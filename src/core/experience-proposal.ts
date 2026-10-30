@@ -203,6 +203,7 @@ export function saveExperienceProposal(
   const actions: WorkAction[] = previousGoal
     ? []
     : [{ kind: "goal", id: goalId, title: parsed.title }];
+
   if (
     budget &&
     latestRequest.includes(budget.sourceText) &&

@@ -185,6 +185,24 @@ it("accepts single-action compose envelopes without discarding unsafe keys", () 
     ).toEqual({ actions: [action] });
   }
 
+  expect(
+    definition?.schema.parse(
+      normalizeAgentArguments("experience.compose", {
+        actions: action,
+        arguments: {},
+      }),
+    ),
+  ).toEqual({ actions: [action] });
+
+  expect(() =>
+    definition?.schema.parse(
+      normalizeAgentArguments("experience.compose", {
+        actions: action,
+        arguments: { send: true },
+      }),
+    ),
+  ).toThrow();
+
   expect(() =>
     definition?.schema.parse(
       normalizeAgentArguments("experience.compose", {

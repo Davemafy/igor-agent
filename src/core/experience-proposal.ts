@@ -142,7 +142,9 @@ export function saveExperienceProposal(
       domain: decision.domain,
       value: decision.value,
       rationale: decision.rationale,
-      rationaleKind: evidenceIds.length ? "cultural-evidence" : "interpretation",
+      rationaleKind: evidenceIds.length
+        ? "cultural-evidence"
+        : "interpretation",
       candidateIds: decision.candidateId ? [decision.candidateId] : [],
       evidenceIds,
       dependencies: [],
@@ -175,7 +177,8 @@ export function saveExperienceProposal(
     status: task.work!.critique.issues.some((issue) => issue.severity === "error")
       ? "partial"
       : "ok",
-    summary: `Saved proposed connected work: ${summary.slice(0, 360)}. All referenced cultural IDs were verified against this task.`,
+    summary:
+      `Saved proposed connected work: ${summary.slice(0, 360)}. All referenced cultural IDs were verified against this task.`,
     artifactIds,
   };
 }

@@ -347,12 +347,10 @@ export async function runUnifiedAgent(
       needsDeliverable &&
       canSave;
     const failedComplexComposition = run.steps.some(
-      (step) =>
-        step.tool === "experience.compose" && step.status === "blocked",
+      (step) => step.tool === "experience.compose" && step.status === "blocked",
     );
     const savePlainDocument =
-      saveBeforeLimit &&
-      (failedComplexComposition || index === maxSteps - 1);
+      saveBeforeLimit && (failedComplexComposition || index === maxSteps - 1);
     const savingTools = savePlainDocument
       ? ["document.create"]
       : ["document.create", "experience.compose"];

@@ -46,9 +46,11 @@ function context(): AgentToolContext {
 }
 
 describe("source observations are not re-issued as fresh evidence", () => {
-  it("does not return the entire prior source list when a web search is a duplicate", async () => {
+  it("does not return previous sources as new web results", async () => {
     const ctx = context();
-    const tool = createAgentToolRegistry(ctx).find((entry) => entry.name === "web.search");
+    const tool = createAgentToolRegistry(ctx).find(
+      (entry) => entry.name === "web.search",
+    );
     expect(tool).toBeDefined();
 
     const result = await tool!.execute({ query: "existing venue details" }, ctx);
@@ -60,7 +62,9 @@ describe("source observations are not re-issued as fresh evidence", () => {
 
   it("does not report old place links as newly discovered sources", async () => {
     const ctx = context();
-    const tool = createAgentToolRegistry(ctx).find((entry) => entry.name === "places.search");
+    const tool = createAgentToolRegistry(ctx).find(
+      (entry) => entry.name === "places.search",
+    );
     expect(tool).toBeDefined();
 
     const result = await tool!.execute({ query: "existing venue address" }, ctx);
@@ -85,7 +89,9 @@ describe("source observations are not re-issued as fresh evidence", () => {
       ],
     });
 
-    const tool = createAgentToolRegistry(ctx).find((entry) => entry.name === "web.search");
+    const tool = createAgentToolRegistry(ctx).find(
+      (entry) => entry.name === "web.search",
+    );
     const result = await tool!.execute({ query: "find a new source" }, ctx);
 
     expect(result.status).toBe("ok");

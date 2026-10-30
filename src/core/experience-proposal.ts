@@ -84,6 +84,61 @@ export function saveExperienceProposal(
     return evidence.length ? evidence : null;
   };
 
+  // A multi-reference cultural request is incomplete unless every named
+  // Qloo seed informs at least one model-chosen, evidence-backed decision.
+  // Do not manufacture decisions or weaken acceptance; instead return the
+  // exact eligible candidate IDs so the model can repair its proposal.
+  const requiredReferences =
+    task.agentRun?.requirements?.culturalDecision
+      ? (task.agentRun.requirements.culturalReferences ?? [])
+      : [];
+  const missingReferences: string[] = [];
+
+  for (const name of requiredReferences) {
+    const seed = task.entities.find(
+      (entity) =>
+        entity.status === "resolved" &&
+        entity.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+    );
+    const eligible = task.catalogue
+      .filter(
+        (candidate) =>
+          !candidate.sample &&
+          Object.entries(candidate.cultural ?? {}).some(([scope, signal]) => {
+            const citedEvidenceId = culturalEvidenceId(candidate, scope, signal);
+
+            return (
+              Boolean(seed?.providerId) &&
+              signal.seedIds.includes(seed!.providerId!) &&
+              task.evidence.some(
+                (evidence) =>
+                  evidence.id === citedEvidenceId &&
+                  evidence.kind === "cultural" &&
+                  evidence.source === "provider-returned" &&
+                  evidence.freshness === "current",
+              )
+            );
+          }),
+      )
+      .map((candidate) => candidate.id);
+
+    if (!parsed.decisions.some((decision) =>
+      eligible.includes(decision.candidateId ?? ""),
+    )) {
+      missingReferences.push(
+        `${name}: ${eligible.slice(0, 4).join(", ") || "no observed candidates"}`,
+      );
+    }
+  }
+
+  if (missingReferences.length) {
+    return {
+      status: "blocked",
+      summary: `Connect at least one Qloo-backed decision to each missing user taste reference using these observed candidate IDs: ${missingReferences.join("; ").slice(0, 700)}. No work was saved.`,
+      artifactIds: [],
+    };
+  }
+
   const cited = parsed.decisions.flatMap((decision) =>
     decision.candidateId ? [decision.candidateId] : [],
   );

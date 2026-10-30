@@ -4,6 +4,7 @@ import {
   saveExperienceProposal,
 } from "./experience-proposal";
 import { WorkActionSchema } from "./work-contracts";
+import { reconcileDeliverableLabels } from "./deliverable-labels";
 import { critiqueExperience } from "./experience-critique";
 import {
   evaluateCandidates,
@@ -812,11 +813,19 @@ export function createAgentToolRegistry(
             (id) => !ctx.task.catalogue.some((c) => c.id === id),
           )
         ) {
+          const observed = ctx.task.catalogue
+            .filter(
+              (candidate) =>
+                !candidate.sample &&
+                Object.keys(candidate.cultural ?? {}).length > 0,
+            )
+            .slice(0, 8)
+            .map((candidate) => candidate.id);
+
           return {
             status: "blocked",
             requests: 0,
-            summary:
-              "Document selected an unobserved cultural candidate. Seed IDs are not candidate IDs. Call qloo.discover to observe actual choices first; never invent candidateIds.",
+            summary: `Unobserved cultural candidate ID rejected. Seed IDs are not candidate IDs. Use only actual candidate IDs: ${observed.join(", ") || "none"}. For an explicitly provisional document, omit candidateIds rather than inventing a selection. No document saved.`,
           };
         }
 
@@ -885,10 +894,17 @@ export function createAgentToolRegistry(
           };
         }
 
+        const matchedFulfills = reconcileDeliverableLabels(
+          title,
+          content,
+          fulfills,
+          ctx.task.agentRun?.requirements?.deliverables ?? [],
+        );
+
         ctx.task.artifacts.push({
           id: `agent-doc-${ctx.runId}-${count + 1}`,
           kind: "research-report",
-          fulfills,
+          fulfills: matchedFulfills,
           candidateIds,
           title,
           content,

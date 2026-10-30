@@ -385,8 +385,7 @@ describe("unified tool orchestration", () => {
     }
   });
 
-
-  it("preserves a saved artifact but marks provider failure as incomplete", async () => {
+  it("keeps a saved artifact but flags provider failure", async () => {
     const store = new SqliteTaskStore(":memory:");
     const task = freshTask("provider-after-document", "owner");
     store.create(task);
@@ -418,7 +417,8 @@ describe("unified tool orchestration", () => {
                 arguments: {
                   title: "Useful proposal",
                   fulfills: ["proposal"],
-                  content: "A useful editable proposal with explicitly unverified assumptions.",
+                  content:
+                    "A useful editable proposal with explicitly unverified assumptions.",
                   sourceIds: [],
                 },
               };

@@ -340,7 +340,7 @@ it("routes an agent-created memo revision back into the persistent agent", async
     sources: [],
     warnings: [],
     outputArtifactIds: ["agent-doc-11111111-1111-4111-8111-111111111111-1"],
-  } as NonNullable<typeof task.agentRun>;
+  } as unknown as NonNullable<typeof task.agentRun>;
 
   expect(await model.routeConversation(text, task)).toEqual({
     intent: "research",

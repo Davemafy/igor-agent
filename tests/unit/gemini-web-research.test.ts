@@ -40,9 +40,7 @@ describe("Gemini grounded web research provider", () => {
 
     expect(response.status).toBe("partial");
     expect(response.sources).toHaveLength(1);
-    expect(response.sources[0].url).toBe(
-      sourceUrl,
-    );
+    expect(response.sources[0].url).toBe(sourceUrl);
     expect(response.sources[0].title).toBe("IEA report");
     const [endpoint, options] = transport.mock.calls[0];
     expect(String(endpoint)).toContain("gemini-2.5-flash:generateContent");

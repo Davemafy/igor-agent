@@ -54,6 +54,7 @@ export function preservePartialAgentWork(
       }
     }
   }
+
   const seenCandidates = new Set<string>();
   const uniqueCandidates = culturalCandidates.filter((candidate) => {
     if (seenCandidates.has(candidate.id)) {
@@ -61,6 +62,7 @@ export function preservePartialAgentWork(
     }
 
     seenCandidates.add(candidate.id);
+
     return true;
   });
 
@@ -73,6 +75,7 @@ export function preservePartialAgentWork(
 
     return normalized.trim().slice(0, 300);
   };
+
   const evidenceIds = [
     ...new Set([
       ...sourceEvidence.map((source) => source.id),

@@ -268,3 +268,51 @@ it("uses the exact document schema when it is the only allowed tool", async () =
   expect(choice.name).toBe("document.create");
   expect(fetcher).toHaveBeenCalledOnce();
 });
+
+it("uses the native connected-experience proposal schema when required", async () => {
+  const proposal = {
+    name: "experience.propose",
+    description: "Save connected cultural decisions and documents",
+    permission: "internal" as const,
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        title: { type: "string" },
+        decisions: { type: "array", items: { type: "object" } },
+        documents: { type: "array", items: { type: "object" } },
+      },
+      required: ["title", "decisions", "documents"],
+    },
+  };
+  const fetcher = vi.fn<typeof fetch>(async (_url, init) => {
+    const request = JSON.parse(String(init?.body));
+    const argumentSchema = request.tools[0].parameters.properties.arguments;
+
+    expect(argumentSchema.additionalProperties).toBe(false);
+    expect(argumentSchema.required).toEqual([
+      "title",
+      "decisions",
+      "documents",
+    ]);
+    expect(argumentSchema.properties.decisions.type).toBe("array");
+
+    return result("choose_agent_action", {
+      name: "experience.propose",
+      arguments: {
+        title: "A grounded cultural evening",
+        decisions: [],
+        documents: [],
+      },
+    });
+  });
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+  const chosen = await model.chooseAgentAction(
+    "Plan the cultural evening",
+    [proposal],
+    [],
+    freshTask("typed-cultural-proposal", "owner"),
+  );
+
+  expect(chosen.name).toBe("experience.propose");
+});

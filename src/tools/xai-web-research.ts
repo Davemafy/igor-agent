@@ -92,7 +92,8 @@ export class XaiWebResearchProvider implements ResearchProvider {
           status: "partial",
           sources: [],
           requests: 1,
-          warning: "Web search did not complete; no sources promoted to evidence.",
+          warning:
+            "Web search did not complete; no sources promoted to evidence.",
         };
       }
 

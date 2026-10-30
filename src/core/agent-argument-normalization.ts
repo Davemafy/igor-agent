@@ -13,7 +13,19 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
     return raw;
   }
 
-  const value = raw as Record<string, unknown>;
+  const outer = raw as Record<string, unknown>;
+  const nested = ["arguments", "document", "payload", "input"]
+    .map((key) => outer[key])
+    .find((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return false;
+      }
+
+      const candidate = item as Record<string, unknown>;
+
+      return "title" in candidate || "content" in candidate;
+    });
+  const value = (nested as Record<string, unknown> | undefined) ?? outer;
 
   const list = (field: string, maximum: number): unknown => {
     const original = value[field];
@@ -22,12 +34,22 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
       return original ? [original] : [];
     }
 
-    return Array.isArray(original)
-      ? original.filter((item) => typeof item === "string").slice(0, maximum)
-      : [];
+    if (!Array.isArray(original)) {
+      return [];
+    }
+
+    return original
+      .map((item) =>
+        item && typeof item === "object" && "id" in item
+          ? (item as { id: unknown }).id
+          : item,
+      )
+      .filter((item) => typeof item === "string")
+      .slice(0, maximum);
   };
 
-  let text: unknown = value.content;
+  let text: unknown =
+    value.content ?? value.markdown ?? value.body ?? value.text;
 
   if (Array.isArray(text) && text.every((part) => typeof part === "string")) {
     text = text.join("\n\n");

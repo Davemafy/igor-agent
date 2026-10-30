@@ -95,6 +95,36 @@ describe("versioned workspace snapshot integration contract", () => {
     expect(snapshot.spatial.places[2].place?.latitude).toBeNull();
   });
 
+  it("displays unevaluated Qloo catalogue places without inventing fit or availability", () => {
+    const task = freshTask("task-map", "owner");
+    const place = makePlace("newly-discovered", false, 40.70);
+    task.candidates = [];
+    task.catalogue = [{
+      id: place.id,
+      providerId: place.providerId,
+      name: place.name,
+      type: "place",
+      tags: [],
+      description: "Provider-discovered place",
+      cost: place.cost,
+      duration: place.duration,
+      available: null,
+      availabilitySource: "provider-returned",
+      location: "New York",
+      sample: false,
+      place: place.place,
+    }];
+
+    const snapshot = projectWorkspace(task);
+    expect(snapshot.discovery.catalogue).toHaveLength(1);
+    expect(snapshot.discovery.candidates).toHaveLength(0);
+    expect(snapshot.spatial.places.map((result) => result.id)).toEqual([
+      "newly-discovered",
+    ]);
+    expect(snapshot.spatial.geocodedPlaceIds).toEqual(["newly-discovered"]);
+    expect(snapshot.spatial.places[0].available).toBeNull();
+  });
+
   it("does not claim evidence, affinity, availability, or external-action success", () => {
     const task = freshTask("task-3", "owner");
     task.status = "partial";

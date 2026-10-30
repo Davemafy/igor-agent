@@ -129,7 +129,7 @@ export function createAgentToolRegistry(
     description: string,
     schema: z.ZodType,
     permission: AgentToolPermission,
-    available: boolean,
+    available: boolean | (() => boolean),
     execute: (
       args: unknown,
       ctx: AgentToolContext,
@@ -139,7 +139,9 @@ export function createAgentToolRegistry(
     description,
     schema,
     permission,
-    available,
+    get available() {
+      return typeof available === "function" ? available() : available;
+    },
     version: 1,
     execute,
   });
@@ -149,16 +151,17 @@ export function createAgentToolRegistry(
   const trueforge = trueForgeConfig();
   // Do not spend scarce model steps on actions the current workspace cannot
   // perform. The executor still validates permissions and protected edits.
-  const revisableDocument = context.task.artifacts.some(
-    (artifact) =>
-      artifact.id.startsWith("agent-doc-") &&
-      !artifact.edited &&
-      !artifact.locked,
-  );
-  const priorWork =
+  const revisableDocument = () =>
+    context.task.artifacts.some(
+      (artifact) =>
+        artifact.id.startsWith("agent-doc-") &&
+        !artifact.edited &&
+        !artifact.locked,
+    );
+  const priorWork = () =>
     context.task.artifacts.length > 0 ||
     (context.task.agentRunHistory?.length ?? 0) > 0;
-  const experienceRequired =
+  const experienceRequired = () =>
     (context.task.agentRun?.requirements?.experienceDomains?.length ?? 0) > 0 ||
     (context.task.work?.decisions.length ?? 0) > 0 ||
     (context.task.work?.documents.length ?? 0) > 0;

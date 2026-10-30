@@ -46,7 +46,11 @@ try {
     const done = events.findLast((event) => event.type === "done");
 
     if (!done) {
-      throw Error("turn_incomplete");
+      const problem = events.findLast((event) => event.type === "error");
+      const terminalCode = String(problem?.code ?? "stream-ended")
+        .replace(/[^a-z-]/g, "")
+        .slice(0, 60);
+      throw Error(`turn_${terminalCode}_after_${events.length}_events`);
     }
 
     task = done.task;
@@ -66,6 +70,16 @@ try {
     status: workspace.agentRun?.status ?? workspace.status,
     acceptance: workspace.agentRun?.acceptance?.status ?? null,
     modelCalls: workspace.agentRun?.usage?.modelCalls ?? null,
+    warnings: (workspace.agentRun?.warnings ?? []).slice(-6).map((value) =>
+      value.slice(0, 240),
+    ),
+    failureCategories: (workspace.trace ?? [])
+      .filter((entry) => /error|rejected/.test(entry.action))
+      .slice(-6)
+      .map((entry) => ({
+        action: entry.action,
+        category: entry.outcome.slice(0, 120),
+      })),
     steps: (workspace.agentRun?.steps ?? []).map((step) => ({
       tool: step.tool,
       status: step.status,

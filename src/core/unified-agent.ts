@@ -354,6 +354,14 @@ export async function runUnifiedAgent(
       Boolean(run.requirements?.culturalDecision) &&
       culturalReady &&
       tools.some((tool) => tool.name === "experience.propose" && tool.available);
+    // Before the first connected experience exists, use the compact
+    // evidence-bound compiler instead of a deeply nested action graph.
+    // Follow-ups with existing connected work retain granular revision tools.
+    const firstExperienceProposal =
+      canProposeExperience &&
+      !task.work?.activeGoalId &&
+      !hasRequestedOutput &&
+      !run.steps.some((step) => step.tool === "experience.propose");
     const savePlainDocument =
       !hasRequestedOutput &&
       needsDeliverable &&
@@ -410,6 +418,7 @@ export async function runUnifiedAgent(
           )
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
+        (!firstExperienceProposal || t.name === "experience.propose") &&
         !(researchFirst && t.name !== "web.search") &&
         !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
         !(mustContinue && t.name === "agent.finish"),

@@ -472,27 +472,14 @@ export async function runUnifiedAgent(
     try {
       args = selected.schema.parse(selection.arguments);
     } catch (error) {
-      // Expose only schema paths/codes, never raw model arguments or provider
-      // text. A structured hint lets the next model decision fix the shape.
-      const allowedFields = new Set([
-        "actions", "kind", "id", "title", "content", "dependencies",
-        "evidenceIds", "candidateIds", "sourceIds", "fulfills",
-        "estimatedCost", "rationale", "rationaleKind", "domain", "value",
-        "alternatives", "name", "amount", "budget", "schedule",
-      ]);
-      const schemaIssues = error instanceof z.ZodError
-        ? error.issues.slice(0, 6).map((issue) => {
-            const path = issue.path.map((part) =>
-              typeof part === "number"
-                ? "item"
-                : allowedFields.has(String(part))
-                  ? String(part)
-                  : "field",
-            ).join(".");
-
-            return `${path || "arguments"}:${issue.code}`;
-          }).join(", ").slice(0, 180)
-        : "unclassified";
+      // Only Zod issue codes are reported, never the provider's raw content.
+      const schemaIssues =
+        error instanceof z.ZodError
+          ? error.issues
+              .slice(0, 6)
+              .map((issue) => issue.code)
+              .join(", ")
+          : "unclassified";
 
       run.warnings.push(`Invalid arguments for ${selected.name}`);
       trace(

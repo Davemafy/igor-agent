@@ -487,7 +487,12 @@ export class ToolCallingModel implements ModelProvider {
         text,
       );
 
-    if (!recovery && artifactRevision && route.intent !== "research" && route.intent !== "agent") {
+    if (
+      !recovery &&
+      artifactRevision &&
+      route.intent !== "research" &&
+      route.intent !== "agent"
+    ) {
       return { intent: "research" as const, query: text.slice(0, 300) };
     }
 

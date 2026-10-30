@@ -121,9 +121,7 @@ it("saves a plain document after a complex composition is rejected", async () =>
         return { name: "experience.compose", arguments: {} };
       }
 
-      expect(offered.map((tool) => tool.name)).toEqual([
-        "document.create",
-      ]);
+      expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
 
       return {
         name: "document.create",

@@ -187,9 +187,9 @@ export function verifyAgentOutcome(
       ),
     );
 
-  for (const domain of connectedExperience
-    ? (requirements?.experienceDomains ?? [])
-    : []) {
+  const domains = connectedExperience ? requirements?.experienceDomains ?? [] : [];
+
+  for (const domain of domains) {
     const matching =
       task.work?.decisions.filter(
         (d) =>

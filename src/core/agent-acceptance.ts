@@ -175,7 +175,16 @@ export function verifyAgentOutcome(
     );
   }
 
-  for (const domain of requirements?.experienceDomains ?? []) {
+  // Experience-domain slots are meaningful only for an actual experience
+  // workspace. A research memo may discuss risk and budget without requiring
+  // synthetic venue/schedule/experience decisions to count as complete.
+  const connectedExperience =
+    Boolean(requirements?.culturalDecision) ||
+    Boolean(task.work?.activeGoalId);
+
+  for (const domain of connectedExperience
+    ? (requirements?.experienceDomains ?? [])
+    : []) {
     const matching =
       task.work?.decisions.filter(
         (d) =>

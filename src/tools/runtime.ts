@@ -90,6 +90,25 @@ export function runtimeModelProvider(mode: Task["mode"]) {
     });
   }
 
+  // Explicit opt-in: a second, independently served Gemini model can
+  // recover read-only reasoning when the primary Gemini model is saturated.
+  // It shares the configured credential but does not replay external actions.
+  const alternateGemini = process.env.GEMINI_FALLBACK_MODEL;
+
+  if (
+    process.env.GEMINI_API_KEY &&
+    alternateGemini &&
+    alternateGemini !== (process.env.GEMINI_MODEL || "gemini-3.5-flash-lite")
+  ) {
+    configured.push({
+      id: "gemini-backup",
+      model: new ResponsiveGeminiModel(
+        process.env.GEMINI_API_KEY,
+        alternateGemini,
+      ),
+    });
+  }
+
   if (process.env.LLM_API_KEY && process.env.LLM_MODEL) {
     configured.push({
       id: "openai",
@@ -112,13 +131,23 @@ export function runtimeModelProvider(mode: Task["mode"]) {
     }
 
     configured.unshift(...configured.splice(index, 1));
+
+    if (preference === "gemini") {
+      const backupIndex = configured.findIndex(
+        (item) => item.id === "gemini-backup",
+      );
+
+      if (backupIndex > 1) {
+        configured.splice(1, 0, ...configured.splice(backupIndex, 1));
+      }
+    }
   }
 
   if (configured.length >= 2) {
-    // Use up to three explicitly configured providers, never a fixture.
+    // Use up to four explicitly configured providers, never a fixture.
     // Nested FallbackModel instances retain their healthy selection for
     // the remainder of the turn without replaying external tool actions.
-    const choices = configured.slice(0, 3).map((item) => item.model);
+    const choices = configured.slice(0, 4).map((item) => item.model);
     let fallback = choices[choices.length - 1];
 
     for (let i = choices.length - 2; i >= 0; i--) {

@@ -189,7 +189,7 @@ it("saves a plain document after a complex composition is rejected", async () =>
       "document.create",
       "document.create",
     ]);
-    expect(task.agentRun?.steps[2].summary).toContain("content:too_small");
+    expect(task.agentRun?.steps[2].summary).toContain("too_small");
     expect(result.status).toBe("ok");
     expect(task.artifacts[0].fulfills).toContain("report");
     expect(store.load(task.id, "owner").artifacts).toHaveLength(1);

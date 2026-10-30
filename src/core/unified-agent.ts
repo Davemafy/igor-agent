@@ -354,6 +354,7 @@ export async function runUnifiedAgent(
       Boolean(run.requirements?.culturalDecision) &&
       culturalReady &&
       tools.some((tool) => tool.name === "experience.propose" && tool.available);
+
     // Before the first connected experience exists, use the compact
     // evidence-bound compiler instead of a deeply nested action graph.
     // Follow-ups with existing connected work retain granular revision tools.
@@ -413,9 +414,7 @@ export async function runUnifiedAgent(
         (t.permission === "read" || t.permission === "internal") &&
         !(
           waitingForCulture &&
-          ["document.create", "experience.compose", "experience.propose"].includes(
-            t.name,
-          )
+          ["document.create", "experience.compose", "experience.propose"].includes(t.name)
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
         (!firstExperienceProposal || t.name === "experience.propose") &&

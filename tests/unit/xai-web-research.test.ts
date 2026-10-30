@@ -38,9 +38,11 @@ describe("xAI grounded web source adapter", () => {
       "https://www.iea.org/reports/global-ev-outlook-2026",
       "https://example.org/public",
     ]);
-    expect(result.sources.every((source) => source.snippet.includes("Verify"))).toBe(
-      true,
+    const sourceExplanationsAreUnverified = result.sources.every((source) =>
+      source.snippet.includes("Verify"),
     );
+
+    expect(sourceExplanationsAreUnverified).toBe(true);
     expect(transport).toHaveBeenCalledOnce();
     const [url, options] = transport.mock.calls[0];
     expect(url).toBe("https://api.x.ai/v1/responses");

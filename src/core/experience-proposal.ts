@@ -81,8 +81,7 @@ export function saveExperienceProposal(
 
     return {
       status: "blocked",
-      summary:
-        `Proposed estimates total ${estimatedTotal}, exceeding the user budget ${budget.amount} by ${overage}. Submit a corrected experience.propose with a total at or below the ceiling. Unknown vendor costs must remain null, not fabricated or called free. No work saved.`,
+      summary: `Proposed estimates total ${estimatedTotal}, exceeding the user budget ${budget.amount} by ${overage}. Submit a corrected experience.propose with a total at or below the ceiling. Unknown vendor costs must remain null, not fabricated or called free. No work saved.`,
       artifactIds: [],
     };
   }

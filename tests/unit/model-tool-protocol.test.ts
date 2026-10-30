@@ -235,3 +235,36 @@ it("repairs research synthesis with existing source IDs", async () => {
   expect(output.text).toContain("unknown");
   expect(fetcher).toHaveBeenCalledTimes(2);
 });
+
+it("uses the exact document schema when it is the only allowed tool", async () => {
+  const fetcher = vi.fn<typeof fetch>(async (_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    const parameters = body.tools[0].parameters.properties.arguments;
+
+    expect(parameters.type).toBe("object");
+    expect(parameters.additionalProperties).toBe(false);
+    expect(parameters.properties.title.type).toBe("string");
+    expect(parameters.properties.sourceIds.type).toBe("array");
+    expect(parameters.properties.sourceIds.items.type).toBe("string");
+
+    return result("choose_agent_action", {
+      name: "document.create",
+      arguments: {
+        title: "Sourced review",
+        content: "Observed evidence and remaining unknowns.",
+        sourceIds: [],
+      },
+    });
+  });
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+
+  const choice = await model.chooseAgentAction(
+    "Save the researched report",
+    [options[1]],
+    [],
+    freshTask("single-document", "owner"),
+  );
+
+  expect(choice.name).toBe("document.create");
+  expect(fetcher).toHaveBeenCalledOnce();
+});

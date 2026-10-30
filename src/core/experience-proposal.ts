@@ -174,11 +174,12 @@ export function saveExperienceProposal(
   task.work!.critique = critiqueExperience(task);
 
   return {
-    status: task.work!.critique.issues.some((issue) => issue.severity === "error")
+    status: task.work!.critique.issues.some(
+      (issue) => issue.severity === "error",
+    )
       ? "partial"
       : "ok",
-    summary:
-      `Saved proposed connected work: ${summary.slice(0, 360)}. All referenced cultural IDs were verified against this task.`,
+    summary: `Saved proposed connected work: ${summary.slice(0, 360)}. All referenced cultural IDs were verified against this task.`,
     artifactIds,
   };
 }

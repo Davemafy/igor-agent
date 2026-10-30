@@ -374,6 +374,18 @@ export async function runUnifiedAgent(
       index < maxSteps - 1 &&
       ((waitingForCulture && culturalToolsAvailable) ||
         (needsDeliverable && !hasRequestedOutput && canSave));
+    // Explicit public research requires a genuine observation before a
+    // document proposal. The model still chooses the search query; it cannot
+    // treat a hypothetical memo as completed external investigation.
+    const researchFirst =
+      !run.requirements?.culturalDecision &&
+      /\\b(?:research|investigate|fact[ -]?check|source[ -]?backed|verify)\\b/i.test(
+        input.goal,
+      ) &&
+      input.research.available !== false &&
+      !run.sources.length &&
+      !run.steps.some((step) => step.tool === "web.search") &&
+      index < maxSteps - 2;
 
     const available = tools.filter(
       (t) =>
@@ -385,6 +397,7 @@ export async function runUnifiedAgent(
           ["document.create", "experience.compose"].includes(t.name)
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
+        !(researchFirst && t.name !== "web.search") &&
         !(mustContinue && t.name === "agent.finish"),
     );
     // Enforce prerequisites from explicit, user-supplied cultural anchors.

@@ -207,7 +207,7 @@ export function createAgentToolRegistry(
           requests: result.requests,
           summary:
             `Web search returned ${result.sources.length} leads, ${added} new unique sources. ${result.warning ?? ""}`.trim(),
-          sources: ctx.sources.slice(-added || undefined),
+          sources: added > 0 ? ctx.sources.slice(-added) : [],
         };
       },
     ),
@@ -332,7 +332,7 @@ export function createAgentToolRegistry(
           status: result.places.length ? "ok" : "partial",
           requests: result.requests,
           summary: `Google Places returned ${result.places.length} places; ${added} sourced map links.`,
-          sources: ctx.sources.slice(-added || undefined),
+          sources: added > 0 ? ctx.sources.slice(-added) : [],
         };
       },
     ),

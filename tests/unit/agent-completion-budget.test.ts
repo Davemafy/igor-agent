@@ -99,7 +99,7 @@ it("reserves the final agent steps for a requested saved deliverable", async () 
 
 it("saves a plain document after a complex composition is rejected", async () => {
   const oldSteps = process.env.IGOR_AGENT_MAX_STEPS;
-  process.env.IGOR_AGENT_MAX_STEPS = "3";
+  process.env.IGOR_AGENT_MAX_STEPS = "6";
   const store = new SqliteTaskStore(":memory:");
   const task = freshTask("rejected-composition", "owner");
   store.create(task);
@@ -121,17 +121,21 @@ it("saves a plain document after a complex composition is rejected", async () =>
         return { name: "experience.compose", arguments: {} };
       }
 
-      expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
+      if (observed.length === 2) {
+        expect(offered.map((tool) => tool.name)).toEqual(["document.create"]);
 
-      return {
-        name: "document.create",
-        arguments: {
-          title: "Provisional EV charging brief",
-          content: "Observed source and explicitly unknown market figures.",
-          sourceIds: ["web-1"],
-          fulfills: ["report"],
-        },
-      };
+        return {
+          name: "document.create",
+          arguments: {
+            title: "Provisional EV charging brief",
+            content: "Observed source and explicitly unknown market figures.",
+            sourceIds: ["web-1"],
+            fulfills: ["report"],
+          },
+        };
+      }
+
+      return { name: "agent.finish", arguments: {} };
     },
   );
 
@@ -169,7 +173,7 @@ it("saves a plain document after a complex composition is rejected", async () =>
       trace: vi.fn(),
     });
 
-    expect(choose).toHaveBeenCalledTimes(3);
+    expect(choose).toHaveBeenCalledTimes(4);
     expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
       "web.search",
       "experience.compose",

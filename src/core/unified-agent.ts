@@ -368,6 +368,10 @@ export async function runUnifiedAgent(
     const failedComplexComposition = run.steps.some(
       (step) => step.tool === "experience.compose" && step.status === "blocked",
     );
+    const rejectedProposals = run.steps.filter(
+      (step) => step.tool === "experience.propose" && step.status === "blocked",
+    ).length;
+    const repeatedProposalFailures = rejectedProposals >= 2;
     const canProposeExperience =
       Boolean(run.requirements?.culturalDecision) &&
       culturalReady &&
@@ -382,8 +386,12 @@ export async function runUnifiedAgent(
       !hasRequestedOutput &&
       needsDeliverable &&
       canSave &&
-      (!canProposeExperience || index === maxSteps - 1) &&
-      (failedComplexComposition || (saveBeforeLimit && index === maxSteps - 1));
+      (!canProposeExperience ||
+        repeatedProposalFailures ||
+        index === maxSteps - 1) &&
+      (repeatedProposalFailures ||
+        failedComplexComposition ||
+        (saveBeforeLimit && index === maxSteps - 1));
     const forceSaving = saveBeforeLimit || savePlainDocument;
     const savingTools = savePlainDocument
       ? ["document.create"]
@@ -416,9 +424,6 @@ export async function runUnifiedAgent(
           !artifact.edited,
       ) &&
       tools.some((tool) => tool.name === "document.revise" && tool.available);
-    const rejectedProposals = run.steps.filter(
-      (step) => step.tool === "experience.propose" && step.status === "blocked",
-    ).length;
     const mustPropose =
       canProposeExperience &&
       (run.requirements?.deliverables.length ?? 0) > 1 &&
@@ -465,6 +470,7 @@ export async function runUnifiedAgent(
         !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
         !(mustContinue && t.name === "agent.finish") &&
         (!directArtifactRevision || t.name === "document.revise") &&
+        !(repeatedProposalFailures && t.name === "experience.propose") &&
         (!mustPropose || t.name === "experience.propose"),
     );
     // Enforce prerequisites from explicit, user-supplied cultural anchors.

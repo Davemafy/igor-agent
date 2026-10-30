@@ -1,0 +1,93 @@
+import { expect, it, vi } from "vitest";
+import { runUnifiedAgent } from "../../src/core/unified-agent";
+import { freshTask } from "../../src/data/fixtures";
+import { SqliteTaskStore } from "../../src/data/store";
+
+it("research tasks require an observed public source before document creation", async () => {
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("research-first", "owner");
+  store.create(task);
+  const choices = vi.fn(
+    async (
+      _goal: string,
+      tools: { name: string }[],
+      observations: { tool: string }[],
+    ) => {
+      if (observations.length === 0) {
+        expect(tools.map((tool) => tool.name)).toEqual(["web.search"]);
+
+        return {
+          name: "web.search",
+          arguments: { query: "electric vehicle charging infrastructure" },
+        };
+      }
+
+      if (observations.length === 1) {
+        expect(tools.some((tool) => tool.name === "document.create")).toBe(
+          true,
+        );
+
+        return {
+          name: "document.create",
+          arguments: {
+            title: "Provisional industry report",
+            content:
+              "A public source discusses charging infrastructure. Exact market share, prices and forecasts remain unverified.",
+            sourceIds: ["web-1"],
+            fulfills: ["report"],
+          },
+        };
+      }
+
+      return { name: "agent.finish", arguments: {} };
+    },
+  );
+
+  try {
+    const result = await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Research electric vehicle charging infrastructure and save a report.",
+      model: {
+        interpret: vi.fn(),
+        interpretAgentRequirements: async () => ({
+          culturalDecision: false,
+          culturalReferences: [],
+          deliverables: ["report"],
+        }),
+        chooseAgentAction: choices,
+      },
+      research: {
+        available: true,
+        research: vi.fn(),
+        searchOnce: async () => ({
+          status: "partial" as const,
+          requests: 1,
+          sources: [
+            {
+              id: "official-result",
+              title: "Real encyclopedia background",
+              url: "https://en.wikipedia.org/wiki/Charging_station",
+              snippet: "Charging station overview",
+              retrievedAt: "2026-10-30T00:00:00.000Z",
+            },
+          ],
+          warning: "Background only, not up-to-date industry figures.",
+        }),
+      },
+      trace: vi.fn(),
+    });
+
+    expect(result.status).toBe("ok");
+    expect(task.agentRun?.steps.map((step) => step.tool)).toEqual([
+      "web.search",
+      "document.create",
+      "agent.finish",
+    ]);
+    expect(task.artifacts[0].evidenceIds).toHaveLength(1);
+    expect(store.load(task.id, "owner").artifacts).toEqual(task.artifacts);
+  } finally {
+    store.close();
+  }
+});

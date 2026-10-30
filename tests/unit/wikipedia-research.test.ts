@@ -2,8 +2,11 @@ import { expect, it, vi } from "vitest";
 import { WikipediaResearchProvider } from "../../src/tools/wikipedia-research";
 
 it("only returns actually retrieved Wikipedia entries as provisional leads", async () => {
-  const transport = vi.fn<typeof fetch>(async (url) => {
+  const transport = vi.fn<typeof fetch>(async (url, init) => {
     const parsed = new URL(String(url));
+    const headers = new Headers(init?.headers);
+
+    expect(headers.get("User-Agent")).toContain("Igor/0.1");
 
     expect(parsed.origin).toBe("https://en.wikipedia.org");
     expect(parsed.pathname).toBe("/w/rest.php/v1/search/page");

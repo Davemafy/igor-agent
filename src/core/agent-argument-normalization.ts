@@ -27,15 +27,28 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
       const key = keys[0];
       const value = outer[key];
 
-      if (key === "actions" && value && typeof value === "object" && !Array.isArray(value)) {
+      if (
+        key === "actions" &&
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         return { actions: [value] };
       }
 
-      if ((key === "workActions" || key === "operations") && Array.isArray(value)) {
+      if (
+        (key === "workActions" || key === "operations") &&
+        Array.isArray(value)
+      ) {
         return { actions: value };
       }
 
-      if ((key === "payload" || key === "input") && value && typeof value === "object" && !Array.isArray(value)) {
+      if (
+        (key === "payload" || key === "input") &&
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         const nested = value as Record<string, unknown>;
 
         if (Array.isArray(nested.actions) && Object.keys(nested).length === 1) {

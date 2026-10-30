@@ -136,11 +136,15 @@ try {
   const updatedMemo = documents(reloaded).find(
     (doc) => doc.id === initialMemo?.id,
   );
+  const originalCitations = new Set(initialMemo.evidenceIds);
+  const citationsPreserved = Boolean(
+    updatedMemo?.evidenceIds.some((id) => originalCitations.has(id)),
+  );
   const actualRevision =
     Boolean(updatedMemo) &&
     updatedMemo.content !== initialMemo.content &&
     updatedMemo.content.length > 250 &&
-    updatedMemo.evidenceIds.some((id) => initialMemo.evidenceIds.includes(id)) &&
+    citationsPreserved &&
     updatedMemo.version > initialMemo.version;
   const revisionToolExecuted = (second.agentRun?.steps ?? []).some(
     (step) => step.tool === "document.revise" && step.status === "ok",
@@ -148,9 +152,7 @@ try {
   report.revisionVerified = {
     sameArtifact: updatedMemo?.id === initialMemo?.id,
     contentChanged: updatedMemo?.content !== initialMemo?.content,
-    citationsPreserved: updatedMemo?.evidenceIds.some((id) =>
-      initialMemo?.evidenceIds.includes(id),
-    ) ?? false,
+    citationsPreserved,
     revisionToolExecuted,
   };
   report.passed =

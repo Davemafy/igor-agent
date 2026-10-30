@@ -471,7 +471,27 @@ export async function runUnifiedAgent(
 
     try {
       args = selected.schema.parse(selection.arguments);
-    } catch {
+    } catch (error) {
+      // Expose only schema paths/codes, never raw model arguments or provider
+      // text. A structured hint lets the next model decision fix the shape.
+      const allowedFields = new Set([
+        "actions", "kind", "id", "title", "content", "dependencies",
+        "evidenceIds", "candidateIds", "sourceIds", "fulfills",
+        "estimatedCost", "rationale", "rationaleKind", "domain", "value",
+        "alternatives", "name", "amount", "budget", "schedule",
+      ]);
+      const schemaIssues = error instanceof z.ZodError
+        ? error.issues.slice(0, 6).map((issue) => {
+            const path = issue.path.map((part) =>
+              typeof part === "number"
+                ? "item"
+                : allowedFields.has(String(part))
+                  ? String(part)
+                  : "field",
+            ).join(".");
+            return `${path || "arguments"}:${issue.code}`;
+          }).join(", ").slice(0, 180)
+        : "unclassified";
       run.warnings.push(`Invalid arguments for ${selected.name}`);
       trace(
         "agent.action.blocked",
@@ -488,7 +508,7 @@ export async function runUnifiedAgent(
           status: "blocked",
           requests: 0,
           summary:
-            "Arguments rejected before execution. Correct the arguments using this tool's declared inputSchema. No tool was executed.",
+            `Arguments rejected (${schemaIssues}). Correct this tool's inputSchema fields. No tool executed.`,
           at: now(),
           durationMs: 0,
         });

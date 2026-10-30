@@ -323,30 +323,29 @@ export async function runUnifiedAgent(
         evidence.source === "provider-returned" &&
         evidence.freshness === "current",
     );
-    const culturalObserved = Boolean(
-      hasObservedSeed && hasCurrentCulturalEvidence,
-    );
+    const culturalObserved = !!hasObservedSeed && hasCurrentCulturalEvidence;
     const waitingForCulture =
       run.requirements?.culturalDecision &&
       !culturalReady &&
       !culturalObserved &&
       !discoveryFailed;
-    const hasRequestedOutput = Boolean(
-      run.outputArtifactIds?.length ||
-        task.artifacts.some((artifact) =>
-          artifact.id.startsWith(`agent-doc-${run.id}`),
-        ),
-    );
+    const hasRequestedOutput =
+      (run.outputArtifactIds?.length ?? 0) > 0 ||
+      task.artifacts.some((artifact) =>
+        artifact.id.startsWith(`agent-doc-${run.id}`),
+      );
+    const needsDeliverable =
+      !!run.requirements?.deliverables.length ||
+      !!run.requirements?.experienceDomains?.length;
+    const canSave =
+      culturalObserved ||
+      run.sources.length > 0 ||
+      !run.requirements?.culturalDecision;
     const saveBeforeLimit =
       index >= maxSteps - 2 &&
       !hasRequestedOutput &&
-      Boolean(
-        run.requirements?.deliverables.length ||
-          run.requirements?.experienceDomains?.length,
-      ) &&
-      (culturalObserved ||
-        run.sources.length > 0 ||
-        !run.requirements?.culturalDecision);
+      needsDeliverable &&
+      canSave;
 
     const available = tools.filter(
       (t) =>

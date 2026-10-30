@@ -1,3 +1,4 @@
+import { normalizeAgentArguments } from "./agent-argument-normalization";
 import { recordArtifactChanges } from "./preserve-artifacts";
 import { preservePartialAgentWork } from "./agent-recovery-artifact";
 import { applyConversationActions } from "./conversation";
@@ -619,7 +620,9 @@ export async function runUnifiedAgent(
     let args: unknown;
 
     try {
-      args = selected.schema.parse(selection.arguments);
+      args = selected.schema.parse(
+        normalizeAgentArguments(selected.name, selection.arguments),
+      );
     } catch (error) {
       // Only Zod issue codes are reported, never the provider's raw content.
       const schemaIssues =

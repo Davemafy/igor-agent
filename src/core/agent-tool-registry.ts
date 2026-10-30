@@ -915,12 +915,42 @@ export function createAgentToolRegistry(
           };
         }
 
-        const sourceEvidence = sourceIds.map(
-          (id) => `${ctx.task.id}:agent:${ctx.runId}:${id}`,
-        );
+        // A follow-up may cite the current run's web IDs or evidence already
+        // attached to this exact artifact. Historical citations are not new
+        // sources; reuse only their existing, current and persisted evidence.
+        const trusted = [
+          ...ctx.sources.map((source) => ({
+            id: `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
+            aliases: [
+              source.id,
+              source.url,
+              `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
+            ],
+          })),
+          ...ctx.task.evidence
+            .filter(
+              (e) =>
+                artifact.evidenceIds.includes(e.id) &&
+                e.kind === "practical" &&
+                e.freshness === "current",
+            )
+            .map((e) => ({
+              id: e.id,
+              aliases: [e.id, e.reference, e.id.split(":").at(-1) ?? ""],
+            })),
+        ];
+        const sourceEvidence = sourceIds.map((reference) => {
+          const matches = new Set(
+            trusted
+              .filter((entry) => entry.aliases.includes(reference))
+              .map((entry) => entry.id),
+          );
+
+          return matches.size === 1 ? [...matches][0] : null;
+        });
 
         if (
-          sourceIds.some((id) => !ctx.sources.some((s) => s.id === id)) ||
+          sourceEvidence.some((id) => !id) ||
           evidenceIds.some(
             (id) =>
               !ctx.task.evidence.some(
@@ -931,12 +961,13 @@ export function createAgentToolRegistry(
           return {
             status: "blocked",
             requests: 0,
-            summary: "Revision cited unobserved evidence.",
+            summary:
+              "Revision cited unobserved evidence. Reuse the saved artifact's existing evidence IDs or this run's observed source IDs.",
           };
         }
 
-        artifact.fulfills = fulfills;
-        artifact.candidateIds = candidateIds;
+        artifact.fulfills = fulfills ?? artifact.fulfills;
+        artifact.candidateIds = candidateIds ?? artifact.candidateIds;
         artifact.title = title;
         artifact.content = content;
         artifact.version = ctx.task.brief.version;
@@ -944,7 +975,7 @@ export function createAgentToolRegistry(
           ...new Set([
             ...artifact.evidenceIds,
             ...evidenceIds,
-            ...sourceEvidence,
+            ...sourceEvidence.filter((id): id is string => Boolean(id)),
           ]),
         ];
         artifact.freshness = "current";

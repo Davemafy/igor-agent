@@ -187,7 +187,9 @@ export function verifyAgentOutcome(
       ),
     );
 
-  const domains = connectedExperience ? requirements?.experienceDomains ?? [] : [];
+  const domains = connectedExperience
+    ? (requirements?.experienceDomains ?? [])
+    : [];
 
   for (const domain of domains) {
     const matching =

@@ -421,6 +421,7 @@ export async function runUnifiedAgent(
     ).length;
     const mustPropose =
       canProposeExperience &&
+      (run.requirements?.deliverables.length ?? 0) > 1 &&
       !hasRequestedOutput &&
       rejectedProposals < 2 &&
       !savePlainDocument;

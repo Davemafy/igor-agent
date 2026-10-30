@@ -111,7 +111,15 @@ it("does not retry indefinitely when a public research provider fails", async ()
     if (observations.length < 2) {
       expect(canSearch).toBe(true);
 
-      return { name: "web.search", arguments: { query: "charging market" } };
+      return {
+        name: "web.search",
+        arguments: {
+          query:
+            observations.length === 0
+              ? "charging market"
+              : "charging infrastructure alternatives",
+        },
+      };
     }
 
     expect(canSearch).toBe(false);

@@ -13,7 +13,12 @@ export function preservePartialAgentWork(
 ): string | null {
   const run = task.agentRun;
 
-  if (!run || run.outputArtifactIds?.length) {
+  if (
+    !run ||
+    run.outputArtifactIds?.length ||
+    (!run.requirements?.deliverables.length &&
+      !run.requirements?.experienceDomains?.length)
+  ) {
     return null;
   }
 

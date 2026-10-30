@@ -350,7 +350,11 @@ export async function runUnifiedAgent(
       (step) => step.tool === "experience.compose" && step.status === "blocked",
     );
     const savePlainDocument =
-      saveBeforeLimit && (failedComplexComposition || index === maxSteps - 1);
+      !hasRequestedOutput &&
+      needsDeliverable &&
+      canSave &&
+      (failedComplexComposition || (saveBeforeLimit && index === maxSteps - 1));
+    const forceSaving = saveBeforeLimit || savePlainDocument;
     const savingTools = savePlainDocument
       ? ["document.create"]
       : ["document.create", "experience.compose"];
@@ -364,7 +368,7 @@ export async function runUnifiedAgent(
           waitingForCulture &&
           ["document.create", "experience.compose"].includes(t.name)
         ) &&
-        (!saveBeforeLimit || savingTools.includes(t.name)),
+        (!forceSaving || savingTools.includes(t.name)),
     );
     let selection: Awaited<
       ReturnType<NonNullable<ModelProvider["chooseAgentAction"]>>

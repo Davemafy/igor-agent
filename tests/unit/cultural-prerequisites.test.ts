@@ -105,7 +105,7 @@ it("uses user-context entity types for mixed music and filmmaker references", as
       original: name,
       name,
       type: type === "person" ? ("person" as const) : ("artist" as const),
-      providerId: name === "Radiohead" ? "mock-radiohead" : "mock-director",
+      providerId: `mock-${name.toLowerCase().replaceAll(" ", "-")}`,
       status: "resolved" as const,
       metadata: "Mock identity only",
       choices: [],
@@ -117,11 +117,11 @@ it("uses user-context entity types for mixed music and filmmaker references", as
       task,
       store,
       owner: "owner",
-      goal: "Our community loves Radiohead and Wong Kar-wai films. Plan a music and film night.",
+      goal: "Our community loves Sade, Radiohead and Wong Kar-wai films. Plan an experience.",
       requirements: {
         culturalDecision: true,
-        culturalReferences: ["Radiohead", "Wong Kar-wai"],
-        experienceDomains: ["music", "culture"],
+        culturalReferences: ["Sade", "Radiohead", "Wong Kar-wai"],
+        experienceDomains: ["culture"],
         deliverables: [],
       },
       cultural: {
@@ -147,7 +147,7 @@ it("uses user-context entity types for mixed music and filmmaker references", as
 
     expect(resolve.mock.calls).toContainEqual(["Radiohead", "artist"]);
     expect(resolve.mock.calls).toContainEqual(["Wong Kar-wai", "person"]);
-    expect(store.load(task.id, "owner").entities).toHaveLength(2);
+    expect(store.load(task.id, "owner").entities).toHaveLength(3);
   } finally {
     store.close();
   }

@@ -20,6 +20,24 @@ export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
     const outer = raw as Record<string, unknown>;
     const keys = Object.keys(outer);
 
+    // A provider may emit one action plus an empty top-level arguments
+    // envelope. Ignore ONLY that provably empty envelope; never discard a
+    // second payload, privileged write, or arbitrary extra key.
+    if (
+      keys.length === 2 &&
+      keys.includes("actions") &&
+      keys.includes("arguments") &&
+      outer.arguments &&
+      typeof outer.arguments === "object" &&
+      !Array.isArray(outer.arguments) &&
+      Object.keys(outer.arguments).length === 0 &&
+      outer.actions &&
+      typeof outer.actions === "object" &&
+      !Array.isArray(outer.actions)
+    ) {
+      return { actions: [outer.actions] };
+    }
+
     // Only unwrap a single recognized wrapper or singleton action.
     // The unchanged strict WorkActionSchema validates every resulting action,
     // including denial of model-initiated approval and external writes.

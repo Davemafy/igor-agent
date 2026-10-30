@@ -917,6 +917,7 @@ export class ToolCallingModel implements ModelProvider {
 
       return { name: proposal.name, arguments: proposal.arguments };
     };
+
     const deadline = Math.max(1000, this.timeoutMs - 5000);
 
     try {

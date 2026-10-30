@@ -460,7 +460,9 @@ export async function runUnifiedAgent(
             "experience.propose",
           ].includes(t.name)
         ) &&
-        (!forceSaving || savingTools.includes(t.name)) &&
+        (!forceSaving ||
+          savingTools.includes(t.name) ||
+          (directArtifactRevision && t.name === "document.revise")) &&
         !(researchFirst && t.name !== "web.search") &&
         !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
         !(mustContinue && t.name === "agent.finish") &&

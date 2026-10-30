@@ -118,6 +118,7 @@ it("repairs invalid document arguments without discarding observed research", as
         const canCreateDocument = offered.some(
           (tool) => tool.name === "document.create",
         );
+
         expect(canCreateDocument).toBe(true);
 
         return { name: "document.create", arguments: {} };
@@ -127,6 +128,7 @@ it("repairs invalid document arguments without discarding observed research", as
         const canCreateDocument = offered.some(
           (tool) => tool.name === "document.create",
         );
+
         expect(canCreateDocument).toBe(true);
 
         return {

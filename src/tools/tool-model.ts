@@ -824,6 +824,62 @@ export class ToolCallingModel implements ModelProvider {
         }),
       },
     ] as unknown[];
+    // Most invalid artifact proposals occurred after the engine narrowed the
+    // available actions to a single document tool. In that state the generic
+    // "any JSON object" envelope was throwing away the registry's schema.
+    // Constrain the native provider's arguments with the actual selected
+    // document contract, including exact IDs observed in this run.
+    let argumentParameters: Record<string, unknown> = {
+      type: "object",
+      additionalProperties: true,
+      description:
+        "Real JSON object matching the chosen tool's inputSchema. Use {} for agent.finish.",
+    };
+    const soleTool = tools.length === 1 ? tools[0] : null;
+
+    if (
+      soleTool?.inputSchema?.type === "object" &&
+      ["document.create", "document.revise"].includes(soleTool.name)
+    ) {
+      const exactSchema = structuredClone(soleTool.inputSchema);
+      delete exactSchema.$schema;
+      const properties = exactSchema.properties;
+
+      if (
+        properties &&
+        typeof properties === "object" &&
+        !Array.isArray(properties)
+      ) {
+        const fields = properties as Record<string, Record<string, unknown>>;
+        const permitted: Record<string, string[]> = {
+          sourceIds: [
+            ...new Set(
+              (context.agentRun?.sources ?? []).map((source) => source.id),
+            ),
+          ].slice(-40),
+          evidenceIds: context.evidence
+            .filter((evidence) => evidence.freshness === "current")
+            .slice(-60)
+            .map((evidence) => evidence.id),
+          candidateIds: context.catalogue.slice(-40).map((candidate) => candidate.id),
+          fulfills: context.agentRun?.requirements?.deliverables ?? [],
+        };
+
+        for (const [field, ids] of Object.entries(permitted)) {
+          if (fields[field]?.type === "array") {
+            fields[field] = {
+              ...fields[field],
+              items: ids.length
+                ? { type: "string", enum: ids }
+                : { type: "string" },
+            };
+          }
+        }
+      }
+
+      argumentParameters = exactSchema;
+    }
+
     const decisionTools = [
       {
         type: "function",
@@ -835,14 +891,7 @@ export class ToolCallingModel implements ModelProvider {
           additionalProperties: false,
           properties: {
             name: { type: "string", enum: allowed },
-            arguments: {
-              type: "object",
-              // The registry owns the strict, selected-tool-specific schema.
-              // Keep this envelope permissive for heterogeneous tool inputs.
-              additionalProperties: true,
-              description:
-                "Real JSON object matching the chosen tool's inputSchema. Use {} for agent.finish. Never encode JSON as a string.",
-            },
+            arguments: argumentParameters,
           },
           required: ["name", "arguments"],
         },

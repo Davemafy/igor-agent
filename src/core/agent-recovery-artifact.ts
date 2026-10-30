@@ -69,7 +69,9 @@ export function preservePartialAgentWork(
   }
 
   const safe = (value: string) => {
-    return value.replace(/[\r\n<>]/g, " ").trim().slice(0, 300);
+    const normalized = value.replace(/[\r\n<>]/g, " ");
+
+    return normalized.trim().slice(0, 300);
   };
   const evidenceIds = [
     ...new Set([
@@ -77,6 +79,12 @@ export function preservePartialAgentWork(
       ...uniqueCandidates.map((candidate) => candidate.id),
     ]),
   ].slice(0, 30);
+  const webLines = sourceEvidence.slice(0, 8).map((source) => {
+    return `- Web: ${safe(source.title)} — ${safe(source.url)}`;
+  });
+  const culturalLines = uniqueCandidates.slice(0, 12).map((candidate) => {
+    return `- Qloo: ${safe(candidate.name)} [${candidate.id}]`;
+  });
   const content = [
     "# Incomplete work — saved evidence",
     "",
@@ -84,12 +92,8 @@ export function preservePartialAgentWork(
     safe(run.goal.slice(0, 1500)),
     "",
     "## Actual observations",
-    ...sourceEvidence.slice(0, 8).map(
-      (source) => `- Web lead: ${safe(source.title)} — ${safe(source.url)}`,
-    ),
-    ...uniqueCandidates.slice(0, 12).map(
-      (candidate) => `- Qloo: ${safe(candidate.name)} [${candidate.id}]`,
-    ),
+    ...webLines,
+    ...culturalLines,
     "",
     "## Not yet established",
     "- Requested deliverables are NOT complete or approved.",
@@ -106,7 +110,9 @@ export function preservePartialAgentWork(
     version: task.brief.version,
     dependencies: ["evidence:research"],
     evidenceIds,
-    assumptions: ["Partial recovery, not a fulfilled deliverable or verified plan."],
+    assumptions: [
+      "Partial recovery, not a fulfilled deliverable or verified plan.",
+    ],
     freshness: "current",
     edited: false,
   });

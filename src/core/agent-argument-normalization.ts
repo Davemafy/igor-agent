@@ -3,10 +3,7 @@
  * arrays. Normalize shape before the unchanged strict tool schema validates
  * the result. NEVER invent or substitute an evidence/source/candidate ID.
  */
-export function normalizeAgentArguments(
-  tool: string,
-  raw: unknown,
-): unknown {
+export function normalizeAgentArguments(tool: string, raw: unknown): unknown {
   if (
     (tool !== "document.create" && tool !== "document.revise") ||
     !raw ||
@@ -30,21 +27,19 @@ export function normalizeAgentArguments(
       : [];
   };
 
-  const content = value.content;
-  const text =
-    Array.isArray(content) &&
-    content.every((part) => typeof part === "string")
-      ? content.join("\n\n")
-      : content && typeof content === "object" && !Array.isArray(content)
-        ? (content as Record<string, unknown>).markdown ??
-          (content as Record<string, unknown>).text ??
-          content
-        : content;
+  let text: unknown = value.content;
+
+  if (Array.isArray(text) && text.every((part) => typeof part === "string")) {
+    text = text.join("\n\n");
+  } else if (text && typeof text === "object" && !Array.isArray(text)) {
+    const structured = text as Record<string, unknown>;
+
+    text = structured.markdown ?? structured.text ?? text;
+  }
+
+  const title = value.title;
   const normalized: Record<string, unknown> = {
-    title:
-      typeof value.title === "string"
-        ? value.title.slice(0, 160)
-        : value.title,
+    title: typeof title === "string" ? title.slice(0, 160) : title,
     content: typeof text === "string" ? text.slice(0, 10000) : text,
     sourceIds: list("sourceIds", 12),
     evidenceIds: list("evidenceIds", 30),

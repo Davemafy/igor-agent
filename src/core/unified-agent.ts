@@ -383,37 +383,101 @@ export async function runUnifiedAgent(
         (!forceSaving || savingTools.includes(t.name)) &&
         !(mustContinue && t.name === "agent.finish"),
     );
+    // Enforce prerequisites from explicit, user-supplied cultural anchors.
+    // The model still chooses open-ended actions, but must not skip named
+    // Qloo dependencies, hallucinate a provider ID, or revise a missing doc.
+    const userText = [
+      input.goal,
+      ...task.messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.text),
+    ]
+      .join(" ")
+      .toLocaleLowerCase();
+    const culturalPrerequisite = waitingForCulture
+      ? references
+          .flatMap((name) => {
+            if (!userText.includes(name.toLocaleLowerCase())) {
+              return [];
+            }
+
+            const entity = task.entities.find(
+              (item) =>
+                item.status === "resolved" &&
+                item.name.toLocaleLowerCase() === name.toLocaleLowerCase() &&
+                item.providerId,
+            );
+
+            if (!entity) {
+              return [{ name: "qloo.resolve_entity", arguments: { name } }];
+            }
+
+            if (observedSeeds.has(entity.providerId!)) {
+              return [];
+            }
+
+            const targetType =
+              entity.type === "person"
+                ? "movie"
+                : ["artist", "movie", "tv_show", "place"].includes(entity.type)
+                  ? entity.type
+                  : null;
+
+            return targetType
+              ? [{
+                  name: "qloo.discover",
+                  arguments: { entityId: entity.id, targetType },
+                }]
+              : [];
+          })
+          .find((choice) => {
+            const fingerprint = choice.name + ":" + JSON.stringify(choice.arguments);
+
+            return (
+              available.some((tool) => tool.name === choice.name) &&
+              !attempted.has(fingerprint)
+            );
+          })
+      : undefined;
     let selection: Awaited<
       ReturnType<NonNullable<ModelProvider["chooseAgentAction"]>>
     >;
 
-    try {
-      run.modelSteps++;
-      selection = await withToolDeadline(
-        model.chooseAgentAction(
-          input.goal,
-          available.map((t) => ({
-            name: t.name,
-            description: t.description,
-            permission: t.permission,
-            inputSchema: z.toJSONSchema(t.schema),
-          })),
-          run.steps.map((s) => ({
-            tool: s.tool,
-            status: s.status,
-            summary: s.summary,
-          })),
-          structuredClone(task),
-        ),
-        decisionDeadline,
+    if (culturalPrerequisite) {
+      selection = culturalPrerequisite;
+      trace(
+        "agent.prerequisite",
+        "Executing a validated user-supplied cultural dependency.",
       );
-    } catch (error) {
-      decisionFailed = true;
-      run.warnings.push(
-        "Agent decision provider failed; completed observations are preserved.",
-      );
-      trace("agent.decision.error", interpretationFailure(error));
-      break;
+    } else {
+      try {
+        run.modelSteps++;
+        selection = await withToolDeadline(
+          model.chooseAgentAction(
+            input.goal,
+            available.map((t) => ({
+              name: t.name,
+              description: t.description,
+              permission: t.permission,
+              inputSchema: z.toJSONSchema(t.schema),
+            })),
+            run.steps.map((step) => ({
+              tool: step.tool,
+              status: step.status,
+              summary: step.summary,
+            })),
+            structuredClone(task),
+          ),
+          decisionDeadline,
+        );
+      } catch (error) {
+        decisionFailed = true;
+        run.warnings.push(
+          "Agent decision provider failed; completed observations are preserved.",
+        );
+        trace("agent.decision.error", interpretationFailure(error));
+        break;
+      }
     }
 
     const selected = available.find(

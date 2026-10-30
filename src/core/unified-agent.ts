@@ -377,6 +377,9 @@ export async function runUnifiedAgent(
     // Explicit public research requires a genuine observation before a
     // document proposal. The model still chooses the search query; it cannot
     // treat a hypothetical memo as completed external investigation.
+    const unsuccessfulSearches = run.steps.filter(
+      (step) => step.tool === "web.search" && step.status !== "ok",
+    ).length;
     const researchFirst =
       !run.requirements?.culturalDecision &&
       /\b(?:research|investigate|fact[ -]?check|source[ -]?backed|verify)\b/i.test(
@@ -398,6 +401,7 @@ export async function runUnifiedAgent(
         ) &&
         (!forceSaving || savingTools.includes(t.name)) &&
         !(researchFirst && t.name !== "web.search") &&
+        !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
         !(mustContinue && t.name === "agent.finish"),
     );
     // Enforce prerequisites from explicit, user-supplied cultural anchors.

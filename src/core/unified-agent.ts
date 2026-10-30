@@ -15,7 +15,11 @@ import { randomUUID } from "node:crypto";
 import type { Task, Event } from "./contracts";
 import { TaskSchema } from "./contracts";
 import type { TaskStore } from "../data/store";
-import type { AgentToolChoice, ModelProvider, CulturalProvider } from "../tools/interfaces";
+import type {
+  AgentToolChoice,
+  ModelProvider,
+  CulturalProvider,
+} from "../tools/interfaces";
 import type {
   ResearchProvider,
   ResearchResult,
@@ -427,14 +431,17 @@ export async function runUnifiedAgent(
                   : null;
 
             return targetType
-              ? [{
-                  name: "qloo.discover",
-                  arguments: { entityId: entity.id, targetType },
-                }]
+              ? [
+                  {
+                    name: "qloo.discover",
+                    arguments: { entityId: entity.id, targetType },
+                  },
+                ]
               : [];
           })
           .find((choice) => {
-            const fingerprint = choice.name + ":" + JSON.stringify(choice.arguments);
+            const fingerprint =
+              choice.name + ":" + JSON.stringify(choice.arguments);
 
             return (
               available.some((tool) => tool.name === choice.name) &&

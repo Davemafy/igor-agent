@@ -251,7 +251,7 @@ export function verifyAgentOutcome(
           decision.goalId === task.work?.activeGoalId &&
           decision.status !== "rejected" &&
           decision.freshness === "current" &&
-          decision.candidateIds.length > 0,
+          (decision.candidateIds?.length ?? 0) > 0,
       ),
     ];
 

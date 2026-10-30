@@ -402,6 +402,31 @@ export async function runUnifiedAgent(
     const culturalToolsAvailable = tools.some(
       (tool) => tool.available && tool.name.startsWith("qloo."),
     );
+    // A requested edit must target the existing saved artifact, not create a
+    // new unrelated copy. Request fresh research separately when specified.
+    const directArtifactRevision =
+      /\b(?:revise|rewrite|edit|update|refine|modify)\b/i.test(input.goal) &&
+      !/\b(?:new|additional|fresh|latest|current)\s+(?:research|sources|facts|evidence)\b|\b(?:search|investigate|look up)\b/i.test(
+        input.goal,
+      ) &&
+      task.artifacts.some(
+        (artifact) =>
+          artifact.id.startsWith("agent-doc-") &&
+          !artifact.locked &&
+          !artifact.edited,
+      ) &&
+      tools.some(
+        (tool) => tool.name === "document.revise" && tool.available,
+      );
+    const rejectedProposals = run.steps.filter(
+      (step) =>
+        step.tool === "experience.propose" && step.status === "blocked",
+    ).length;
+    const mustPropose =
+      canProposeExperience &&
+      !hasRequestedOutput &&
+      rejectedProposals < 2 &&
+      !savePlainDocument;
     const mustContinue =
       index < maxSteps - 1 &&
       ((waitingForCulture && culturalToolsAvailable) ||
@@ -438,7 +463,9 @@ export async function runUnifiedAgent(
         (!forceSaving || savingTools.includes(t.name)) &&
         !(researchFirst && t.name !== "web.search") &&
         !(t.name === "web.search" && unsuccessfulSearches >= 2) &&
-        !(mustContinue && t.name === "agent.finish"),
+        !(mustContinue && t.name === "agent.finish") &&
+        (!directArtifactRevision || t.name === "document.revise") &&
+        (!mustPropose || t.name === "experience.propose"),
     );
     // Enforce prerequisites from explicit, user-supplied cultural anchors.
     // The model still chooses open-ended actions, but must not skip named

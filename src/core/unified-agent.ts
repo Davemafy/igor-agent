@@ -489,9 +489,11 @@ export async function runUnifiedAgent(
                   ? String(part)
                   : "field",
             ).join(".");
+
             return `${path || "arguments"}:${issue.code}`;
           }).join(", ").slice(0, 180)
         : "unclassified";
+
       run.warnings.push(`Invalid arguments for ${selected.name}`);
       trace(
         "agent.action.blocked",

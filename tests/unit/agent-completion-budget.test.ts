@@ -200,3 +200,72 @@ it("repairs invalid document arguments without discarding observed research", as
     }
   }
 });
+
+it("forces an explicit follow-up edit to preserve the original artifact ID", async () => {
+  const store = new SqliteTaskStore(":memory:");
+  const task = freshTask("saved-memo-revision", "owner");
+  task.artifacts.push({
+    id: "agent-doc-earlier-1",
+    kind: "research-report",
+    title: "Existing memo",
+    content: "Original research conclusions, retained for comparison.",
+    version: task.brief.version,
+    dependencies: [],
+    evidenceIds: [],
+    fulfills: ["report"],
+    assumptions: [],
+    freshness: "current",
+    edited: false,
+  });
+  store.create(task);
+  const choose = vi.fn(
+    async (_goal: string, offered: { name: string }[], observed: unknown[]) => {
+      if (observed.length === 0) {
+        expect(offered.map((tool) => tool.name)).toEqual(["document.revise"]);
+
+        return {
+          name: "document.revise",
+          arguments: {
+            artifactId: "agent-doc-earlier-1",
+            title: "Existing memo — revised",
+            content:
+              "Revised research priorities now focus on charging-network operators. " +
+              "Original source limitations are retained.",
+            sourceIds: [],
+          },
+        };
+      }
+
+      return { name: "agent.finish", arguments: {} };
+    },
+  );
+
+  try {
+    await runUnifiedAgent({
+      task,
+      store,
+      owner: "owner",
+      goal: "Revise the saved memo to prioritize network operators.",
+      model: {
+        interpret: vi.fn(),
+        interpretAgentRequirements: async () => ({
+          culturalDecision: false,
+          culturalReferences: [],
+          deliverables: ["report"],
+        }),
+        chooseAgentAction: choose,
+      },
+      research: { available: false, research: vi.fn() },
+      trace: vi.fn(),
+    });
+
+    expect(task.artifacts).toHaveLength(1);
+    expect(task.artifacts[0].id).toBe("agent-doc-earlier-1");
+    expect(task.artifacts[0].content).toContain("network operators");
+    expect(store.load(task.id, "owner").artifacts[0].content).toContain(
+      "network operators",
+    );
+  } finally {
+    store.close();
+  }
+});

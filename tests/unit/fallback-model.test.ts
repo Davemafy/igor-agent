@@ -321,11 +321,13 @@ it("falls back on a malformed SDK function decision without replaying tools", as
 it("recovers one unknown read-only model decision through an authorized backup", async () => {
   const task = freshTask("unknown-decision", "owner");
   const primary = {
+    interpret: vi.fn(async () => reply),
     chooseAgentAction: vi.fn(async (): Promise<never> => {
       throw new Error("Provider returned an unexpected empty decision");
     }),
   };
   const backup = {
+    interpret: vi.fn(async () => reply),
     chooseAgentAction: vi.fn(async () => ({
       name: "document.revise",
       arguments: {
@@ -353,11 +355,13 @@ it("recovers one unknown read-only model decision through an authorized backup",
 
 it("does not replay a failing backup after an unknown primary decision error", async () => {
   const primary = {
+    interpret: vi.fn(async () => reply),
     chooseAgentAction: vi.fn(async (): Promise<never> => {
       throw new Error("Unclassified model decision");
     }),
   };
   const backup = {
+    interpret: vi.fn(async () => reply),
     chooseAgentAction: vi.fn(async (): Promise<never> => {
       throw new Error("Backup is unavailable");
     }),

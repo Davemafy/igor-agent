@@ -317,3 +317,57 @@ it("falls back on a malformed SDK function decision without replaying tools", as
   expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
   expect(backup.chooseAgentAction).toHaveBeenCalledTimes(2);
 });
+
+it("recovers one unknown read-only model decision through an authorized backup", async () => {
+  const task = freshTask("unknown-decision", "owner");
+  const primary = {
+    chooseAgentAction: vi.fn(async (): Promise<never> => {
+      throw new Error("Provider returned an unexpected empty decision");
+    }),
+  };
+  const backup = {
+    chooseAgentAction: vi.fn(async () => ({
+      name: "document.revise",
+      arguments: {
+        artifactId: "saved-doc",
+        title: "Revised investment memo",
+        content: "The original source citations remain attached.",
+      },
+    })),
+  };
+  const choices = [
+    {
+      name: "document.revise",
+      description: "Revise saved work",
+      permission: "internal" as const,
+    },
+  ];
+  const model = new FallbackModel(primary, backup);
+
+  await expect(
+    model.chooseAgentAction("Revise my memo", choices, [], task),
+  ).resolves.toMatchObject({ name: "document.revise" });
+  expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
+  expect(backup.chooseAgentAction).toHaveBeenCalledOnce();
+});
+
+it("does not replay a failing backup after an unknown primary decision error", async () => {
+  const primary = {
+    chooseAgentAction: vi.fn(async (): Promise<never> => {
+      throw new Error("Unclassified model decision");
+    }),
+  };
+  const backup = {
+    chooseAgentAction: vi.fn(async (): Promise<never> => {
+      throw new Error("Backup is unavailable");
+    }),
+  };
+  const task = freshTask("backup-no-replay", "owner");
+  const model = new FallbackModel(primary, backup);
+
+  await expect(
+    model.chooseAgentAction("Revise saved work", [], [], task),
+  ).rejects.toThrow("Backup is unavailable");
+  expect(primary.chooseAgentAction).toHaveBeenCalledOnce();
+  expect(backup.chooseAgentAction).toHaveBeenCalledOnce();
+});

@@ -412,20 +412,22 @@ export async function runUnifiedAgent(
     );
     // A requested edit must target the existing saved artifact, not create a
     // new unrelated copy. Request fresh research separately when specified.
+    const hasEditableAgentDocument = task.artifacts.some(
+      (artifact) =>
+        artifact.id.startsWith("agent-doc-") &&
+        !artifact.locked &&
+        !artifact.edited,
+    );
+    const hasEditableConnectedDocument =
+      task.work?.documents.some(
+        (document) => document.status !== "approved" && !document.edited,
+      ) ?? false;
     const directArtifactRevision =
       /\b(?:revise|rewrite|edit|update|refine|modify)\b/i.test(input.goal) &&
       !/\b(?:new|additional|fresh|latest|current)\s+(?:research|sources|facts|evidence)\b|\b(?:search|investigate|look up)\b/i.test(
         input.goal,
       ) &&
-      (task.artifacts.some(
-        (artifact) =>
-          artifact.id.startsWith("agent-doc-") &&
-          !artifact.locked &&
-          !artifact.edited,
-      ) ||
-        (task.work?.documents.some(
-          (document) => document.status !== "approved" && !document.edited,
-        ) ?? false)) &&
+      (hasEditableAgentDocument || hasEditableConnectedDocument) &&
       tools.some((tool) => tool.name === "document.revise" && tool.available);
     const mustPropose =
       canProposeExperience &&

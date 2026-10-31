@@ -1,4 +1,5 @@
 import { applyWorkActions } from "./connected-work";
+import { groundDocumentSources } from "./agent-source-grounding";
 import {
   ExperienceProposalArguments,
   saveExperienceProposal,
@@ -829,20 +830,21 @@ export function createAgentToolRegistry(
           };
         }
 
-        // Models may echo a server-owned evidence ID or a retrieved URL
-        // instead of the short web source ID. Accept only exact references
-        // to sources observed in THIS run; never resolve guessed citations.
-        const sourceReferences = sourceIds.map((reference) => {
-          const observed = ctx.sources.find((source) => {
-            const evidenceId = `${ctx.task.id}:agent:${ctx.runId}:${source.id}`;
+        // Preserve the actual source/citation boundary even if a model
+        // submits unsupported aliases. Inline [web-N] citations and exact
+        // observed URLs can safely recover the valid references, but unknown
+        // references are never silently accepted or credited as completed.
+        const sourceGrounding = groundDocumentSources(
+          sourceIds,
+          content,
+          ctx.sources,
+          ctx.task.id,
+          ctx.runId,
+        );
+        const groundedSourceIds = sourceGrounding.ids;
+        const incompleteReferences = sourceGrounding.rejected.length > 0;
 
-            return [source.id, source.url, evidenceId].includes(reference);
-          });
-
-          return observed?.id;
-        });
-
-        if (sourceReferences.some((id) => !id)) {
+        if (incompleteReferences && !groundedSourceIds.length) {
           const allowed = ctx.sources
             .map((source) => source.id)
             .slice(-12)
@@ -854,10 +856,6 @@ export function createAgentToolRegistry(
             summary: `Document cited an unobserved source. Valid sourceIds: ${allowed || "none"}. Use exact observed IDs, not titles or invented numbers.`,
           };
         }
-
-        const groundedSourceIds = [
-          ...new Set(sourceReferences.filter((id): id is string => !!id)),
-        ];
 
         if (
           culturalIds.some(
@@ -894,13 +892,15 @@ export function createAgentToolRegistry(
           };
         }
 
-        const matchedFulfills = reconcileDeliverableLabels(
-          title,
-          content,
-          fulfills,
-          ctx.task.agentRun?.requirements?.deliverables ?? [],
-          ctx.task.agentRun?.goal ?? "",
-        );
+        const matchedFulfills = incompleteReferences
+          ? []
+          : reconcileDeliverableLabels(
+              title,
+              content,
+              fulfills,
+              ctx.task.agentRun?.requirements?.deliverables ?? [],
+              ctx.task.agentRun?.goal ?? "",
+            );
 
         ctx.task.artifacts.push({
           id: `agent-doc-${ctx.runId}-${count + 1}`,
@@ -914,15 +914,20 @@ export function createAgentToolRegistry(
           evidenceIds,
           assumptions: [
             "This document distinguishes confirmed source observations from remaining uncertainties.",
+            ...(incompleteReferences
+              ? ["Some model-supplied source IDs were unobserved and excluded; this draft does not fulfill requested deliverables."]
+              : []),
           ],
           freshness: "current",
           edited: false,
         });
 
         return {
-          status: "ok",
+          status: incompleteReferences ? "partial" : "ok",
           requests: 0,
-          summary: `Saved editable document ${title} with ${groundedSourceIds.length} observed source IDs.`,
+          summary: incompleteReferences
+            ? `Saved incomplete editable document ${title} with ${groundedSourceIds.length} grounded source IDs; unobserved references were excluded and no deliverable was certified.`
+            : `Saved editable document ${title} with ${groundedSourceIds.length} observed source IDs.`,
           artifactIds: [`agent-doc-${ctx.runId}-${count + 1}`],
         };
       },

@@ -12,7 +12,7 @@ describe("agent multi-turn connected document editing", () => {
       { kind: "goal", id: "event-evening", title: "An evening together" },
       {
         kind: "document",
-        id: "invitation",
+        id: "event-invitation",
         title: "Original invitation",
         content: "A warm invitation for friends.",
         evidenceIds: [],
@@ -55,7 +55,7 @@ describe("agent multi-turn connected document editing", () => {
               return {
                 name: "document.revise",
                 arguments: {
-                  artifactId: "document:invitation",
+                  artifactId: "document:event-invitation",
                   title: "Warm invitation",
                   content:
                     "We would love to see you at the evening gathering. Please join us and bring your good energy.",
@@ -73,7 +73,7 @@ describe("agent multi-turn connected document editing", () => {
 
       expect(offered[0]).toEqual(["document.revise"]);
       expect(offered[1]).toContain("agent.finish");
-      expect(task.work?.documents.find((d) => d.id === "invitation")).toMatchObject({
+      expect(task.work?.documents.find((d) => d.id === "event-invitation")).toMatchObject({
         title: "Warm invitation",
         version: 2,
       });

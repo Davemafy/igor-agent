@@ -4,25 +4,17 @@
 
 <p align="center">
   <a href="assets/Screen%20Recording%202026-10-31%20035320.mp4">
-    <img src="assets/readme/igor-demo-preview.gif" alt="Moving preview from the real Igor product screen recording. Select to view the complete video with sound." width="100%">
+    <img src="assets/readme/igor-demo-preview.gif" alt="Igor — your agent with taste. See Igor in action." width="100%">
   </a>
 </p>
 
-<p align="center"><sub>Real product footage · looping silent preview · <a href="assets/Screen%20Recording%202026-10-31%20035320.mp4">Play the complete video with audio</a></sub></p>
-
 **Most AI gives you recommendations. Igor turns cultural intelligence into decisions, connected work, and plans that can change with you.**
 
-**Watch the walkthrough:** [Igor product screen recording (MP4)](assets/Screen%20Recording%202026-10-31%20035320.mp4) · **Explore Qloo:** [Integration, evidence and evaluation](qloo/README.md) · **Try it:** [Live app](https://igor-production-243e.up.railway.app/app)
+[Watch Igor](assets/Screen%20Recording%202026-10-31%20035320.mp4) · [Try Igor](https://igor-production-243e.up.railway.app/app) · [Qloo integration](qloo/README.md) · [Get started](#running-it-yourself)
 
 Meet Igor, your agent with taste. Start with a film, an artist, a place or a feeling. Powered by Qloo's Taste Graph, Igor helps you discover what fits, compare preferences, and turn a conversation into an editable plan, invitation, itinerary or creative brief. When things change, your decisions and work can carry forward.
 
-- **Judge path:** [Try a film discovery, revise the budget, inspect saved work](#judge-walkthrough)
-- **Verified production run:** [October 26 Railway checks](docs/live-integration.md), including a LIVE Qloo retrieval and a correction with no new Qloo calls
-- **Supported outcomes:** [What Igor can actually produce](docs/broader-outcomes.md)
-
 ---
-
-> **Release evidence:** The October 26 Railway Qloo session below is a documented historical production test, not proof that every current model configuration or this exact source revision passes live acceptance. The public repository excludes rights-restricted Qloo recordings; its archived replay suites are not reported as passing. The demo video is an actual screen recording, not evidence of an authenticated live provider test at this commit.
 
 ## Contents
 
@@ -241,8 +233,6 @@ This boundary is enforced through [typed contracts](src/core/contracts.ts), [cap
 | **A correction has a scope** | Dependent work changes; unrelated edits are retained |
 | **No silent external actions** | No automatic booking, purchase or invitation send |
 
-These describe documented application contracts and covered cases, not a guarantee that every fresh production request will succeed.
-
 ## The verified production run
 
 The Railway checks recorded on **October 26, 2026** exercised a configured Gemini and Qloo runtime.
@@ -268,11 +258,9 @@ The production check shows a real retrieval and a selective correction in those 
 5. Reload the conversation and ask Igor to recall your original request.
 6. Compare what happened with the [dated production log](docs/live-integration.md) and [Qloo evidence](qloo/EVIDENCE.md).
 
-This is a walkthrough of the real app, not a dedicated `/judges` route or a guaranteed replay of historical responses.
-
 ## Screens
 
-The full product walkthrough is included in this repository: [watch the uploaded MP4](assets/Screen%20Recording%202026-10-31%20035320.mp4).
+[Watch Igor in action](assets/Screen%20Recording%202026-10-31%20035320.mp4).
 
 ## Data model
 

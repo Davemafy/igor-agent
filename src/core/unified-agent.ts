@@ -424,8 +424,7 @@ export async function runUnifiedAgent(
           !artifact.edited,
       ) ||
         (task.work?.documents.some(
-          (document) =>
-            document.status !== "approved" && !document.edited,
+          (document) => document.status !== "approved" && !document.edited,
         ) ?? false)) &&
       tools.some((tool) => tool.name === "document.revise" && tool.available);
     const mustPropose =

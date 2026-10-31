@@ -715,6 +715,7 @@ export class ToolCallingModel implements ModelProvider {
     context: Task,
   ) {
     const allowed = tools.map((tool) => tool.name);
+    const revisionOnly = allowed.length === 1 && allowed[0] === "document.revise";
 
     if (!allowed.length) {
       throw new Error("No agent tools are authorized.");
@@ -734,10 +735,12 @@ export class ToolCallingModel implements ModelProvider {
           "You are Igor, a general-purpose agent deciding ONE next action based on the user's goal and REAL observed tool results.",
           "Use the available tools only. Each tool includes its real inputSchema. Use exactly those field names and enum values; do not invent aliases. Return the tool name and a structured JSON OBJECT of arguments (not a JSON-encoded string).",
           "When requirements name experienceDomains, create the required linked domain decisions as well as the requested documents before finishing.",
+          "A user-supplied budget ceiling is a HARD constraint. Before experience.propose, sum every non-null estimatedCost and ensure the sum does not exceed acceptanceRequirements.budget.amount. When pricing is unknown use null, NEVER zero or a fabricated estimate. If a proposal was rejected as over budget, revise actual scope or plausible allocations and verify the total before submitting again. An infeasible proposal is not a completed plan.",
           "Do not invent tool results, Qloo scores, IDs, prices, venue opening times, browser actions or completed external work.",
           "When culturalDecision is required, resolving entities only identifies seeds. Call qloo.discover for the currently required seeds to obtain actual candidate affinities and evidence. qloo.explore_location supplies geography/category leads and does not satisfy personalized cultural evidence. Candidate IDs must come from culturalCandidates, never knownEntities. If web tools are unavailable, create a culturally grounded creative draft with practical facts explicitly unverified instead of inventing venues or citations.",
           "Prefer the cheapest sufficient tool. Use Qloo for relevant cultural links, Google Places for locations, web search for fresh evidence, and page reads only for observed IDs.",
           "For a revision, use document.revise with the affected existing agent artifactId to retain identity and prior versions. Use document.create only for new deliverables. Approved and manually edited work remains protected.",
+          "If document.revise is the only offered tool, rewrite the relevant saved artifact using its visible current content and existing evidenceIds; preserve valid references, report unverified claims, and do not request a new document ID or unrelated cultural discovery.",
           "Prefer one coherent saved document covering related deliverables, with their exact fulfills keys, unless the user requests separate outputs. If completion was rejected, inspect the unmet requirements and continue rather than repeating agent.finish.",
           "After Qloo discovery, prefer experience.propose for a new connected experience: title, decisions [{domain,value,rationale,candidateId?,estimatedCost?}], documents [{title,content,fulfills}]. Use only candidateIds from culturalCandidates. Include substantive plans, schedule and requested pitch content; do not claim verified prices, venues or availability. The server links current Qloo evidence and creates versioned typed work. Use experience.compose for granular selective revisions and existing linked decisions. Never modify approved or manually edited work.",
           "After observations, save requested editable work using experience.compose for linked experience decisions/documents, or document.create for standalone artifacts, before agent.finish. Its arguments are {title,content,sourceIds,evidenceIds?,candidateIds?,fulfills?}. For document.create, sourceIds MUST be exact IDs from validDocumentSourceIds; never invent IDs or copy evidence IDs into sourceIds. Qloo evidence IDs belong in evidenceIds. fulfills must name interpreted deliverable keys. Clearly label estimates and unknowns. Never retry identical failed arguments.",
@@ -760,12 +763,12 @@ export class ToolCallingModel implements ModelProvider {
           savedArtifacts: context.artifacts.slice(-6).map((a) => ({
             id: a.id,
             title: a.title,
-            content: a.content.slice(0, 2500),
+            content: a.content.slice(0, revisionOnly ? 6500 : 2500),
             locked: a.locked,
             edited: a.edited,
             evidenceIds: a.evidenceIds,
           })),
-          knownEntities: context.entities
+          knownEntities: (revisionOnly ? [] : context.entities)
             .filter((e) => e.status === "resolved")
             .slice(-10)
             .map((e) => ({ id: e.id, name: e.name, type: e.type })),
@@ -789,7 +792,7 @@ export class ToolCallingModel implements ModelProvider {
                 ? { observedPageText: source.excerpt.slice(0, 1300) }
                 : {}),
             })),
-          culturalCandidates: context.catalogue
+          culturalCandidates: (revisionOnly ? [] : context.catalogue)
             .slice(0, 30)
             .map((candidate) => ({
               id: candidate.id,
@@ -806,7 +809,7 @@ export class ToolCallingModel implements ModelProvider {
                   ),
                 ),
             })),
-          culturalEvidence: context.evidence
+          culturalEvidence: (revisionOnly ? [] : context.evidence)
             .filter((e) => e.kind === "cultural" && e.freshness === "current")
             .sort(
               (a, b) =>

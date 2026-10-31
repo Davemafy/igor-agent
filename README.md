@@ -12,11 +12,8 @@
 
 Meet Igor, your agent with taste. Start with a film, an artist, a place or a feeling. Powered by Qloo's Taste Graph, Igor helps you discover what fits, compare preferences, and turn a conversation into an editable plan, invitation, itinerary or creative brief. When things change, your decisions and work can carry forward.
 
-- **Demo video:** [Watch Igor's uploaded recording](assets/Screen%20Recording%202026-10-31%20035320.mp4)
-- **Live app:** https://igor-production-243e.up.railway.app/app
 - **Judge path:** [Try a film discovery, revise the budget, inspect saved work](#judge-walkthrough)
 - **Verified production run:** [October 26 Railway checks](docs/live-integration.md), including a LIVE Qloo retrieval and a correction with no new Qloo calls
-- **Qloo integration:** [Source map, workflow, evidence and evaluation](qloo/README.md)
 - **Supported outcomes:** [What Igor can actually produce](docs/broader-outcomes.md)
 
 ---

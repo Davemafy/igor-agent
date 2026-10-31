@@ -12,6 +12,7 @@ function seeded() {
       id: "gallery-invitation",
       title: "Invitation",
       content: "Original invitation with unchanged evidence.",
+      fulfills: ["invitation"],
       dependencies: [],
       evidenceIds: [],
     },
@@ -59,6 +60,7 @@ describe("connected work agent revision boundary", () => {
       (document) => document.id === "gallery-invitation",
     );
     expect(updated?.version).toBe(2);
+    expect(updated?.fulfills).toEqual(["invitation"]);
     expect(updated?.content).toContain("Revised invitation");
     expect(updated?.history.at(-1)?.content).toContain("Original invitation");
     expect(task.work?.documents[1]).toEqual(unrelated);

@@ -715,7 +715,8 @@ export class ToolCallingModel implements ModelProvider {
     context: Task,
   ) {
     const allowed = tools.map((tool) => tool.name);
-    const revisionOnly = allowed.length === 1 && allowed[0] === "document.revise";
+    const revisionOnly =
+      allowed.length === 1 && allowed[0] === "document.revise";
 
     if (!allowed.length) {
       throw new Error("No agent tools are authorized.");

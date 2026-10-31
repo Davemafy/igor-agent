@@ -417,12 +417,16 @@ export async function runUnifiedAgent(
       !/\b(?:new|additional|fresh|latest|current)\s+(?:research|sources|facts|evidence)\b|\b(?:search|investigate|look up)\b/i.test(
         input.goal,
       ) &&
-      task.artifacts.some(
+      (task.artifacts.some(
         (artifact) =>
           artifact.id.startsWith("agent-doc-") &&
           !artifact.locked &&
           !artifact.edited,
-      ) &&
+      ) ||
+        (task.work?.documents.some(
+          (document) =>
+            document.status !== "approved" && !document.edited,
+        ) ?? false)) &&
       tools.some((tool) => tool.name === "document.revise" && tool.available);
     const mustPropose =
       canProposeExperience &&

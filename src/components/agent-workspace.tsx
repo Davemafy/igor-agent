@@ -1,7 +1,6 @@
 "use client";
-import { referenceImageUrl } from "./reference-media";
 
-import { Compass, FilePlus2, Heart, Map, Home as HomeIcon, UserRound } from "lucide-react";
+import { Compass, FilePlus2, Map, Home as HomeIcon, UserRound, Sparkles } from "lucide-react";
 import { AccountDialog } from "./account-panel";
 import { Connections } from "./connections-view";
 import { ReferenceWork } from "./reference-work";
@@ -60,14 +59,26 @@ import "../app/research-discovery.css";
 import "../app/reference-acceptance.css";
 import "../app/grounded-map.css";
 import "../app/igor-release-cohesion.css";
+import "../app/igor-landing-ui.css";
 
 const assets = "/marketing/assets/";
 const starts = [
-  { title: "A film night for 6 friends", image: "home-story-1.webp", fallback: "photos/hero-dinner-a-800.webp", prompt: "Plan a film and music evening for six friends in New York, with indie films, jazz and good food. Ask only for essential missing details." },
-  { title: "Rooftop spots in New York", image: "home-story-2.webp", fallback: "photos/gallery-800.webp", prompt: "Find rooftop places in New York. Show verified venues and explain the trade-offs." },
-  { title: "Afrobeats meets jazz", image: "home-story-3.webp", fallback: "covers/c08.webp", prompt: "Explore artists, playlists and experiences where Afrobeats meets jazz." },
-  { title: "Hidden gems in London", image: "home-story-4.webp", fallback: "photos/london-street-800.webp", prompt: "Discover underrated cultural places and experiences in London, with verifiable sources." },
-  { title: "Books for a cozy weekend", image: "home-story-5.webp", fallback: "covers/c05.webp", prompt: "Find books for a cozy weekend, using what I like and leaving room for new discoveries." },
+  {
+    title: "Gift shortlist",
+    prompt: "Help me make a thoughtful gift shortlist for someone. Start with who they are and their interests.",
+  },
+  {
+    title: "A night for Alex",
+    prompt: "Plan a thoughtful evening for someone I care about, with music, a place to go, and a personal invitation.",
+  },
+  {
+    title: "Creative direction",
+    prompt: "Help me develop an original creative direction from a rough idea and turn it into editable work.",
+  },
+  {
+    title: "The weekend brief",
+    prompt: "Help me plan a weekend away, accounting for location, people, dates, budget and travel.",
+  },
 ];
 
 type Page = "home" | "work" | "history" | "saved" | "explore" | "maps" | "create";
@@ -90,7 +101,6 @@ export function AgentWorkspace({
   const [page, setPage] = useState<Page>(initialPage);
   const [workspacePane, setWorkspacePane] = useState<"thread" | "work">(initialPane);
   const [prompt, setPrompt] = useState("");
-  const [storyShortlist, setStoryShortlist] = useState<string[]>([]);
   const [focusedCandidate, setFocusedCandidate] = useState<{ taskId: string; candidateId: string } | null>(null);
   const [menu, setMenu] = useState(false);
   const [exploreView, setExploreView] = useState<"discover" | "compare" | "plan" | "detail" | "revisions" | "maps">(initialExploreView);
@@ -148,6 +158,7 @@ export function AgentWorkspace({
       return Number.isFinite(left) && Number.isFinite(right) ? right - left : 0;
     });
   const title = task?.brief.goal || "Your conversation";
+  const invitationPreview = task ? projectInvitationScene(task) : null;
 
   useEffect(() => {
     if (!task || w.isLoadingWorkspace) {
@@ -191,7 +202,6 @@ export function AgentWorkspace({
     const frame = requestAnimationFrame(() => {
       // The work is already visible beside conversation on desktop.
       if (window.matchMedia("(min-width: 1024px)").matches) { return; }
-
       outputRef.current?.scrollIntoView({
         block: "start",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -251,15 +261,6 @@ export function AgentWorkspace({
     );
   }
 
-  function selectWorkspacePane(next: "thread" | "work") {
-    setWorkspacePane(next);
-    const url = new URL(location.href);
-    const view = next === "work" ? "editor" : "conversation";
-
-    url.searchParams.set("view", view);
-    history.replaceState({ view }, "", url);
-  }
-
   function navigate(next: Page) {
     if (next === page) {
       setMenu(false);
@@ -296,16 +297,10 @@ export function AgentWorkspace({
         : view === "conversations" ? "history" : "work";
       setPage(next);
       setMenu(false);
-
-      if (view === "editor" || view === "conversation") {
-        setWorkspacePane(view === "editor" ? "work" : "thread");
-      }
-
       if (["compare", "detail", "plan", "revisions"].includes(String(view))) {
         setPage("explore");
         setExploreView(view as "compare" | "detail" | "plan" | "revisions");
       } else if (next === "explore") { setExploreView("discover"); }
-
       if (next === "maps") { setExploreView("maps"); }
     };
 
@@ -394,7 +389,7 @@ export function AgentWorkspace({
         maxLength={3000}
         placeholder={
           page === "home" || (page === "work" && !started)
-            ? "What do you want to explore, plan, create or learn?"
+            ? "Bring an idea. Start anywhere."
             : "Ask or refine anything…"
         }
         onChange={(e) => setPrompt(e.target.value)}
@@ -420,11 +415,40 @@ export function AgentWorkspace({
   );
 
   return (
-    <div className={`iw-app igor-mockup ${started && page === "work" ? "iw-active" : ""}`}>
+    <div className={`iw-app igor-mockup igor-landing ${started && page === "work" ? "iw-active" : ""}`}>
       {accountOpen && <AccountDialog onClose={() => setAccountOpen(false)} />}
       <a className="iw-skip" href="#iw-main">
         Skip to content
       </a>
+      <div className="iw-landing-bar">
+        <button type="button" className="iw-landing-brand" onClick={() => navigate("home")} aria-label="Igor home">
+          <img src="/marketing/assets/brand/igor-mark-white.svg" width="28" height="28" alt="" />
+          <span>igor</span>
+        </button>
+        <span className="iw-landing-context">Your workspace</span>
+        {page === "work" && started && hasResult && (
+          <button
+            type="button"
+            className="iw-landing-focus"
+            aria-pressed={workspacePane === "work"}
+            onClick={() => setWorkspacePane((current) => current === "work" ? "thread" : "work")}
+          >
+            <FileText />
+            {workspacePane === "work" ? "Show conversation" : "Focus on your work"}
+          </button>
+        )}
+        <button
+          ref={menuTrigger}
+          type="button"
+          className="iw-landing-mobile-menu"
+          aria-expanded={menu}
+          aria-controls="iw-menu"
+          aria-label={menu ? "Close navigation" : "Open navigation"}
+          onClick={() => setMenu((current) => !current)}
+        >
+          {menu ? <X /> : <Menu />}
+        </button>
+      </div>
       <header className="iw-nav">
         <button type="button" className="iw-brand" onClick={() => navigate("home")} aria-label="Igor home">
           <img
@@ -473,6 +497,24 @@ export function AgentWorkspace({
             <span>Search</span>
           </button>
         </nav>
+        <div className="iw-landing-spaces"><Sparkles size={15} aria-hidden="true" /><span>Your spaces</span></div>
+        <div className="iw-landing-recents" aria-label="Recent conversations">
+          <small>Recents</small>
+          {matchingHistory.slice(0, 6).map((recent) => (
+            <button
+              type="button"
+              key={recent.id}
+              aria-current={recent.id === task?.id && page === "work" ? "page" : undefined}
+              disabled={w.isBusy || w.isLoadingWorkspace}
+              onClick={() => void open(recent.id)}
+              title={conversationTitle(recent.title || recent.goal)}
+            >
+              <MessageCircle />
+              <span>{conversationTitle(recent.title || recent.goal)}</span>
+            </button>
+          ))}
+          {!matchingHistory.length && !historyLoading && <span className="iw-landing-no-recents">No conversations yet</span>}
+        </div>
         <AppearanceControl />
         <button
           type="button"
@@ -494,7 +536,6 @@ export function AgentWorkspace({
           <span>New conversation</span>
         </button>
         <button
-          ref={menuTrigger}
           className="iw-menu-toggle"
           aria-label={menu ? "Close navigation" : "Open navigation"}
           aria-expanded={menu}
@@ -526,6 +567,15 @@ export function AgentWorkspace({
               <Bookmark />
               Library
             </button>
+            <div className="iw-landing-mobile-appearance"><AppearanceControl /></div>
+            <button onClick={() => { setMenu(false); setAccountOpen(true); }}>
+              <UserRound />
+              Account
+            </button>
+            <button onClick={() => { setMenu(false); void fresh(); }}>
+              <Compose />
+              New conversation
+            </button>
           </div>
         )}
       </header>
@@ -534,9 +584,9 @@ export function AgentWorkspace({
           <section className="iw-welcome">
             <div className="iw-intro">
               <h1>
-                Your agent.
+                What’s on
                 <br />
-                With taste.
+                your mind?
               </h1>
               <p>
                 Discover, decide and create.
@@ -551,55 +601,38 @@ export function AgentWorkspace({
                 Continue current conversation <ArrowRight />
               </button>
             )}
-            <div className="iw-quick-start" aria-label="Start a new task">
-              {[
-                ["Plan an evening", "Plan a thoughtful evening with friends. Ask for essential details."],
-                ["Find a film", "Help me find a film based on my taste."],
-                ["Build a playlist", "Help me build a playlist with a particular mood."],
-                ["Find a place", "Help me find a place worth visiting. Ask for the city if needed."],
-                ["Compare options", "Help me compare some options and decide on one."],
-              ].map(([label, request]) => (
-                <button key={label} disabled={!task || w.isBusy}
-                  onClick={() => { setPrompt(request); input.current?.focus(); }}>{label}</button>
-              ))}
+            <div className="iw-landing-example">
+              <button
+                type="button"
+                disabled={!task || w.isBusy}
+                className="iw-landing-example-prompt"
+                onClick={() => {
+                  setPrompt("Find a gift for Alex. Then plan a night around it.");
+                  input.current?.focus();
+                }}
+              >
+                <span>Find a gift for Alex. Then plan a night around it.</span>
+                <span className="iw-landing-example-tags"><span>Jazz</span><span>Design</span><span>London</span></span>
+              </button>
+              <img src="/marketing/assets/photos/hero-dinner-a-480.webp" alt="Friends gathered around dinner" loading="lazy" />
+              <p>One goal. A night worth making.</p>
+              <small>Illustrative example · Tap to start a real conversation</small>
             </div>
-            <div className="iw-ideas" aria-label="Ways to begin">
+            <div className="iw-landing-suggestions" aria-label="Other ways to begin">
               {starts.map((story) => (
-                <article className="iw-story-card" key={story.title}>
-                  <button className="iw-story-open" disabled={!task || w.isBusy}
-                    onClick={() => { setPrompt(story.prompt); input.current?.focus(); }}
-                    aria-label={`Start: ${story.title}`}>
-                    <img
-                      src={referenceImageUrl(story.image)}
-                      alt=""
-                      loading="eager"
-                      onError={(event) => {
-                        const fallback = assets + story.fallback;
-
-                        if (event.currentTarget.src !== new URL(fallback, location.origin).href) {
-                          event.currentTarget.src = fallback;
-                        }
-                      }}
-                    />
-                    <span className="iw-story-name">{story.title}</span>
-                  </button>
-                  <button type="button" className="iw-story-heart"
-                    aria-label={storyShortlist.includes(story.title)
-                      ? `Remove ${story.title} from this preview shortlist`
-                      : `Shortlist ${story.title} in this preview`}
-                    aria-pressed={storyShortlist.includes(story.title)}
-                    onClick={() => setStoryShortlist((items) => items.includes(story.title)
-                      ? items.filter((item) => item !== story.title) : [...items, story.title])}>
-                    <Heart size={23} fill={storyShortlist.includes(story.title) ? "currentColor" : "none"}/>
-                  </button>
-                </article>
+                <button
+                  type="button"
+                  key={story.title}
+                  disabled={!task || w.isBusy}
+                  onClick={() => {
+                    setPrompt(story.prompt);
+                    input.current?.focus();
+                  }}
+                >
+                  {story.title}
+                </button>
               ))}
             </div>
-            <a className="iw-photo-credit"
-              href="https://www.splitshire.com/images/rooftop-terrace-with-string-lights"
-              target="_blank" rel="noopener noreferrer">
-              Photo: Splitshire
-            </a>
           </section>
         )}
         {page === "work" && started && (
@@ -639,11 +672,11 @@ export function AgentWorkspace({
             {hasResult && (
               <nav className="iw-pane-switch" aria-label="Conversation and work">
                 <button type="button" aria-pressed={workspacePane === "thread"}
-                  onClick={() => selectWorkspacePane("thread")}>
+                  onClick={() => setWorkspacePane("thread")}>
                   <MessageCircle /> Conversation
                 </button>
                 <button type="button" aria-pressed={workspacePane === "work"}
-                  onClick={() => selectWorkspacePane("work")}>
+                  onClick={() => setWorkspacePane("work")}>
                   <FileText /> Your work
                 </button>
               </nav>
@@ -843,6 +876,51 @@ export function AgentWorkspace({
                   aria-label="Your work"
                   aria-busy={w.isBusy || w.isLoadingWorkspace}
                 >
+                  <div className="iw-landing-work-heading"><h2>Your work</h2></div>
+                  {task && (
+                    <div className="iw-landing-work-overview" aria-label="Current saved results">
+                      {task.candidates.some((candidate) => candidate.freshness === "current" && !candidate.sample && !!candidate.imageUrl) && (
+                        <section className="iw-landing-result-panel iw-landing-candidate-panel">
+                          <h3>Connected references</h3>
+                          <div className="iw-landing-image-grid">
+                            {task.candidates.filter((candidate) => candidate.freshness === "current" && !candidate.sample && !!candidate.imageUrl).slice(0, 3).map((candidate) => (
+                              <figure key={candidate.id}>
+                                <img src={candidate.imageUrl!} alt={candidate.name} loading="lazy" />
+                                <figcaption>{candidate.name}</figcaption>
+                              </figure>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                      {!!task.schedule.length && (
+                        <section className="iw-landing-result-panel iw-landing-plan-panel">
+                          <h3>Plan</h3>
+                          <div className="iw-landing-plan-items">
+                            {task.schedule.slice(0, 4).map((stop, index) => {
+                              const source = task.candidates.find((candidate) => candidate.id === stop.candidateId && candidate.freshness === "current" && !candidate.sample);
+                              return (
+                                <div className="iw-landing-plan-item" key={`${index}:${stop.label}`}>
+                                  {source?.imageUrl ? <img src={source.imageUrl} alt="" loading="lazy" /> : <span className="iw-landing-plan-number">{index + 1}</span>}
+                                  <div><strong>{stop.label}</strong><small>{stop.minutes} minutes · Time unconfirmed</small></div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      )}
+                      {invitationPreview?.artifact?.freshness === "current" && (
+                        <section className="iw-landing-result-panel iw-landing-invite-panel">
+                          <h3>Invitation draft</h3>
+                          <div className="iw-landing-invite-preview">
+                            <strong>{invitationPreview.title}</strong>
+                            <p>{invitationPreview.body.slice(0, 230)}</p>
+                            <small>Saved draft · Not sent</small>
+                          </div>
+                        </section>
+                      )}
+                    </div>
+                  )}
+                  <div id="iw-landing-editor" className="iw-landing-work-editor">
                   {task ? (
                     <Work
                       key={task.id}
@@ -857,6 +935,7 @@ export function AgentWorkspace({
                   ) : (
                     <LoadingSurface mode="output" />
                   )}
+                  </div>
                 </section>
               )}
             </div>
@@ -880,12 +959,9 @@ export function AgentWorkspace({
                   navigate("maps");
                 } else {
                   const fromMap = page === "maps";
-
                   if (fromMap) { navigate("explore"); }
-
                   const url = new URL(location.href);
                   url.searchParams.set("view", view === "discover" ? "explore" : view);
-
                   if (fromMap) { history.replaceState({view}, "", url); }
                   else { history.pushState({view}, "", url); }
                 }
@@ -918,9 +994,7 @@ export function AgentWorkspace({
               busy={w.isBusy || w.isLoadingWorkspace}
               onResearch={(area) => void (async () => {
                 const workspace = await w.createWorkspace();
-
                 if (!workspace) { return; }
-
                 navigate("work");
                 await w.sendTurn({type:"message",text:
                   `Find real places in ${area}. Show source-backed places and verified coordinates only.`}, workspace);
@@ -1548,12 +1622,7 @@ function Saved({
           <ProductCollections task={task} collections={saved.data.collections}
             isBusy={saved.isBusy || busy} saveOutput={saved.saveOutput}
 
-            onDiscover={onDiscover}
-              onLoad={async (id) => {
-                await onLoad(id);
-
-                return true;
-              }}/>) }
+            onDiscover={onDiscover} onLoad={async (id) => {await onLoad(id);return true;}}/>)}
       </div>
       {saved.errorMessage && <p role="alert">{saved.errorMessage}</p>}
     </section>

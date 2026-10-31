@@ -1,0 +1,928 @@
+/* IGOR /APP — direct adaptation of the public landing-page workspace.
+   Authoritative sources: public/marketing/index.html, styles.css, recording.css.
+   Keep the same Archivo font, black/ink panels, #ff704e signal, 17/36/47 desktop
+   hierarchy and 58px phone bar. Live task data replaces marketing examples;
+   invitation/document preview remains authored and editable, never fabricated. */
+
+.iw-app.igor-mockup.igor-landing {
+  --iw-black: #050505;
+  --iw-paper: #090a0a;
+  --iw-line: #303030;
+  --iw-muted: #bdbeb8;
+  --iw-ink: #fafafa;
+  --igor-ink: #fafafa;
+  --igor-paper: #090a0a;
+  --igor-line: #303030;
+  --ir-ink: #fafafa;
+  --ir-line: #3b3d3e;
+  --ir-muted: #bdbeb8;
+  --ir-quiet: #141616;
+  --ir-white: #141616;
+  --iw-landing-rail: clamp(176px, 16.8vw, 242px);
+  padding: 60px 0 0 var(--iw-landing-rail) !important;
+  background: #090a0a;
+  color: #f7f7f7;
+  font: 400 14px/1.45 Archivo, Arial, sans-serif;
+  min-height: 100dvh;
+}
+.iw-app.igor-mockup.igor-landing::before,
+.iw-app.igor-mockup.igor-landing .iw-welcome::before,
+.iw-app.igor-mockup.igor-landing .iw-welcome::after {
+  display: none !important;
+}
+.iw-app.igor-mockup.igor-landing :is(button, a, input, textarea, select, summary):focus-visible {
+  outline: 2px solid #ff704e;
+  outline-offset: 2px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 90;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  background: #090a0a;
+  border-bottom: 1px solid #303030;
+  color: #fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-brand {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fafafa;
+  font-size: 23px;
+  font-weight: 720;
+  letter-spacing: -.075em;
+  flex: none;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-brand img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-context {
+  color: #bdbeb8;
+  font-size: 11px;
+  border-left: 1px solid #444;
+  padding-left: 14px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-focus {
+  margin-left: auto;
+  border: 1px solid #464747;
+  background: transparent;
+  border-radius: 7px;
+  padding: 9px 13px;
+  font: 600 11px/1.3 Archivo, Arial, sans-serif;
+  color: #f8f8f8;
+  min-height: 36px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-focus svg {width: 15px;height: 15px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-focus[aria-pressed="true"] {background: #272a2a;}
+
+@media (min-width: 761px) {
+  .iw-app.igor-mockup.igor-landing:has(> main > .iw-library:not(.iw-history-page)) {
+    padding-left: var(--iw-landing-rail) !important;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav,
+  .iw-app.igor-mockup.igor-landing .iw-nav:is(:hover,:focus-within) {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: var(--iw-landing-rail) !important;
+    min-width: var(--iw-landing-rail) !important;
+    max-width: var(--iw-landing-rail);
+    height: calc(100dvh - 60px);
+    margin: 0;
+    padding: 13px 12px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    border: 0;
+    border-right: 1px solid #303030;
+    border-radius: 0;
+    box-shadow: none;
+    background: #090a0a;
+    color: #fafafa;
+    backdrop-filter: none;
+    transition: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    z-index: 60;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav > .iw-brand {display: none;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new {
+    order: 0;
+    align-self: stretch;
+    margin: 0 0 18px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    background: #242626;
+    border: 1px solid #3b3c3c;
+    border-radius: 7px;
+    box-shadow: none;
+    color: #fafafa;
+    font-size: 12px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new > span {
+    position: static;
+    opacity: 1;
+    overflow: visible;
+    clip-path: none;
+    width: auto;
+    height: auto;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new svg {width: 17px;height: 17px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-spaces {
+    order: 1;
+    display: flex;
+    gap: 10px;
+    padding: 0 9px 15px;
+    font-size: 12px;
+    align-items: center;
+    color: #eee;
+    border-bottom: 1px solid #303030;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-spaces svg {width: 15px;height: 15px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents {
+    order: 2;
+    display: grid;
+    gap: 3px;
+    padding-top: 15px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents > small {
+    color: #aaa;
+    font-size: 10px;
+    padding: 0 7px 8px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents > button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: 7px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 450;
+    color: #e5e5e5;
+    background: transparent;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents > button[aria-current="page"] {background: #242626;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents > button:hover {background: #202222;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents > button svg {width: 14px;height: 14px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-recents > button span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-no-recents {font-size: 11px;color:#a6a6a2;padding:8px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav nav {
+    order: 3;
+    flex: 0 0 auto;
+    width: 100%;
+    display: grid;
+    gap: 2px;
+    justify-content: stretch;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid #303030;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button,
+  .iw-app.igor-mockup.igor-landing .iw-nav:is(:hover,:focus-within) nav button {
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 36px;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 7px;
+    color: #c5c5c2;
+    background: transparent;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: left;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button[aria-current="page"] {background:#242626;color:#fff;}
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button > span,
+  .iw-app.igor-mockup.igor-landing .iw-nav:is(:hover,:focus-within) nav button > span {
+    position: static;
+    opacity: 1;
+    width: auto;
+    height: auto;
+    clip-path: none;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button svg {width: 15px;height: 15px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-appearance {
+    order: 4;
+    position: relative;
+    margin: auto 0 0;
+    width: auto;
+    height: auto;
+    align-self: stretch;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-appearance-trigger {
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 9px;
+    margin: 0;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    color: #d8d8d8;
+    font-size: 11px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-appearance-trigger > span {
+    position: static; width: auto; height: auto; clip-path: none; overflow: visible; opacity: 1;
+    font-size: 11px; white-space: normal;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-appearance-panel {
+    position: fixed;
+    left: calc(var(--iw-landing-rail) + 8px);
+    right: auto; bottom: 12px; top: auto;
+    color: #1a1a1a; z-index: 100;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-account {
+    order: 5;
+    display: flex;
+    justify-content: flex-start;
+    padding: 8px;
+    min-height: 38px;
+    height: auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border: 0;
+    border-radius: 7px;
+    color: #d8d8d8;
+    background: transparent;
+  }
+}
+
+/* Marketing mobile story: dark greeting, a prompt and one expressive image. */
+.iw-app.igor-mockup.igor-landing .iw-welcome {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100dvh - 60px);
+  padding: 65px clamp(24px, 7vw, 90px) 72px;
+  margin: 0;
+  background: #131414;
+  color: #fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-intro {text-align: left;max-width: 850px;margin: 0 auto;}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-intro h1 {
+  margin: 0;
+  max-width: 760px;
+  color: #fafafa;
+  font: 850 clamp(58px,7vw,108px)/.99 Archivo,Arial,sans-serif;
+  font-stretch: 76%;
+  font-variation-settings: "wdth" 76,"wght" 850;
+  letter-spacing: -.055em;
+  text-transform: none;
+  text-align: left;
+}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-intro p {
+  margin: 21px 0 0;
+  max-width: 35ch;
+  color: #bdbeb8;
+  font-size: 18px;
+  line-height: 1.4;
+  text-align: left;
+}
+.iw-app.igor-mockup.igor-landing .iw-welcome-compose {margin: 29px auto 0;max-width: 850px;width: 100%;}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-composer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #303232;
+  border: 1px solid #484a4a;
+  border-radius: 13px;
+  padding: 14px 14px 14px 18px;
+  min-height: 68px;
+  box-shadow: none;
+  color: white;
+}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-home-search-icon {display:none;}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-composer textarea {
+  color: #fafafa;
+  font-size: 17px;
+  min-height: 36px;
+  padding: 5px 0;
+}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-composer textarea::placeholder {color:#d0d0d0;}
+.iw-app.igor-mockup.igor-landing .iw-welcome .iw-composer button[type="submit"] {
+  background: #fafafa;
+  color: #0c0c0c;
+  border-radius: 50%;
+  width: 40px; height: 40px;
+}
+.iw-app.igor-mockup.igor-landing .iw-resume-work {
+  display: flex;
+  margin: 18px 0 0;
+  padding: 8px 14px;
+  border: 1px solid #3b3d3e;
+  border-radius: 7px;
+  background: #242626;
+  color: #fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 530px);
+  margin: 25px auto 0;
+  text-align: left;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example-prompt {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-height: 90px;
+  background: #303232;
+  border: 1px solid #4a4a4a;
+  border-radius: 13px;
+  color: #fafafa;
+  padding: 16px;
+  text-align: left;
+  justify-content: stretch;
+  font-size: 16px;
+  font-weight: 550;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example-tags {display:flex;gap:5px;flex-wrap:wrap;}
+.iw-app.igor-mockup.igor-landing .iw-landing-example-tags span {
+  border-radius: 20px;background: #484a4a;color:#eee;padding:4px 9px;font-size:11px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example > img {
+  display:block;width:100%;height:260px;object-fit:cover;border-radius:12px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example > p {
+  color:#c5c5c2;text-align:center;font-size:13px;margin:0;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-example > small {
+  color:#979895;font-size:10px;text-align:center;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-suggestions {
+  display:flex;flex-wrap:wrap;gap:8px;max-width:850px;margin:24px auto 0;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-suggestions button {
+  background: #242626;
+  border: 1px solid #3b3d3e;
+  border-radius: 20px;
+  min-height: 38px;
+  padding: 8px 13px;
+  font-size: 12px;
+  color: #e3e3e3;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-suggestions button:hover {background:#303232;}
+
+/* Desktop: marketing workspace 17 / 36 / 47 overall, after the 17% rail. */
+@media (min-width: 1024px) {
+  .iw-app.igor-mockup.igor-landing.iw-active {overflow:hidden;height:100dvh;min-height:0;}
+  .iw-app.igor-mockup.igor-landing.iw-active > main {
+    display:flex;
+    flex:1 1 auto;
+    min-height:0;
+    height:calc(100dvh - 60px);
+    padding:0;
+    overflow:hidden;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace {
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    min-height:0;
+    height:calc(100dvh - 60px);
+    background:#090a0a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workbar,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-pane-switch {
+    display:none !important;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workgrid,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result .iw-workgrid {
+    display:grid !important;
+    grid-template-columns:minmax(265px,36fr) minmax(340px,47fr) !important;
+    flex:1 1 auto;
+    gap:0;
+    min-width:0;
+    min-height:0;
+    overflow:hidden;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workgrid:has(> .iw-thread:only-child) {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-thread,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result .iw-thread {
+    display:flex !important;
+    flex:1 1 auto;
+    min-width:0;
+    width:100%;
+    min-height:0;
+    background:#090a0a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-messages {
+    min-width:0;
+    min-height:0;
+    padding:18px 16px 20px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-color:#484a4a transparent;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message-stream {
+    max-width:100%;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-inline-output {
+    display:block !important;
+    min-width:0;
+    min-height:0;
+    max-width:none;
+    width:100%;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    border:0;
+    border-left:1px solid #303030;
+    border-radius:0;
+    padding:13px 12px 32px;
+    margin:0;
+    background:#090a0a;
+    box-shadow:none;
+    scrollbar-color:#484a4a transparent;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace[data-pane="work"] .iw-workgrid {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result[data-pane="work"] .iw-thread {display:none !important;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace[data-pane="work"] .iw-inline-output {border-left:0;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workspace-footer,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result .iw-workspace-footer {
+    display:grid !important;
+    flex:0 0 auto;
+    grid-template-columns:minmax(265px,36fr) minmax(340px,47fr) !important;
+    border-top:1px solid #303030;
+    background:#090a0a;
+    padding:0;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workspace-footer > .iw-dock {
+    grid-column:1;
+    min-width:0;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:11px 16px;
+    border:0;
+    background:#090a0a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace[data-pane="work"] .iw-workspace-footer {grid-template-columns:minmax(0,1fr) !important;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace[data-pane="work"] .iw-workspace-footer > .iw-dock {
+    max-width:760px;justify-self:center;
+  }
+}
+/* Conversations and saved outcomes use the landing page's bounded black panels. */
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message {
+  position:relative;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:0 0 14px;
+  animation:none;
+  max-width:100%;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-author {
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  margin:0;
+  flex:none;
+  border-radius:50%;
+  color:#fafafa;
+  background:#795741;
+  font-size:10px;
+  font-weight:600;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-author img {
+  display:block;
+  width:27px;
+  height:27px;
+  padding:4px;
+  object-fit:contain;
+  border-radius:50%;
+  background:#fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-assistant .iw-author {background:transparent;}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message .pp-message-text,
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message .ird-chat-receipt {
+  min-width:0;
+  flex:1 1 auto;
+  max-width:calc(100% - 42px);
+  margin:0;
+  padding:11px 13px;
+  border:1px solid #303334;
+  border-radius:10px;
+  background:#141616;
+  color:#fafafa;
+  font-size:clamp(12px,1.1vw,15px);
+  line-height:1.5;
+  box-shadow:none;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-user .pp-message-text {
+  background:#141616;
+  border-radius:10px;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message-sources {color:#bdbeb8;}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message-sources a {color:#f7f7f7;}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace :is(.iw-receipt,.iw-choices,.iw-references) {
+  border-color:#3b3d3e;
+  color:#eaeaea;
+}
+.iw-app.igor-mockup.igor-landing .iw-workspace-footer .iw-composer {
+  display:flex;
+  align-items:center;
+  width:100%;
+  min-height:52px;
+  border:1px solid #3b3d3e;
+  border-radius:10px;
+  padding:8px 10px 8px 13px;
+  background:#141616;
+  color:#fafafa;
+  box-shadow:none;
+}
+.iw-app.igor-mockup.igor-landing .iw-workspace-footer .iw-composer textarea {background:transparent;color:#fafafa;min-height:35px;font-size:13px;}
+.iw-app.igor-mockup.igor-landing .iw-workspace-footer .iw-composer textarea::placeholder {color:#a9aaa8;}
+.iw-app.igor-mockup.igor-landing .iw-workspace-footer .iw-composer > button {border-radius:50%;background:#fafafa;color:#101010;}
+.iw-app.igor-mockup.igor-landing .iw-workspace-footer .iw-dock > p {display:none;}
+
+/* Actual data first: provider imagery, saved schedule, saved invitation. */
+.iw-app.igor-mockup.igor-landing .iw-landing-work-heading {padding:0 2px 10px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-work-heading h2 {
+  font:650 14px/1.3 Archivo,Arial,sans-serif;
+  color:#fafafa;
+  text-transform:none;
+  letter-spacing:-.02em;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-work-overview {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:16px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-result-panel {
+  min-width:0;
+  padding:9px;
+  background:#121414;
+  border:1px solid #3b3d3e;
+  border-radius:10px;
+  overflow:hidden;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-result-panel h3 {
+  font:600 13px/1.3 Archivo,Arial,sans-serif;
+  color:#fafafa;
+  text-transform:none;
+  letter-spacing:-.018em;
+  margin:0 0 10px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-candidate-panel {grid-column:1/-1;}
+.iw-app.igor-mockup.igor-landing .iw-landing-image-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-image-grid figure {margin:0;min-width:0;}
+.iw-app.igor-mockup.igor-landing .iw-landing-image-grid img {
+  display:block;width:100%;aspect-ratio:1.1;object-fit:cover;border-radius:6px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-image-grid figcaption {
+  padding:5px 1px 0;
+  font-size:10px;
+  line-height:1.25;
+  color:#d0d1d0;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-items {display:grid;gap:8px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-item {display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:9px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-item img,
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-number {
+  width:54px;height:54px;object-fit:cover;border-radius:4px;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-number {display:grid;place-items:center;background:#2b2d2d;color:#fafafa;}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-item strong {display:block;color:#f7f7f7;font-size:11px;font-weight:600;line-height:1.3;}
+.iw-app.igor-mockup.igor-landing .iw-landing-plan-item small {display:block;margin-top:4px;color:#bdbeb8;font-size:10px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-invite-preview {
+  background:#fff9ed;
+  color:#181613;
+  padding:15px 12px;
+  min-height:170px;
+  border-radius:5px;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-invite-preview > strong {
+  display:block;
+  font:900 clamp(22px,2vw,40px)/.99 Archivo,Arial,sans-serif;
+  font-stretch:62%;
+  font-variation-settings:"wdth" 62,"wght" 900;
+  letter-spacing:-.03em;
+  color:#9b2028;
+}
+.iw-app.igor-mockup.igor-landing .iw-landing-invite-preview > p {font-size:11px;line-height:1.4;margin-top:12px;max-height:100px;overflow:hidden;white-space:pre-wrap;}
+.iw-app.igor-mockup.igor-landing .iw-landing-invite-preview > small {display:block;font-size:10px;color:#685d52;margin-top:9px;}
+.iw-app.igor-mockup.igor-landing .iw-landing-work-editor {min-width:0;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .iw-result-content {max-width:none;width:100%;gap:12px;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .iw-resource-tabs {
+  display:flex;gap:7px;overflow-x:auto;padding:0 0 10px;margin:0 0 13px;border-color:#3b3d3e;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .iw-resource-tabs button {
+  flex:none;padding:7px 10px;min-height:34px;border:1px solid #3b3d3e;
+  border-radius:7px;background:#141616;color:#c5c5c2;
+  font:600 11px/1.25 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .iw-resource-tabs button[aria-pressed="true"] {
+  background:#303232;color:#fff;border:1px solid #565858;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-surface {padding:14px 8px 24px;background:#121414;color:#fafafa;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-surface .ir-heading h2,
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-surface .ir-card-open strong {color:#fafafa;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output :is(.ird-card,.iw-references article,.ird-detail-sources) {
+  background:#141616;border-color:#3b3d3e;color:#f7f7f7;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-search,
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-chip-row button {
+  background:#1e2020;color:#fafafa;border-color:#484a4a;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ir-search input {color:#fafafa;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ig-connected-work {background:#141616;color:#fafafa;border:1px solid #3b3d3e;}
+.iw-app.igor-mockup.igor-landing .iw-inline-output :is(.ig-connected-document,.ic-paper,.ig-connected-paper) {
+  background:#fffaf0;color:#1b1b1b;
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-output .ei-poster {
+  box-shadow:none;
+}
+
+/* Other native routes retain the same dark app chrome; readable authored
+   documents, invitations, map tiles and image media keep their own surfaces. */
+.iw-app.igor-mockup.igor-landing > main {background:#090a0a;color:#fafafa;}
+.iw-app.igor-mockup.igor-landing .iw-library,
+.iw-app.igor-mockup.igor-landing .iw-standalone-reference {
+  background:#090a0a;
+  color:#fafafa;
+  min-height:calc(100dvh - 60px);
+}
+.iw-app.igor-mockup.igor-landing .iw-standalone-reference > .ir-surface,
+.iw-app.igor-mockup.igor-landing .iw-history-page {
+  background:#090a0a;color:#fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-history-heading h1,
+.iw-app.igor-mockup.igor-landing .iw-library > h1 {
+  color:#fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-history-list > button {
+  background:#141616;color:#fafafa;border:1px solid #3b3d3e;
+}
+.iw-app.igor-mockup.igor-landing .iw-history-search {
+  background:#141616;border-color:#3b3d3e;color:#fafafa;
+}
+.iw-app.igor-mockup.igor-landing .iw-history-search input {color:#fafafa;}
+
+/* Desktop with less horizontal space: preserve real controls, not squashed columns. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .iw-app.igor-mockup.igor-landing {--iw-landing-rail:170px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-work-overview {grid-template-columns:1fr;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-candidate-panel {grid-column:auto;}
+}
+@media (min-width: 761px) and (max-width: 1023px) {
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-inline-output {background:#090a0a;color:#fafafa;}
+}
+/* Native phone navigation, copied from marketing's small-screen hierarchy:
+   one surface at a time; no invisible side pane, scroll or horizontal overflow. */
+@media (max-width: 760px) {
+  .iw-app.igor-mockup.igor-landing {
+    --iw-landing-rail:0px;
+    padding:58px 0 70px !important;
+    background:#141616;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-landing-bar {
+    height:58px;padding:0 16px;
+    background:#141616;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-landing-context {font-size:10px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-focus {display:none;}
+  .iw-app.igor-mockup.igor-landing .iw-nav,
+  .iw-app.igor-mockup.igor-landing .iw-nav:is(:hover,:focus-within) {
+    display:flex;flex-direction:row;align-items:center;justify-content:center;
+    position:fixed;top:auto;bottom:0;left:0;right:0;
+    width:100% !important;max-width:100%;height:70px;
+    margin:0;padding:5px 5px max(5px,env(safe-area-inset-bottom));
+    border:0;border-top:1px solid #303030;border-radius:0;
+    background:#141616;color:#fafafa;box-shadow:none;
+    z-index:80;overflow:visible;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav > .iw-brand,
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-spaces,
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-landing-recents,
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-account {display:none;}
+  .iw-app.igor-mockup.igor-landing .iw-nav nav {
+    flex:1 1 auto;display:flex;align-items:center;justify-content:space-around;
+    width:auto;height:auto;gap:0;margin:0;padding:0;overflow:visible;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button {
+    flex:1 1 auto;min-width:0;max-width:65px;height:58px;min-height:58px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:4px 0;border:0;border-radius:6px;background:transparent;
+    color:#bdbeb8;font-size:10px;text-align:center;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button[aria-current="page"] {color:#fafafa;background:#242626;}
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button svg {width:18px;height:18px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav nav button span {font-size:10px;color:inherit;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new {
+    margin:0 0 0 4px;flex:0 0 43px;width:43px;height:43px;min-width:43px;
+    padding:0;border:1px solid #454747;border-radius:7px;background:#242626;
+    color:#fafafa;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new span {display:none;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-new svg {width:18px;height:18px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-appearance {display:none;}
+  .iw-app.igor-mockup.igor-landing .iw-welcome {
+    min-height:calc(100dvh - 128px);
+    padding:42px 23px 62px;
+    background:#1b1b1b;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-welcome .iw-intro h1 {
+    font-size:clamp(46px,12vw,65px);
+    line-height:.97;
+    letter-spacing:-.055em;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-welcome .iw-intro p {font-size:15px;margin-top:18px;}
+  .iw-app.igor-mockup.igor-landing .iw-welcome .iw-composer textarea {font-size:14px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-example {max-width:390px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-example > img {height:210px;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace {
+    display:flex;
+    flex-direction:column;
+    height:calc(100dvh - 128px);
+    min-height:0;
+    background:#090a0a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workbar {
+    background:#090a0a;color:#fafafa;border-bottom:1px solid #303030;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workbar h1 {color:#fafafa;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-pane-switch {
+    background:#141616;border-color:#3b3d3e;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-pane-switch button {
+    background:#141616;color:#bdbeb8;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-pane-switch button[aria-pressed="true"] {
+    background:#303232;color:#fafafa;border-color:#484a4a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workgrid,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result .iw-workgrid {
+    display:flex !important;
+    flex-direction:column !important;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-thread,
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result .iw-thread {
+    display:flex !important;
+    flex:1 1 auto;
+    min-height:0;
+    width:100%;
+    background:#090a0a;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-messages {overflow-y:auto;background:#090a0a;color:#fafafa;padding:16px;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-inline-output {
+    display:flex !important;
+    flex-direction:column;
+    flex:1 1 auto;
+    min-height:0;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:14px 14px 30px;
+    overflow-y:auto;
+    background:#090a0a;
+    border:0;
+    color:#fafafa;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace[data-pane="thread"] .iw-inline-output {display:none !important;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace.iw-with-result[data-pane="work"] .iw-thread {display:none !important;}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workspace-footer {
+    display:flex;flex:0 0 auto;background:#090a0a;border-top:1px solid #303030;
+    padding:0;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-workspace-footer > .iw-dock {
+    flex:1;max-width:none;width:100%;padding:8px 12px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-landing-work-overview {grid-template-columns:1fr;gap:9px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-candidate-panel {grid-column:auto;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-image-grid {gap:6px;}
+  .iw-app.igor-mockup.igor-landing .iw-standalone-reference,
+  .iw-app.igor-mockup.igor-landing .iw-library {min-height:calc(100dvh - 128px);}
+}
+@media (prefers-reduced-motion: reduce) {
+  .iw-app.igor-mockup.igor-landing .iw-landing-example,
+  .iw-app.igor-mockup.igor-landing .iw-landing-result-panel {
+    transition:none !important;
+    animation:none !important;
+  }
+}
+/* Source-backed mobile navigation: the landing phone has one Igor header
+   and a small overflow menu, not a competing bottom navigation bar. */
+.iw-app.igor-mockup.igor-landing .iw-landing-mobile-menu {display:none;}
+@media (max-width:760px) {
+  .iw-app.igor-mockup.igor-landing {padding:58px 0 0 !important;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-mobile-menu {
+    display:grid;place-items:center;flex:none;
+    width:39px;height:39px;margin-left:auto;
+    border:0;border-radius:8px;background:transparent;color:#d5d5d5;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-landing-mobile-menu svg {width:21px;height:21px;}
+  .iw-app.igor-mockup.igor-landing .iw-nav,
+  .iw-app.igor-mockup.igor-landing .iw-nav:is(:hover,:focus-within) {
+    position:fixed;top:58px;right:0;bottom:auto;left:auto;
+    display:block;width:0 !important;max-width:0;height:0;
+    padding:0;margin:0;overflow:visible;
+    border:0;background:transparent;box-shadow:none;
+    z-index:85;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav > :is(.iw-brand, nav, .iw-new, .iw-account, .iw-appearance, .iw-landing-spaces, .iw-landing-recents) {
+    display:none !important;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu {
+    display:grid;
+    position:fixed;top:64px;right:12px;left:auto;bottom:auto;
+    width:min(320px,calc(100vw - 24px));
+    max-height:calc(100dvh - 82px);overflow-y:auto;
+    background:#242626;color:#fafafa;
+    border:1px solid #484a4a;border-radius:12px;
+    padding:10px;gap:3px;z-index:95;
+    box-shadow:0 20px 55px #0009;
+    backdrop-filter:none;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu > button {
+    display:flex;justify-content:flex-start;align-items:center;
+    width:100%;min-height:42px;gap:10px;
+    padding:10px 12px;border:0;border-radius:7px;
+    background:transparent;color:#f0f0f0;text-align:left;
+    font-size:13px;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu > button:hover {background:#333636;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu > button svg {width:17px;height:17px;}
+  .iw-app.igor-mockup.igor-landing .iw-landing-mobile-appearance {position:relative;}
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu .iw-landing-mobile-appearance .iw-appearance {
+    display:block !important;position:relative !important;
+    width:100% !important;height:auto !important;
+    top:auto !important;left:auto !important;right:auto !important;bottom:auto !important;
+    margin:0;padding:0;z-index:96;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu .iw-appearance-trigger {
+    display:flex !important;align-items:center;justify-content:flex-start;
+    gap:10px;width:100%;min-height:42px;padding:10px 12px;
+    background:transparent;color:#fafafa;border:0;border-radius:7px;
+    font-size:13px;box-shadow:none;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu .iw-appearance-trigger > span {
+    position:static;width:auto;height:auto;clip-path:none;overflow:visible;white-space:normal;
+  }
+  .iw-app.igor-mockup.igor-landing .iw-nav .iw-menu .iw-appearance-panel {
+    position:absolute !important;top:calc(100% + 6px) !important;
+    left:auto !important;right:0 !important;bottom:auto !important;
+    color:#111;max-width:min(320px,calc(100vw - 28px));
+  }
+  .iw-app.igor-mockup.igor-landing .iw-welcome {min-height:calc(100dvh - 58px);}
+  .iw-app.igor-mockup.igor-landing .iw-inline-workspace {height:calc(100dvh - 58px);}
+  .iw-app.igor-mockup.igor-landing .iw-standalone-reference,
+  .iw-app.igor-mockup.igor-landing .iw-library {min-height:calc(100dvh - 58px);}
+}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message {flex-wrap:wrap;}
+.iw-app.igor-mockup.igor-landing .iw-inline-workspace .iw-message > .iw-message-sources {
+  flex-basis:calc(100% - 42px);
+  margin-left:40px;
+  margin-top:2px;
+}

@@ -191,6 +191,7 @@ export function AgentWorkspace({
     const frame = requestAnimationFrame(() => {
       // The work is already visible beside conversation on desktop.
       if (window.matchMedia("(min-width: 1024px)").matches) { return; }
+
       outputRef.current?.scrollIntoView({
         block: "start",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -286,10 +287,12 @@ export function AgentWorkspace({
         : view === "conversations" ? "history" : "work";
       setPage(next);
       setMenu(false);
+
       if (["compare", "detail", "plan", "revisions"].includes(String(view))) {
         setPage("explore");
         setExploreView(view as "compare" | "detail" | "plan" | "revisions");
       } else if (next === "explore") { setExploreView("discover"); }
+
       if (next === "maps") { setExploreView("maps"); }
     };
 
@@ -864,9 +867,12 @@ export function AgentWorkspace({
                   navigate("maps");
                 } else {
                   const fromMap = page === "maps";
+
                   if (fromMap) { navigate("explore"); }
+
                   const url = new URL(location.href);
                   url.searchParams.set("view", view === "discover" ? "explore" : view);
+
                   if (fromMap) { history.replaceState({view}, "", url); }
                   else { history.pushState({view}, "", url); }
                 }
@@ -899,7 +905,9 @@ export function AgentWorkspace({
               busy={w.isBusy || w.isLoadingWorkspace}
               onResearch={(area) => void (async () => {
                 const workspace = await w.createWorkspace();
+
                 if (!workspace) { return; }
+
                 navigate("work");
                 await w.sendTurn({type:"message",text:
                   `Find real places in ${area}. Show source-backed places and verified coordinates only.`}, workspace);
@@ -1527,7 +1535,12 @@ function Saved({
           <ProductCollections task={task} collections={saved.data.collections}
             isBusy={saved.isBusy || busy} saveOutput={saved.saveOutput}
 
-            onDiscover={onDiscover} onLoad={async (id) => {await onLoad(id);return true;}}/>)}
+            onDiscover={onDiscover}
+              onLoad={async (id) => {
+                await onLoad(id);
+
+                return true;
+              }}/>) }
       </div>
       {saved.errorMessage && <p role="alert">{saved.errorMessage}</p>}
     </section>

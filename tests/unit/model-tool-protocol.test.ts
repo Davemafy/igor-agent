@@ -379,3 +379,62 @@ it.each(["conversation", "clarification", "draft"])(
     });
   },
 );
+
+it("keeps sole-document revision context narrow and the existing source content visible", async () => {
+  const task = freshTask("revision-small-context", "owner");
+  const original = "Observed market evidence with citations. ".repeat(150);
+  task.artifacts.push({
+    id: "agent-doc-prior-1",
+    kind: "research-report",
+    title: "Existing investment memo",
+    content: original,
+    evidenceIds: [],
+    dependencies: [],
+    assumptions: [],
+    version: 1,
+    freshness: "current",
+    edited: false,
+  });
+  const fetcher = vi.fn<typeof fetch>(async (_url, init) => {
+    const request = JSON.parse(String(init?.body));
+    const context = JSON.parse(request.input[1].content);
+
+    expect(request.input[0].content).toContain("HARD constraint");
+    expect(context.savedArtifacts[0].content.length).toBeGreaterThan(2500);
+    expect(context.culturalCandidates).toEqual([]);
+    expect(context.culturalEvidence).toEqual([]);
+    expect(context.knownEntities).toEqual([]);
+
+    return result("choose_agent_action", {
+      name: "document.revise",
+      arguments: {
+        artifactId: "agent-doc-prior-1",
+        title: "Revised memo",
+        content: "The original evidence remains visible; revisions remain unverified.",
+        sourceIds: [],
+      },
+    });
+  });
+  const tool = {
+    name: "document.revise",
+    description: "Revise the existing saved memo",
+    permission: "internal" as const,
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        artifactId: { type: "string" },
+        title: { type: "string" },
+        content: { type: "string" },
+        sourceIds: { type: "array", items: { type: "string" } },
+      },
+      required: ["artifactId", "title", "content", "sourceIds"],
+    },
+  };
+  const model = new ToolCallingModel("fixture-key", "test-model", fetcher);
+
+  await expect(
+    model.chooseAgentAction("Revise the existing memo", [tool], [], task),
+  ).resolves.toMatchObject({ name: "document.revise" });
+  expect(fetcher).toHaveBeenCalledOnce();
+});

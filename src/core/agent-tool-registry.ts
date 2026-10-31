@@ -163,7 +163,10 @@ export function createAgentToolRegistry(
         artifact.id.startsWith("agent-doc-") &&
         !artifact.edited &&
         !artifact.locked,
-    );
+    ) ||
+    (context.task.work?.documents.some(
+      (document) => !document.edited && document.status !== "approved",
+    ) ?? false);
   const priorWork = () =>
     context.task.artifacts.length > 0 ||
     (context.task.agentRunHistory?.length ?? 0) > 0;
@@ -960,6 +963,100 @@ export function createAgentToolRegistry(
             status: "blocked",
             requests: 0,
             summary: "Revision selected an unobserved cultural candidate.",
+          };
+        }
+
+        // Connected experience documents have a versioned work identity,
+        // distinct from standalone agent artifacts. Reuse the existing
+        // mutation path so owner edits, approvals and dependencies survive.
+        const workId = artifactId.startsWith("document:")
+          ? artifactId.slice("document:".length)
+          : artifactId;
+        const linked = ctx.task.work?.documents.find((d) => d.id === workId);
+
+        if (linked) {
+          if (linked.edited || linked.status === "approved") {
+            return {
+              status: "blocked",
+              requests: 0,
+              summary: "Approved or manually edited document is protected.",
+            };
+          }
+
+          const trustedReferences = [
+            ...ctx.sources.map((source) => ({
+              id: `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
+              aliases: [
+                source.id,
+                source.url,
+                `${ctx.task.id}:agent:${ctx.runId}:${source.id}`,
+              ],
+            })),
+            ...ctx.task.evidence
+              .filter(
+                (e) =>
+                  linked.evidenceIds.includes(e.id) &&
+                  e.freshness === "current",
+              )
+              .map((e) => ({
+                id: e.id,
+                aliases: [e.id, e.reference, e.id.split(":").at(-1) ?? ""],
+              })),
+          ];
+          const cited = sourceIds.map((reference) => {
+            const matched = new Set(
+              trustedReferences
+                .filter((item) => item.aliases.includes(reference))
+                .map((item) => item.id),
+            );
+
+            return matched.size === 1 ? [...matched][0] : null;
+          });
+
+          if (
+            cited.some((id) => !id) ||
+            evidenceIds.some(
+              (id) =>
+                !ctx.task.evidence.some(
+                  (e) => e.id === id && e.freshness === "current",
+                ),
+            )
+          ) {
+            return {
+              status: "blocked",
+              requests: 0,
+              summary: "Revision cited unobserved or stale evidence.",
+            };
+          }
+
+          const summary = applyWorkActions(
+            ctx.task,
+            [
+              {
+                kind: "document",
+                id: linked.id,
+                title,
+                content,
+                dependencies: linked.dependencies,
+                evidenceIds: [
+                  ...new Set([
+                    ...linked.evidenceIds,
+                    ...evidenceIds,
+                    ...cited.filter((id): id is string => Boolean(id)),
+                  ]),
+                ],
+                candidateIds: candidateIds ?? linked.candidateIds,
+                fulfills: fulfills ?? linked.fulfills,
+              },
+            ],
+            ctx.task.agentRun?.goal,
+          );
+
+          return {
+            status: "ok",
+            requests: 0,
+            summary: `Revised connected document ${workId}; version and protected work preserved. ${summary}`.slice(0, 500),
+            artifactIds: [`document:${workId}`],
           };
         }
 

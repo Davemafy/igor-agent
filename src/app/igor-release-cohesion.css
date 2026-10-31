@@ -1,0 +1,413 @@
+/* Igor release cohesion pass. Surgical overrides, no fabricated UI or new palette.
+   Keep PR34's cinematic Home and existing navigation, improve connected work legibility. */
+.iw-app.igor-mockup .ig-create-stage-grounded {
+  width:100%;
+  max-width:1190px;
+  margin:0 auto;
+  padding:clamp(18px,3vw,35px) clamp(18px,3vw,38px) 25px;
+  color:#15191c;
+  background:#fff;
+}
+.iw-app.igor-mockup .ig-create-stage-grounded .ig-create-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:18px;
+  padding:0 0 24px;
+  border-bottom:1px solid #e4e6e6;
+}
+.iw-app.igor-mockup .ig-create-heading-copy {min-width:0;max-width:780px;flex:1 1 360px}
+.iw-app.igor-mockup .ig-create-heading-copy h1 {
+  margin:11px 0 12px;
+  max-width:24ch;
+  font:740 clamp(28px,3.1vw,43px)/1.13 Archivo,Arial,sans-serif;
+  letter-spacing:-.045em;
+  text-transform:none;
+  word-spacing:normal;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ig-create-heading-copy p {
+  margin:0;
+  max-width:64ch;
+  color:#627078;
+  font:450 14px/1.6 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ig-create-stage-grounded :is(.ig-create-top-actions button,.ig-create-empty-main button,.ig-create-itinerary>button,.ig-create-footer button) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  min-height:44px;
+  padding:10px 15px;
+  border:1px solid #cfd5d7;
+  border-radius:6px;
+  color:#192024;
+  background:#fff;
+  font:700 13px/1.3 Archivo,Arial,sans-serif;
+  cursor:pointer;
+}
+.iw-app.igor-mockup .ig-create-stage-grounded :is(.ig-create-top-actions .ig-create-invite,.ig-create-empty-main button) {
+  color:#fff;
+  border-color:#101619;
+  background:#101619;
+}
+.iw-app.igor-mockup .ig-create-stage-grounded button:disabled {opacity:.5;cursor:not-allowed}
+.iw-app.igor-mockup .ig-create-top-actions {display:flex;flex-wrap:wrap;gap:9px;}
+.iw-app.igor-mockup .ig-create-empty-state {
+  display:grid;
+  grid-template-columns:minmax(0,1.55fr) minmax(260px,.75fr);
+  gap:clamp(20px,3vw,45px);
+  padding:clamp(30px,4vw,60px) 0;
+}
+.iw-app.igor-mockup .ig-create-empty-main {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:18px;
+  min-width:0;
+}
+.iw-app.igor-mockup .ig-create-empty-main h2 {
+  margin:0;
+  max-width:22ch;
+  font:720 clamp(28px,3.1vw,43px)/1.13 Archivo,Arial,sans-serif;
+  letter-spacing:-.044em;
+}
+.iw-app.igor-mockup .ig-create-empty-main p {
+  margin:0;
+  max-width:62ch;
+  color:#515f67;
+  font:450 15px/1.65 Archivo,Arial,sans-serif;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ig-create-empty-state aside {
+  min-width:0;
+  padding:19px 21px;
+  border:1px solid #e2e5e7;
+  border-radius:8px;
+  background:#fbfbfa;
+}
+.iw-app.igor-mockup .ig-create-empty-state aside h3 {
+  margin:0 0 15px;
+  font:740 16px/1.3 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ig-create-empty-state dl {margin:0}
+.iw-app.igor-mockup .ig-create-empty-state dl>div {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 0;
+  border-top:1px solid #e6e7e7;
+  font:500 13px/1.4 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ig-create-empty-state dt {color:#566269}
+.iw-app.igor-mockup .ig-create-empty-state dd {font-weight:760;margin:0}
+.iw-app.igor-mockup .ig-create-empty-state aside p {
+  margin:14px 0 0;
+  color:#637078;
+  font:450 12px/1.55 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ig-create-source-photos {
+  position:relative;display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  height:auto;min-height:0;
+}
+.iw-app.igor-mockup .ig-create-source-photos .ig-create-photo {
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+  width:100%;
+  height:220px;
+  min-width:0;
+  border-radius:8px;
+  overflow:hidden;
+}
+.iw-app.igor-mockup .ig-create-source-photos .ig-create-photo img {
+  width:100%;height:100%;object-fit:cover;
+}
+.iw-app.igor-mockup .ig-create-content-preview {
+  padding:clamp(25px,4vw,44px);
+  min-height:260px;
+  border:1px solid #e1e4e5;
+  background:#fafaf9;
+  border-radius:7px;
+}
+.iw-app.igor-mockup .ig-create-content-preview>span {
+  font:740 11px/1.4 Archivo,Arial,sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#63717a;
+}
+.iw-app.igor-mockup .ig-create-content-preview h2 {
+  margin:14px 0;
+  font:730 clamp(24px,2.6vw,34px)/1.2 Archivo,Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ig-create-content-preview p {
+  margin:0;color:#414d55;
+  font:450 14px/1.75 Archivo,Arial,sans-serif;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ig-create-draft-status {
+  display:inline-flex;align-items:center;gap:6px;
+  color:#69747b;font:450 12px Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ig-create-stage-document {
+  padding:clamp(18px,2.5vw,36px);
+}
+.iw-app.igor-mockup .ig-create-document-heading h1 {
+  max-width:26ch;
+  margin:10px 0;
+  font:750 clamp(29px,3.1vw,42px)/1.15 Archivo,Arial,sans-serif;
+  letter-spacing:-.04em;
+  word-spacing:normal;
+  text-transform:none;
+}
+.iw-app.igor-mockup .ig-create-document-heading p {
+  margin:0;color:#606b72;font-size:14px;
+}
+.iw-app.igor-mockup .ig-create-document-paper {
+  min-height:260px;
+  border-radius:8px;
+  padding:clamp(20px,3vw,38px);
+}
+.iw-app.igor-mockup .ig-create-document-paper h2 {
+  margin:0 0 19px;
+  font:720 clamp(22px,2.2vw,31px)/1.24 Archivo,Arial,sans-serif;
+  text-transform:none;
+  word-spacing:normal;
+}
+.iw-app.igor-mockup .ig-create-original-request {
+  padding:13px 14px;
+  border-left:3px solid #d5d9da;
+  color:#657078;
+  font:440 12px/1.6 Archivo,Arial,sans-serif;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ig-create-original-request strong {display:block;color:#414c52}
+.iw-app.igor-mockup .ig-create-document-excerpt {
+  color:#293840;
+  font:430 14px/1.72 Archivo,Arial,sans-serif;
+  white-space:normal;
+}
+.iw-app.igor-mockup .ig-create-document-excerpt .pp-message-text {
+  font:inherit;white-space:normal;
+}
+.iw-app.igor-mockup .ig-create-document-excerpt .pp-message-text :is(p,li) {
+  font-size:14px;line-height:1.7;
+}
+.iw-app.igor-mockup .ig-create-document-excerpt .pp-message-text h3 {
+  margin:20px 0 9px;
+  color:#17232a;
+  font:730 18px/1.35 Archivo,Arial,sans-serif;
+  text-transform:none;
+}
+.iw-app.igor-mockup .ig-create-document-side {border-radius:8px;background:#fafaf9}
+.iw-app.igor-mockup .ig-create-document-side h2 {font-size:19px}
+.iw-app.igor-mockup .ig-create-document-edit {border-radius:6px}
+.iw-app.igor-mockup .ir-result-domain-note {
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;
+  margin:0 0 17px;color:#566570;
+  font:560 12px/1.4 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ir-result-domain-note span+span {
+  padding-left:18px;border-left:1px solid #d8dcde;
+}
+.iw-app.igor-mockup .ir-result-domain-note button {
+  display:inline-flex;align-items:center;gap:7px;
+  min-height:35px;padding:6px 11px;
+  border:1px solid #d5dadb;border-radius:6px;background:#fff;
+  color:#1d2e37;font:700 12px/1.3 Archivo,Arial,sans-serif;
+  cursor:pointer;
+}
+.iw-app.igor-mockup .ir-card-proof {
+  display:flex;flex-direction:column;
+  min-height:74px;
+  gap:5px;
+  padding:10px 12px 12px;
+  border-top:1px solid #e5e7e7;
+  color:#5c6970;
+  font:500 12px/1.42 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ir-card-signal {display:flex;flex-direction:column;gap:3px;min-width:0}
+.iw-app.igor-mockup .ir-card-proof-source {
+  color:#303e46;
+  font:740 10px/1.25 Archivo,Arial,sans-serif;
+  letter-spacing:.02em;
+}
+.iw-app.igor-mockup .ir-card-signal strong {font:780 13px/1.3 Archivo,Arial,sans-serif;color:#141d22}
+.iw-app.igor-mockup .ir-card-signal small {
+  font:490 11px/1.45 Archivo,Arial,sans-serif;
+  color:#66747b;
+  overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ir-compare-context-signal {
+  display:flex;flex-direction:column;gap:5px;
+  padding:11px 0;
+  border-top:1px solid #e6e8e8;
+}
+.iw-app.igor-mockup .ir-compare-context-signal span {
+  font:710 12px/1.4 Archivo,Arial,sans-serif;color:#1a272c;
+}
+.iw-app.igor-mockup .ir-compare-context-signal small {
+  font:450 11px/1.5 Archivo,Arial,sans-serif;
+  color:#5c6b73;overflow-wrap:anywhere;
+}
+.iw-app.igor-mockup .ir-detail-signal-summary {
+  display:flex;flex-wrap:wrap;gap:6px 12px;margin:12px 0;
+}
+.iw-app.igor-mockup .ir-detail-signal-summary span {
+  padding:6px 9px;background:#f6f6f5;border:1px solid #e2e4e5;
+  border-radius:5px;color:#232f36;font:680 11px/1.4 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ir-maps {
+  min-height:100dvh;
+  background:#fff;
+  color:#141c21;
+}
+.iw-app.igor-mockup .ir-maps .ir-grounded-map {
+  color:#141c21;
+}
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-toolbar>a,
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-credit,
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-credit a,
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-footer label {
+  color:#384850;
+}
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-frame {
+  height:clamp(440px,70dvh,770px);
+  border-radius:7px;
+}
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-footer {padding-bottom:26px}
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-footer input,
+.iw-app.igor-mockup .ir-maps .ir-grounded-map-footer button {border-radius:6px}
+@media(max-width:960px) {
+ .iw-app.igor-mockup .ig-create-empty-state {grid-template-columns:1fr}
+ .iw-app.igor-mockup .ig-create-stage-grounded .ig-create-layout {grid-template-columns:1fr}
+}
+@media(max-width:760px) {
+ .iw-app.igor-mockup .ig-create-stage-grounded {
+   padding:20px 15px 85px;
+ }
+ .iw-app.igor-mockup .ig-create-heading-copy h1 {font-size:31px}
+ .iw-app.igor-mockup .ig-create-empty-main h2 {font-size:27px}
+ .iw-app.igor-mockup .ig-create-source-photos .ig-create-photo {height:150px}
+ .iw-app.igor-mockup .ig-create-document-heading h1 {font-size:29px}
+ .iw-app.igor-mockup .ig-create-document-grid {grid-template-columns:1fr;gap:14px}
+ .iw-app.igor-mockup .ir-result-domain-note {gap:8px 12px}
+ .iw-app.igor-mockup .ir-result-domain-note span+span {padding-left:12px}
+ .iw-app.igor-mockup .ir-maps .ir-grounded-map-frame {height:52dvh;min-height:340px;}
+}
+@media(prefers-reduced-motion:reduce){
+ .iw-app.igor-mockup .ig-create-stage-grounded * {transition:none!important;animation:none!important}
+}
+/* Mobile: keep the same information hierarchy without header/nav collisions. */
+@media(max-width:760px) {
+ .iw-app.igor-mockup:has(.iw-welcome) .iw-intro h1 {
+   font-size:clamp(43px,10.5vw,56px);
+   line-height:.98;
+   letter-spacing:-.062em;
+   overflow-wrap:normal;
+ }
+ .iw-app.igor-mockup:has(.iw-welcome) .iw-intro p {
+   font-size:clamp(15px,4vw,18px);
+   line-height:1.45;
+ }
+ .iw-app.igor-mockup .iw-nav {
+   height:calc(70px + env(safe-area-inset-bottom));
+   padding:3px 5px env(safe-area-inset-bottom);
+ }
+ .iw-app.igor-mockup .iw-nav nav button {
+   min-height:59px;
+   gap:5px;
+   padding:6px 2px;
+   border-radius:7px;
+   font-size:11px;
+ }
+ .iw-app.igor-mockup .iw-nav nav button svg {
+   width:21px;height:21px;stroke-width:1.8;
+ }
+ .iw-app.igor-mockup .iw-nav nav button span {
+   font-size:11px;
+   line-height:1.2;
+ }
+ .iw-app.igor-mockup .ir-surface .ir-heading h2 {
+   font-size:clamp(28px,7vw,37px);
+   line-height:1.1;
+ }
+ .iw-app.igor-mockup .ir-surface .ir-search {
+   min-height:52px;
+ }
+}
+.iw-app.igor-mockup .iw-standalone-reference:has(.ir-maps) {
+  background:#fff;
+  min-height:100dvh;
+}
+
+/* Empty Explore offers real actions, never a gallery of pretend results. */
+.iw-app.igor-mockup .ir-discovery-start {
+  max-width:850px;
+  margin:clamp(22px,5vh,50px) auto;
+  padding:0 clamp(2px,2vw,22px) 48px;
+  color:#13191c;
+}
+.iw-app.igor-mockup .ir-discovery-start header {margin:0 0 22px;}
+.iw-app.igor-mockup .ir-discovery-start h3 {
+  margin:0 0 8px;
+  font:750 clamp(28px,3vw,39px)/1.12 Archivo,Arial,sans-serif;
+  letter-spacing:-.04em;
+}
+.iw-app.igor-mockup .ir-discovery-start header p {
+  max-width:60ch;
+  margin:0;color:#5b6a70;
+  font:450 15px/1.6 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ir-discovery-start-links {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 21px;
+  border-top:1px solid #e1e5e6;
+}
+.iw-app.igor-mockup .ir-discovery-start-links button {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-width:0;min-height:70px;
+  padding:13px 8px 13px 0;
+  border:0;border-bottom:1px solid #e1e5e6;
+  background:transparent;color:#182228;
+  font:690 16px/1.3 Archivo,Arial,sans-serif;
+  text-align:left;cursor:pointer;
+}
+.iw-app.igor-mockup .ir-discovery-start-links button:hover {background:#f7f8f8}
+.iw-app.igor-mockup .ir-discovery-start-links button:disabled {opacity:.48;cursor:not-allowed}
+.iw-app.igor-mockup .ir-discovery-start-links button svg {flex-shrink:0;color:#617077;stroke-width:1.8}
+.iw-app.igor-mockup .ir-discovery-no-results {
+  max-width:55ch;margin:20px 0 0;color:#6d787d;
+  font:450 12px/1.5 Archivo,Arial,sans-serif;
+}
+.iw-app.igor-mockup .ir-plan-cover-placeholder {
+  display:flex;flex-direction:column;justify-content:flex-end;
+  gap:12px;min-height:260px;height:100%;
+  padding:clamp(22px,3vw,42px);
+  background:linear-gradient(145deg,#17222a,#26343b);
+  color:#fff;text-align:left;
+}
+.iw-app.igor-mockup .ir-plan-cover-placeholder span {
+  font:700 11px/1.25 Archivo,Arial,sans-serif;
+  letter-spacing:.05em;text-transform:uppercase;
+  color:#bdc6ca;
+}
+.iw-app.igor-mockup .ir-plan-cover-placeholder strong {
+  max-width:24ch;
+  font:740 clamp(21px,2.3vw,33px)/1.17 Archivo,Arial,sans-serif;
+  letter-spacing:-.035em;
+  overflow-wrap:anywhere;
+}
+@media(max-width:760px) {
+ .iw-app.igor-mockup .ir-discovery-start {
+   margin:25px auto;padding:0 0 70px;
+ }
+ .iw-app.igor-mockup .ir-discovery-start-links {grid-template-columns:1fr}
+ .iw-app.igor-mockup .ir-discovery-start-links button {min-height:61px}
+}

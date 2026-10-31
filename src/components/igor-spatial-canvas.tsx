@@ -11,9 +11,10 @@ import {
   List,
   RefreshCw,
   Plus,
+  Search,
   Trash2,
 } from "lucide-react";
-import type { Candidate, Task } from "@/core/contracts";
+import type { Candidate, CandidateInput, Task } from "@/core/contracts";
 import type { CanvasMutation, PresentationNode } from "@/core/presentation";
 
 type Position = { lat: number; lng: number; altitude?: number };
@@ -28,6 +29,7 @@ type MapElement = HTMLElement & {
 type Maps3DLibrary = {
   Map3DElement: new (options: unknown) => MapElement;
   Marker3DInteractiveElement: new (options: unknown) => HTMLElement;
+  MarkerInteractiveElement?: new (options: unknown) => HTMLElement;
 };
 type MapsAPI = { importLibrary: (name: string) => Promise<unknown> };
 type MapsWindow = Window & {
@@ -58,7 +60,7 @@ function loadMaps(): Promise<MapsAPI> {
 
     if (!config.browserKey) {
       throw new Error(
-        "3D Maps is not configured yet. Your places and plan are still available.",
+        "Maps are not configured. Your grounded places and plan are still available.",
       );
     }
 
@@ -106,7 +108,7 @@ function loadMaps(): Promise<MapsAPI> {
   });
 }
 
-const position = (c: Candidate): Position => ({
+const position = (c: Candidate | CandidateInput): Position => ({
   lat: c.place!.latitude!,
   lng: c.place!.longitude!,
   altitude: 0,
@@ -117,11 +119,13 @@ export default function IgorSpatialCanvas({
   node,
   busy,
   mutate,
+  selectedCandidateId,
 }: {
   task: Task;
   node: Extract<PresentationNode, { candidateIds: string[] }>;
   busy: boolean;
   mutate: (mutation: CanvasMutation) => void;
+  selectedCandidateId?: string | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<MapElement | null>(null);
@@ -144,16 +148,25 @@ export default function IgorSpatialCanvas({
     mutationRef.current = mutate;
     busyRef.current = busy;
   }, [mutate, busy]);
-  const candidates = useMemo(
+  const [mapQuery, setMapQuery] = useState("");
+  const [mapCategory, setMapCategory] = useState("All");
+  const availableCandidates = useMemo(
     () =>
       node.candidateIds
-        .map((id) => task.candidates.find((c) => c.id === id))
+        .map((id) => (task.candidates.find((c) => c.id === id) ?? task.catalogue.find((c) => c.id === id)))
         .filter(
-          (c): c is Candidate =>
-            !!c && c.type === "place" && c.freshness === "current",
+          (c): c is Candidate | CandidateInput =>
+            !!c && c.type === "place" && !c.sample && !!c.providerId &&
+            (!("freshness" in c) || c.freshness === "current"),
         ),
     [node.candidateIds, task.candidates],
   );
+  const candidates = useMemo(() => availableCandidates.filter((candidate) => {
+    const text = [candidate.name, candidate.description, candidate.place?.address ?? "", ...candidate.tags]
+      .join(" ").toLowerCase();
+    return text.includes(mapQuery.trim().toLowerCase()) &&
+      (mapCategory === "All" || text.includes(mapCategory.toLowerCase()));
+  }), [availableCandidates, mapQuery, mapCategory]);
   const places = useMemo(
     () =>
       candidates.filter((c) => {
@@ -201,12 +214,13 @@ export default function IgorSpatialCanvas({
     "idle",
   );
   const [error, setError] = useState("");
-  const [enabled, setEnabled] = useState(false);
-  const [twoD, setTwoD] = useState(false);
+  const [userEnabled, setEnabled] = useState(false);
+  const [twoD, setTwoD] = useState(true);
   const [requestedView, setRequestedView] = useState<"map" | "list">("map");
   const viewMode = places.length ? requestedView : "list";
+  const enabled = userEnabled || (places.length > 0 && requestedView === "map");
   const [retryKey, setRetryKey] = useState(0);
-  const selectedId = task.canvas?.selectedCandidateId;
+  const selectedId = selectedCandidateId ?? task.canvas?.selectedCandidateId;
   const selected = candidates.find((c) => c.id === selectedId) || candidates[0];
   const itinerary = task.canvas?.itineraryIds || [];
   // Selection is owned by the versioned Task, not by map-local state.
@@ -276,19 +290,19 @@ export default function IgorSpatialCanvas({
 
       if (twoD) {
         type FlatMap = { panTo: (p: Position) => void };
+        type MapOverlay = {
+          onAdd: () => void;
+          draw: () => void;
+          onRemove: () => void;
+          setMap: (map: FlatMap | null) => void;
+          getPanes: () => {overlayMouseTarget: HTMLElement} | null;
+          getProjection: () => {
+            fromLatLngToDivPixel: (point: Position) => {x:number; y:number} | null
+          };
+        };
         const lib = (await api.importLibrary("maps")) as {
           Map: new (el: HTMLElement, options: unknown) => FlatMap;
-        };
-        const markerLibrary = (await api.importLibrary("marker")) as {
-          Marker: new (options: unknown) => {
-            addListener: (
-              event: string,
-              callback: () => void,
-            ) => { remove: () => void };
-            setMap: (map: null) => void;
-            setOpacity?: (value: number) => void;
-            setZIndex?: (value: number) => void;
-          };
+          OverlayView: new () => MapOverlay;
         };
 
         if (!active) {
@@ -301,29 +315,66 @@ export default function IgorSpatialCanvas({
           gestureHandling: "cooperative",
           zoomControl: true,
           mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          styles: [
+            {elementType:"geometry",stylers:[{color:"#102638"}]},
+            {elementType:"labels.text.fill",stylers:[{color:"#cad9e3"}]},
+            {elementType:"labels.text.stroke",stylers:[{color:"#071a2a"}]},
+            {featureType:"water",elementType:"geometry",stylers:[{color:"#071e32"}]},
+            {featureType:"road",elementType:"geometry",stylers:[{color:"#294253"}]},
+            {featureType:"road",elementType:"geometry.stroke",stylers:[{color:"#102d40"}]},
+            {featureType:"poi.park",elementType:"geometry",stylers:[{color:"#173c37"}]},
+            {featureType:"poi",elementType:"labels.icon",stylers:[{visibility:"off"}]},
+            {featureType:"transit",elementType:"labels.icon",stylers:[{visibility:"off"}]},
+          ],
         });
         flatMap.current = flat;
-        const stops = placesRef.current.map((c) => {
-          const marker = new markerLibrary.Marker({
-            map: flat,
-            position: position(c),
-            title: c.name,
-          });
-          markersRefSet(c.id, { flat: marker });
-          const listener = marker.addListener("click", () => {
+        // OverlayView anchors every photo marker to provider-backed lat/lng.
+        // The provider reprojects it as the real map pans, tilts and zooms.
+        const stops = placesRef.current.map((candidate) => {
+          const overlay = new lib.OverlayView();
+          const markerButton = document.createElement("button");
+          markerButton.type = "button";
+          markerButton.className = "ic-photo-map-pin";
+          markerButton.setAttribute("aria-label", `Select ${candidate.name}`);
+          markerButton.title = candidate.name;
+          if (candidate.imageUrl) {
+            const image = document.createElement("img");
+            image.src = candidate.imageUrl;
+            image.alt = "";
+            image.loading = "lazy";
+            image.referrerPolicy = "no-referrer";
+            image.addEventListener("error", () => image.remove());
+            markerButton.append(image);
+          } else {
+            const letter = document.createElement("span");
+            letter.textContent = candidate.name.slice(0,1);
+            markerButton.append(letter);
+          }
+          const select = () => {
             if (!busyRef.current) {
-              mutationRef.current({
-                operation: "select",
-                nodeId: node.id,
-                candidateId: c.id,
-              });
+              mutationRef.current({operation:"select", nodeId:node.id, candidateId:candidate.id});
             }
-          });
-
+          };
+          markerButton.addEventListener("click",select);
+          overlay.onAdd = () => {
+            overlay.getPanes()?.overlayMouseTarget.append(markerButton);
+          };
+          overlay.draw = () => {
+            const pixel = overlay.getProjection().fromLatLngToDivPixel(position(candidate));
+            if (pixel) {
+              markerButton.style.left = `${pixel.x}px`;
+              markerButton.style.top = `${pixel.y}px`;
+            }
+          };
+          overlay.onRemove = () => markerButton.remove();
+          overlay.setMap(flat);
+          markersRefSet(candidate.id,{element:markerButton});
           return () => {
-            listener.remove();
-            marker.setMap(null);
-            markers.current.delete(c.id);
+            markerButton.removeEventListener("click",select);
+            overlay.setMap(null);
+            markers.current.delete(candidate.id);
           };
         });
 
@@ -383,7 +434,8 @@ export default function IgorSpatialCanvas({
       };
       const element = new library.Map3DElement({
         ...view,
-        mode: "HYBRID",
+        mode: "ROADMAP",
+        colorScheme: "DARK",
         gestureHandling: "COOPERATIVE",
       });
       element.style.width = "100%";
@@ -420,11 +472,33 @@ export default function IgorSpatialCanvas({
       const listeners: (() => void)[] = [];
 
       for (const c of all) {
-        const marker = new library.Marker3DInteractiveElement({
-          position: position(c),
-          label: c.name,
-          altitudeMode: "CLAMP_TO_GROUND",
-        });
+        const marker = library.MarkerInteractiveElement
+          ? new library.MarkerInteractiveElement({
+              position: position(c),
+              title: c.name,
+              altitudeMode: "CLAMP_TO_GROUND",
+            })
+          : new library.Marker3DInteractiveElement({
+              position: position(c),
+              label: c.name,
+              altitudeMode: "CLAMP_TO_GROUND",
+            });
+        if (library.MarkerInteractiveElement) {
+          const chip = document.createElement("div");
+          chip.className = "ic-map-3d-label";
+          if (c.imageUrl) {
+            const photo = document.createElement("img");
+            photo.src = c.imageUrl;
+            photo.alt = "";
+            photo.referrerPolicy = "no-referrer";
+            photo.addEventListener("error", () => photo.remove());
+            chip.append(photo);
+          }
+          const name = document.createElement("strong");
+          name.textContent = c.name;
+          chip.append(name);
+          marker.append(chip);
+        }
 
         const select = () => {
           if (!busyRef.current) {
@@ -550,10 +624,32 @@ export default function IgorSpatialCanvas({
   }
 
   return (
-    <div className="ic-spatial" data-map-mode={viewMode}>
+    <div className="ic-spatial" data-map-mode={viewMode} data-spatial-dimension={twoD ? "2d" : "3d"}>
+      <div className="ic-reference-map-controls" aria-label="Place search and filters">
+        <label className="ic-reference-map-search">
+          <Search size={23}/>
+          <span className="pp-visually-hidden">Search mapped places</span>
+          <input type="search" placeholder="Search places, neighbourhoods or a particular kind of place"
+            value={mapQuery} onChange={(event) => setMapQuery(event.target.value)}/>
+        </label>
+        <div className="ic-reference-map-filters" role="group" aria-label="Filter mapped places">
+          {["All","Films","Music","Dining","Bars","Art","Culture"].map((kind) => (
+            <button key={kind} aria-pressed={mapCategory===kind}
+              onClick={() => setMapCategory(kind)}>{kind}</button>
+          ))}
+        </div>
+      </div>
+      <div className="ic-dimensional-switch" role="group" aria-label="Map dimension">
+        <button type="button" aria-pressed={twoD}
+          onClick={() => { setTwoD(true); setRequestedView("map"); setEnabled(true); }}
+          disabled={!places.length}>2D</button>
+        <button type="button" aria-pressed={!twoD}
+          onClick={() => { setTwoD(false); setRequestedView("map"); setEnabled(true); }}
+          disabled={!places.length}>3D</button>
+      </div>
       <div className="ic-spatial-heading">
         <div>
-          <span className="ic-eyebrow">Places in this task</span>
+          <span className="ic-eyebrow">Explore places</span>
           <strong>
             {candidates.length} {candidates.length === 1 ? "place" : "places"} ·{" "}
             {places.length} mappable

@@ -1,9 +1,13 @@
 "use client";
+import { referenceImageUrl } from "./reference-media";
 
-import Link from "next/link";
-import { UserRound } from "lucide-react";
+import { Compass, FilePlus2, Heart, Map, Home as HomeIcon, UserRound } from "lucide-react";
 import { AccountDialog } from "./account-panel";
 import { Connections } from "./connections-view";
+import { ReferenceWork } from "./reference-work";
+import { GroundedMap } from "./grounded-map";
+import { ReferenceConversationResults } from "./reference-conversation-results";
+import { ReferenceCreateStage } from "./reference-create-stage";
 import { DecisionWork } from "./decision-work";
 import { InvitationStudio } from "./invitation-studio";
 import { projectInvitationScene } from "@/core/invitation-scene";
@@ -51,56 +55,45 @@ import "../app/revision-impact.css";
 import "../app/spatial-morph.css";
 import "../app/workbench.css";
 import "../app/native-workspace.css";
+import "../app/mockup-native.css";
 import "../app/research-discovery.css";
+import "../app/reference-acceptance.css";
+import "../app/grounded-map.css";
+import "../app/igor-release-cohesion.css";
 
 const assets = "/marketing/assets/";
 const starts = [
-  {
-    title: "A thoughtful gift",
-    caption: "A little more them.",
-    image: "covers/c01.webp",
-    prompt:
-      "Help me find a thoughtful gift. Ask who it is for and what matters before suggesting anything.",
-  },
-  {
-    title: "Something together",
-    caption: "Room for everyone.",
-    image: "covers/c02.webp",
-    prompt:
-      "Plan something great with friends. Use the details I provide to explore real options, show a sourced shortlist, and save a usable plan. Ask only for essential missing information.",
-  },
-  {
-    title: "A new direction",
-    caption: "Give the idea a shape.",
-    image: "covers/c03.webp",
-    prompt:
-      "Help me develop a creative idea. Ask what I am making and who it is for.",
-  },
-  {
-    title: "A few days away",
-    caption: "Somewhere worth going.",
-    image: "covers/c04.webp",
-    prompt:
-      "Help me plan a short trip. Start with where I am leaving from, my dates and budget.",
-  },
+  { title: "A film night for 6 friends", image: "home-story-1.webp", fallback: "photos/hero-dinner-a-800.webp", prompt: "Plan a film and music evening for six friends in New York, with indie films, jazz and good food. Ask only for essential missing details." },
+  { title: "Rooftop spots in New York", image: "home-story-2.webp", fallback: "photos/gallery-800.webp", prompt: "Find rooftop places in New York. Show verified venues and explain the trade-offs." },
+  { title: "Afrobeats meets jazz", image: "home-story-3.webp", fallback: "covers/c08.webp", prompt: "Explore artists, playlists and experiences where Afrobeats meets jazz." },
+  { title: "Hidden gems in London", image: "home-story-4.webp", fallback: "photos/london-street-800.webp", prompt: "Discover underrated cultural places and experiences in London, with verifiable sources." },
+  { title: "Books for a cozy weekend", image: "home-story-5.webp", fallback: "covers/c05.webp", prompt: "Find books for a cozy weekend, using what I like and leaving room for new discoveries." },
 ];
-type Page = "work" | "history" | "saved";
+
+type Page = "home" | "work" | "history" | "saved" | "explore" | "maps" | "create";
 
 export function AgentWorkspace({
   initialPage = "work",
   initialConversation = false,
   initialHasResult = false,
+  initialExploreView = "discover",
+  initialPane = "thread",
 }: {
   initialPage?: Page;
   initialConversation?: boolean;
   initialHasResult?: boolean;
   initialPane?: "thread" | "work";
+  initialExploreView?: "discover" | "compare" | "plan" | "detail" | "revisions" | "maps";
 }) {
   const w = useWorkspace();
   const [accountOpen, setAccountOpen] = useState(false);
   const [page, setPage] = useState<Page>(initialPage);
+  const [workspacePane, setWorkspacePane] = useState<"thread" | "work">(initialPane);
   const [prompt, setPrompt] = useState("");
+  const [storyShortlist, setStoryShortlist] = useState<string[]>([]);
+  const [focusedCandidate, setFocusedCandidate] = useState<{ taskId: string; candidateId: string } | null>(null);
   const [menu, setMenu] = useState(false);
+  const [exploreView, setExploreView] = useState<"discover" | "compare" | "plan" | "detail" | "revisions" | "maps">(initialExploreView);
   const [historyError, setHistoryError] = useState("");
   const [historySearch, setHistorySearch] = useState("");
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -111,6 +104,12 @@ export function AgentWorkspace({
   const presentedResult = useRef("");
   const scrolledTask = useRef<string | null>(null);
   const task = w.task;
+  const focusedCandidateId = focusedCandidate && focusedCandidate.taskId === task?.id
+    ? focusedCandidate.candidateId
+    : null;
+  function setFocusedCandidateId(id: string | null) {
+    setFocusedCandidate(id && task ? { taskId: task.id, candidateId: id } : null);
+  }
   const hasResult = !task
     ? initialHasResult
     : !!(
@@ -188,6 +187,8 @@ export function AgentWorkspace({
 
     presentedResult.current = resultIdentity;
     const frame = requestAnimationFrame(() => {
+      // The work is already visible beside conversation on desktop.
+      if (window.matchMedia("(min-width: 1024px)").matches) return;
       outputRef.current?.scrollIntoView({
         block: "start",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -248,6 +249,10 @@ export function AgentWorkspace({
   }
 
   function navigate(next: Page) {
+    if (next === page) {
+      setMenu(false);
+      return;
+    }
     if (page === "work" && next !== "work" && !canLeave()) {
       return;
     }
@@ -261,10 +266,31 @@ export function AgentWorkspace({
         ? "conversation"
         : next === "history"
           ? "conversations"
-          : "saved",
+          : next,
     );
-    history.replaceState({}, "", url);
+    history.pushState({ view: next }, "", url);
   }
+
+  // Browser Back/Forward must restore the same visible surface, without
+  // creating a new task or replaying an agent turn.
+  useEffect(() => {
+    const restoreView = () => {
+      const view = new URL(location.href).searchParams.get("view");
+      const next: Page = view === "home" || view === "explore" ||
+        view === "create" || view === "maps" || view === "saved"
+        ? view
+        : view === "conversations" ? "history" : "work";
+      setPage(next);
+      setMenu(false);
+      if (["compare", "detail", "plan", "revisions"].includes(String(view))) {
+        setPage("explore");
+        setExploreView(view as "compare" | "detail" | "plan" | "revisions");
+      } else if (next === "explore") setExploreView("discover");
+      if (next === "maps") setExploreView("maps");
+    };
+    window.addEventListener("popstate", restoreView);
+    return () => window.removeEventListener("popstate", restoreView);
+  }, []);
 
   async function open(id: string) {
     if (w.isBusy || w.isLoadingWorkspace || !canLeave()) {
@@ -273,6 +299,7 @@ export function AgentWorkspace({
 
     try {
       if (await w.openWorkspace(id)) {
+        setWorkspacePane("thread");
         navigate("work");
         const url = new URL(location.href);
         url.searchParams.set("task", id);
@@ -295,6 +322,7 @@ export function AgentWorkspace({
     }
 
     setPrompt("");
+    setFocusedCandidateId(null);
     navigate("work");
     const url = new URL(location.href);
     url.searchParams.delete("task");
@@ -333,6 +361,9 @@ export function AgentWorkspace({
       <label className="iw-sr" htmlFor="iw-message">
         Message Igor
       </label>
+      {(page === "home" || (page === "work" && !started)) && (
+        <Search className="iw-home-search-icon" aria-hidden="true" />
+      )}
       <textarea
         id="iw-message"
         ref={input}
@@ -340,7 +371,9 @@ export function AgentWorkspace({
         value={prompt}
         maxLength={3000}
         placeholder={
-          started ? "Keep the thought going…" : "Bring an idea. Start anywhere."
+          page === "home" || (page === "work" && !started)
+            ? "What do you want to explore, plan, create or learn?"
+            : "Ask or refine anything…"
         }
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={(e) => {
@@ -365,45 +398,60 @@ export function AgentWorkspace({
   );
 
   return (
-    <div className={`iw-app ${started && page === "work" ? "iw-active" : ""}`}>
-      <AppearanceControl />
+    <div className={`iw-app igor-mockup ${started && page === "work" ? "iw-active" : ""}`}>
       {accountOpen && <AccountDialog onClose={() => setAccountOpen(false)} />}
       <a className="iw-skip" href="#iw-main">
         Skip to content
       </a>
       <header className="iw-nav">
-        <Link className="iw-brand" href="/" aria-label="Igor homepage">
+        <button type="button" className="iw-brand" onClick={() => navigate("home")} aria-label="Igor home">
           <img
-            src={assets + "brand/igor-mark-black.svg"}
+            src="/marketing/assets/brand/igor-mark-black.svg"
             width="29"
             height="29"
             alt=""
           />
           <span>igor</span>
-        </Link>
+        </button>
         <nav aria-label="Product navigation">
           <button
-            aria-current={page === "work" ? "page" : undefined}
-            onClick={() => navigate("work")}
+            aria-current={page === "home" || (page === "work" && !started) ? "page" : undefined}
+            onClick={() => navigate("home")}
           >
-            <MessageCircle />
-            <span>Your space</span>
+            <HomeIcon />
+            <span>Home</span>
           </button>
-          <button
-            aria-current={page === "history" ? "page" : undefined}
-            onClick={() => navigate("history")}
-          >
-            <Search />
-            <span>Conversations</span>
+          <button aria-current={page === "explore" ? "page" : undefined}
+            onClick={() => { setExploreView("discover"); navigate("explore"); }}>
+            <Compass />
+            <span>Explore</span>
+          </button>
+          <button aria-current={page === "create" ? "page" : undefined}
+            onClick={() => navigate("create")}>
+            <FilePlus2 />
+            <span>Create</span>
           </button>
           <button
             aria-current={page === "saved" ? "page" : undefined}
             onClick={() => navigate("saved")}
           >
             <Bookmark />
-            <span>Saved</span>
+            <span>Library</span>
+          </button>
+          <button aria-current={page === "maps" ? "page" : undefined}
+            onClick={() => { setExploreView("maps"); navigate("maps"); }}>
+            <Map />
+            <span>Maps</span>
+          </button>
+          <button
+            aria-current={page === "history" ? "page" : undefined}
+            onClick={() => navigate("history")}
+          >
+            <Search />
+            <span>Search</span>
           </button>
         </nav>
+        <AppearanceControl />
         <button
           type="button"
           onClick={() => setAccountOpen(true)}
@@ -435,29 +483,38 @@ export function AgentWorkspace({
         </button>
         {menu && (
           <div id="iw-menu" className="iw-menu">
-            <button onClick={() => navigate("work")}>
-              <MessageCircle />
-              Your space
+            <button onClick={() => navigate("home")}>
+              <HomeIcon />
+              Home
+            </button>
+            <button onClick={() => { setExploreView("discover");navigate("explore"); }}>
+              <Compass /> Explore
+            </button>
+            <button onClick={() => navigate("create")}>
+              <FilePlus2 /> Create
+            </button>
+            <button onClick={() => { setExploreView("maps");navigate("maps"); }}>
+              <Map /> Maps
             </button>
             <button onClick={() => navigate("history")}>
               <Search />
-              Conversations
+              Search conversations
             </button>
             <button onClick={() => navigate("saved")}>
               <Bookmark />
-              Saved
+              Library
             </button>
           </div>
         )}
       </header>
       <main id="iw-main">
-        {page === "work" && !started && (
+        {(page === "home" || (page === "work" && !started)) && (
           <section className="iw-welcome">
             <div className="iw-intro">
               <h1>
-                What’s on
+                Your agent.
                 <br />
-                your mind?
+                With taste.
               </h1>
               <p>
                 Discover, decide and create.
@@ -466,33 +523,66 @@ export function AgentWorkspace({
               </p>
             </div>
             <div className="iw-welcome-compose">{composer}</div>
-            <div className="iw-ideas" aria-label="Ways to begin">
-              {starts.map((s, i) => (
-                <button
-                  key={s.title}
-                  disabled={!task || w.isBusy}
-                  onClick={() => {
-                    setPrompt(s.prompt);
-                    input.current?.focus();
-                  }}
-                >
-                  <div className="iw-poster">
-                    <LoadingImage src={assets + s.image} />
-                    <span className="iw-poster-number">0{i + 1}</span>
-                  </div>
-                  <div>
-                    <h2>{s.title}</h2>
-                    <ArrowUpRight />
-                  </div>
-                  <p>{s.caption}</p>
-                </button>
+            {started && page === "home" && (
+              <button type="button" className="iw-resume-work"
+                onClick={() => navigate("work")}>
+                Continue current conversation <ArrowRight />
+              </button>
+            )}
+            <div className="iw-quick-start" aria-label="Start a new task">
+              {[
+                ["Plan an evening", "Plan a thoughtful evening with friends. Ask for essential details."],
+                ["Find a film", "Help me find a film based on my taste."],
+                ["Build a playlist", "Help me build a playlist with a particular mood."],
+                ["Find a place", "Help me find a place worth visiting. Ask for the city if needed."],
+                ["Compare options", "Help me compare some options and decide on one."],
+              ].map(([label, request]) => (
+                <button key={label} disabled={!task || w.isBusy}
+                  onClick={() => { setPrompt(request); input.current?.focus(); }}>{label}</button>
               ))}
             </div>
+            <div className="iw-ideas" aria-label="Ways to begin">
+              {starts.map((story) => (
+                <article className="iw-story-card" key={story.title}>
+                  <button className="iw-story-open" disabled={!task || w.isBusy}
+                    onClick={() => { setPrompt(story.prompt); input.current?.focus(); }}
+                    aria-label={`Start: ${story.title}`}>
+                    <img
+                      src={referenceImageUrl(story.image)}
+                      alt=""
+                      loading="eager"
+                      onError={(event) => {
+                        const fallback = assets + story.fallback;
+                        if (event.currentTarget.src !== new URL(fallback, location.origin).href) {
+                          event.currentTarget.src = fallback;
+                        }
+                      }}
+                    />
+                    <span className="iw-story-name">{story.title}</span>
+                  </button>
+                  <button type="button" className="iw-story-heart"
+                    aria-label={storyShortlist.includes(story.title)
+                      ? `Remove ${story.title} from this preview shortlist`
+                      : `Shortlist ${story.title} in this preview`}
+                    aria-pressed={storyShortlist.includes(story.title)}
+                    onClick={() => setStoryShortlist((items) => items.includes(story.title)
+                      ? items.filter((item) => item !== story.title) : [...items, story.title])}>
+                    <Heart size={23} fill={storyShortlist.includes(story.title) ? "currentColor" : "none"}/>
+                  </button>
+                </article>
+              ))}
+            </div>
+            <a className="iw-photo-credit"
+              href="https://www.splitshire.com/images/rooftop-terrace-with-string-lights"
+              target="_blank" rel="noopener noreferrer">
+              Photo: Splitshire
+            </a>
           </section>
         )}
         {page === "work" && started && (
           <section
             className={`iw-workspace iw-inline-workspace ${hasResult ? "iw-with-result" : ""}`}
+            data-pane={workspacePane}
             aria-busy={w.isLoadingWorkspace}
           >
             <header className="iw-workbar">
@@ -523,6 +613,18 @@ export function AgentWorkspace({
                 )}
               </span>
             </header>
+            {hasResult && (
+              <div className="iw-pane-switch" role="group" aria-label="Workspace view">
+                <button type="button" aria-pressed={workspacePane === "thread"}
+                  onClick={() => setWorkspacePane("thread")}>
+                  <MessageCircle /> Conversation
+                </button>
+                <button type="button" aria-pressed={workspacePane === "work"}
+                  onClick={() => setWorkspacePane("work")}>
+                  <FileText /> Your work
+                </button>
+              </div>
+            )}
             <div className="iw-workgrid">
               <section
                 className="iw-thread"
@@ -636,6 +738,21 @@ export function AgentWorkspace({
                       message={w.executionMessage}
                       task={task}
                     />
+                    {task && (
+                      <ReferenceConversationResults
+                        task={task}
+                        busy={w.isBusy || w.isLoadingWorkspace}
+                        onOpen={(id) => {
+                          setFocusedCandidateId(id);
+                          setExploreView("detail");
+                          navigate("explore");
+                        }}
+                        onCompare={() => {
+                          setExploreView("compare");
+                          navigate("explore");
+                        }}
+                      />
+                    )}
                     {!!w.feedback?.steps.length && !w.isBusy && hasResult && (
                       <details className="iw-receipt">
                         <summary>
@@ -692,31 +809,33 @@ export function AgentWorkspace({
                             />
                           ))}
                     </AdaptiveStage>
+                    <div ref={end} />
                   </div>
-                  {hasResult && (
-                    <section
-                      ref={outputRef}
-                      className="iw-inline-output"
-                      aria-label="Your work"
-                      aria-busy={w.isBusy || w.isLoadingWorkspace}
-                    >
-                      {task ? (
-                        <Work
-                          key={task.id}
-                          task={task}
-                          busy={w.isBusy || w.isLoadingWorkspace}
-                          onTurn={turn}
-                          onTask={w.acceptTask}
-                          onLoad={open}
-                        />
-                      ) : (
-                        <LoadingSurface mode="output" />
-                      )}
-                    </section>
-                  )}
-                  <div ref={end} />
                 </div>
               </section>
+              {hasResult && (
+                <section
+                  ref={outputRef}
+                  className="iw-inline-output"
+                  aria-label="Your work"
+                  aria-busy={w.isBusy || w.isLoadingWorkspace}
+                >
+                  {task ? (
+                    <Work
+                      key={task.id}
+                      task={task}
+                      busy={w.isBusy || w.isLoadingWorkspace}
+                      onTurn={turn}
+                      onTask={w.acceptTask}
+                      onLoad={open}
+                      selectedCandidateId={focusedCandidateId}
+                      onSelectCandidate={setFocusedCandidateId}
+                    />
+                  ) : (
+                    <LoadingSurface mode="output" />
+                  )}
+                </section>
+              )}
             </div>
             <footer className="iw-workspace-footer">
               <div className="iw-dock">
@@ -726,11 +845,66 @@ export function AgentWorkspace({
             </footer>
           </section>
         )}
+        {(page === "explore" || page === "maps") && task && (
+          <section className="iw-standalone-reference" aria-label="Discover and maps">
+            <ReferenceWork task={task} view={page === "maps" ? "maps" : exploreView}
+              busy={w.isBusy || w.isLoadingWorkspace} onTurn={turn}
+              selectedCandidateId={focusedCandidateId} onSelectCandidate={setFocusedCandidateId}
+              onNavigate={(view) => {
+                setExploreView(view);
+                if (view === "maps") {
+                  navigate("maps");
+                } else {
+                  const fromMap = page === "maps";
+                  if (fromMap) navigate("explore");
+                  const url = new URL(location.href);
+                  url.searchParams.set("view", view === "discover" ? "explore" : view);
+                  if (fromMap) history.replaceState({view}, "", url);
+                  else history.pushState({view}, "", url);
+                }
+              }} />
+          </section>
+        )}
+        {page === "create" && task && (
+          <section className="iw-standalone-reference" aria-label="Create work">
+            <ReferenceCreateStage task={task} busy={w.isBusy || w.isLoadingWorkspace} onTurn={turn}/>
+            {!!(task.work?.documents.length || task.artifacts.length || task.canvas) && (
+              <div id="ig-create-editor" className="ig-create-editor">
+                <Work key={task.id + ":create"} task={task} busy={w.isBusy || w.isLoadingWorkspace}
+                  onTurn={turn} onTask={w.acceptTask} onLoad={open}
+                  selectedCandidateId={focusedCandidateId} onSelectCandidate={setFocusedCandidateId}
+                  preferred={task.work?.documents.length ? "documents" : task.artifacts.length ? "drafts" : "workspace"}/>
+              </div>
+            )}
+            <div className="iw-standalone-composer">{composer}</div>
+          </section>
+        )}
+        {page === "maps" && !task && (
+          <section className="ir-surface ir-maps" aria-label="Places in context">
+            <header className="ir-heading">
+              <div>
+                <h2>Places in context</h2>
+                <p>Browse a real map; Igor only adds candidate pins when coordinates are verified.</p>
+              </div>
+            </header>
+            <GroundedMap
+              busy={w.isBusy || w.isLoadingWorkspace}
+              onResearch={(area) => void (async () => {
+                const workspace = await w.createWorkspace();
+                if (!workspace) return;
+                navigate("work");
+                await w.sendTurn({type:"message",text:
+                  `Find real places in ${area}. Show source-backed places and verified coordinates only.`}, workspace);
+              })()}
+            />
+          </section>
+        )}
+        {(page === "create" || page === "explore") && !task && <LoadingSurface mode="output" />}
         {page === "history" && (
           <section className="iw-library iw-history-page">
             <header className="iw-history-heading">
-              <h1>Conversations</h1>
-              <p>Pick up where you left off.</p>
+              <h1>Search</h1>
+              <p>Find your conversations, or open Library for saved work.</p>
             </header>
             <label className="iw-history-search">
               <Search />
@@ -817,6 +991,7 @@ export function AgentWorkspace({
         )}
         {page === "saved" && task && (
           <Saved
+            history={w.history}
             onDiscover={async (request) => {
               await turn({ type: "message", text: request });
             }}
@@ -864,14 +1039,20 @@ function Work({
   onTurn,
   onTask,
   onLoad,
+  preferred,
+  selectedCandidateId,
+  onSelectCandidate,
 }: {
   task: Task;
   busy: boolean;
   onTurn: (a: TaskAction) => Promise<void>;
   onTask: (t: Task) => void;
   onLoad: (id: string) => Promise<void>;
+  preferred?: string;
+  selectedCandidateId?: string | null;
+  onSelectCandidate?: (id: string | null) => void;
 }) {
-  const [resource, setResource] = useState<string | null>(null);
+  const [resource, setResource] = useState<string | null>(preferred ?? null);
   const research = buildResearchCards(task);
   const placeNode = task.canvas?.surface.nodes.find(
     (node) => node.type === "spatial",
@@ -883,7 +1064,13 @@ function Work({
   // A gathering is not an invitation. Only expose the editor once a
   // genuine invitation artifact has been saved to this task.
   const hasInvitation = Boolean(projectInvitationScene(task)?.artifact);
+  const groundedCount = [...task.candidates, ...task.catalogue].filter((candidate) => !candidate.sample).length;
   const resources = [
+    ...(groundedCount ? [{ id: "discover", title: "Discover" }] : []),
+    ...(groundedCount > 1 ? [{ id: "compare", title: "Compare" }] : []),
+    ...(task.brief.selected.length || task.schedule.length ? [{ id: "plan", title: "Plan" }] : []),
+    ...(groundedCount ? [{ id: "detail", title: "Details" }] : []),
+    ...(task.receipts?.length || task.artifactHistory?.length ? [{ id: "revisions", title: "Versions" }] : []),
     ...(hasInvitation ? [{ id: "invite", title: "Invitation" }] : []),
     ...(hasCanvasWork || research
       ? [{ id: "workspace", title: research ? "Explore" : "Current view" }]
@@ -904,10 +1091,19 @@ function Work({
   ];
   // Follow actual available work on first render, instead of pinning every
   // gathering to the invitation tab. Retain explicit user tab selection.
+  const defaultResource = task.work?.documents.length
+    ? "documents"
+    : research && task.artifacts.some((item) => item.kind === "research-report" && item.freshness === "current")
+      ? "workspace"
+      : task.schedule.length || task.brief.selected.length
+        ? "plan"
+        : hasInvitation ? "invite"
+          : groundedCount ? "discover"
+            : resources[0]?.id;
   const active =
     resource && resources.some((item) => item.id === resource)
       ? resource
-      : resources[0]?.id;
+      : defaultResource;
   const saved = useSavedOutcomes(task, onTask, onTurn);
   const kept = new Set(
     saved.data.collections.flatMap((collection) =>
@@ -952,6 +1148,11 @@ function Work({
             excludeQuestions
           />
         ))}
+      {(["discover", "compare", "plan", "detail", "revisions"].includes(active || "")) && (
+        <ReferenceWork task={task} view={active as "discover" | "compare" | "plan" | "detail" | "revisions"} busy={busy}
+          onTurn={onTurn} onNavigate={(view) => setResource(view)}
+          selectedCandidateId={selectedCandidateId} onSelectCandidate={onSelectCandidate} />
+      )}
       {active === "invite" && (
         <InvitationStudio task={task} busy={busy} onTurn={onTurn} />
       )}
@@ -1217,41 +1418,108 @@ function WorkSharing({
 }
 
 function Saved({
-  task,
-  onTask,
-  onTurn,
-  onLoad,
-  onDiscover,
-  busy,
+  task, onDiscover, busy, onTask, onTurn, onLoad, history,
 }: {
   task: Task;
   busy: boolean;
+  history: Array<{ id: string; goal: string; title?: string; preview?: string; updatedAt?: string | null }>;
   onDiscover: (request: string) => Promise<void>;
-  onTask: (t: Task) => void;
-  onTurn: (a: TaskAction) => Promise<void>;
+  onTask: (task: Task) => void;
+  onTurn: (action: TaskAction) => Promise<void>;
   onLoad: (id: string) => Promise<void>;
 }) {
   const saved = useSavedOutcomes(task, onTask, onTurn);
+  const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
+  const [manage, setManage] = useState(false);
+  const entries = [
+    ...history.map((entry) => ({
+      id: entry.id,
+      title: conversationTitle(entry.title || entry.goal),
+      summary: entry.preview || "Saved conversation",
+      kind: "Conversations",
+      image: null as string | null,
+      action: "open" as const,
+    })),
+    ...saved.data.collections.map((entry) => ({
+      id: entry.id,
+      title: entry.title,
+      summary: `${entry.items.length} saved ${entry.items.length === 1 ? "reference" : "references"}`,
+      kind: "Collections",
+      image: entry.items.find((item) => item.imageUrl)?.imageUrl ?? null,
+      action: "manage" as const,
+    })),
+    ...task.artifacts.map((artifact) => ({
+      id: artifact.id,
+      title: artifact.title,
+      summary: artifact.kind.replaceAll("-", " "),
+      kind: artifact.kind === "invitation" ? "Invitations" : artifact.kind === "research-report" ? "Research" : "Plans",
+      image: task.candidates.find((candidate) =>
+        task.brief.selected.includes(candidate.id) && candidate.imageUrl
+      )?.imageUrl ?? null,
+      action: "open" as const,
+    })),
+  ];
+  const visible = entries.filter((entry) =>
+    (filter === "All" || entry.kind === filter) &&
+    (entry.title + " " + entry.summary).toLowerCase().includes(search.trim().toLowerCase()),
+  );
 
   return (
-    <section className="iw-library">
-      <h1>Your collection.</h1>
-      {saved.isLoading ? (
-        <LoadingSurface mode="collection" />
-      ) : (
-        <ProductCollections
-          task={task}
-          collections={saved.data.collections}
-          isBusy={saved.isBusy || busy}
-          saveOutput={saved.saveOutput}
-          onDiscover={onDiscover}
-          onLoad={async (id) => {
-            await onLoad(id);
-
-            return true;
-          }}
-        />
-      )}
+    <section className="iw-library ig-reference-library">
+      <header className="ig-library-heading">
+        <h1>Your work, connected.</h1>
+        <p>Plans, ideas, collections and drafts — all in one place.</p>
+      </header>
+      <label className="ig-library-search">
+        <Search />
+        <span className="iw-sr">Search your saved work</span>
+        <input type="search" placeholder="Find something you've saved..." value={search}
+          onChange={(event) => setSearch(event.target.value)} />
+      </label>
+      <div className="ig-library-filters" role="group" aria-label="Saved work categories">
+        {["All","Plans","Collections","Invitations","Research","Conversations"].map((name) => (
+          <button key={name} aria-pressed={filter === name} onClick={() => setFilter(name)}>{name}</button>
+        ))}
+      </div>
+      {visible.length ? (
+        <div className="ig-library-grid">
+          {visible.map((item) => (
+            <button key={item.kind + ":" + item.id} className="ig-library-card" disabled={busy || saved.isBusy}
+              onClick={() => {
+                if (item.action === "manage") {
+                  setManage(true);
+                  requestAnimationFrame(() => document.getElementById("ig-collections-manager")?.scrollIntoView({block:"start",behavior:"smooth"}));
+                } else {
+                  void onLoad(item.kind === "Plans" || item.kind === "Research" || item.kind === "Invitations" ? task.id : item.id);
+                }
+              }}>
+              <div className="ig-library-cover">
+                {item.image ? <img src={item.image} alt="" loading="lazy"/> : (
+                  <div className="ig-library-cover-fallback" aria-label={`Preview image unavailable for ${item.title}`}>
+                    <span>{item.kind}</span>
+                    <strong>{item.title}</strong>
+                  </div>
+                )}
+                <Bookmark aria-hidden="true" />
+              </div>
+              <strong>{item.title}</strong>
+              <span>{item.summary}</span>
+            </button>
+          ))}
+        </div>
+      ) : <div className="ir-empty"><h3>No saved work in this category</h3>
+        <p>Work that you save through Igor will appear here. Your conversation history stays recoverable.</p>
+        <button onClick={() => {setFilter("All");setSearch("");}}>Show everything</button>
+      </div>}
+      <div className="ig-library-manager" id="ig-collections-manager">
+        <button className="ir-secondary" onClick={() => setManage(!manage)}
+          aria-expanded={manage}>{manage ? "Hide collection management" : "Manage saved collections"}</button>
+        {manage && (saved.isLoading ? <LoadingSurface mode="collection"/> :
+          <ProductCollections task={task} collections={saved.data.collections}
+            isBusy={saved.isBusy || busy} saveOutput={saved.saveOutput}
+            onDiscover={onDiscover} onLoad={async (id) => {await onLoad(id);return true;}}/>)}
+      </div>
       {saved.errorMessage && <p role="alert">{saved.errorMessage}</p>}
     </section>
   );

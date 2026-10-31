@@ -1,0 +1,505 @@
+.iw-app.igor-mockup .iw-intro h1{letter-spacing:-.02em;word-spacing:.13em}
+
+.iw-app.igor-mockup .ir-reference-section-heading h3{letter-spacing:-.018em!important;word-spacing:.12em}
+.iw-app.igor-mockup .ig-create-top h1,.iw-app.igor-mockup .ig-library-heading h1{letter-spacing:-.02em;word-spacing:.1em;line-height:1.06}
+.ig-create-stage-document{min-height:min(850px,100dvh)}
+.ig-create-document-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:26px;margin-bottom:30px}
+.ig-create-document-heading h1{margin:11px 0 13px;font:850 clamp(36px,4.1vw,58px)/1.09 Archivo,Arial,sans-serif;font-variation-settings:"wght" 850,"wdth" 87;letter-spacing:-.015em;word-spacing:.08em;max-width:800px;overflow-wrap:break-word}
+.ig-create-document-heading p{max-width:56ch;color:#67717c;font-size:17px;line-height:1.5}
+.ig-create-document-edit{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex:0 0 auto;min-height:50px;padding:11px 19px;color:white;background:#101214;border:1px solid #101214;border-radius:14px;font:650 14px/1.2 Archivo,sans-serif;cursor:pointer}
+.ig-create-document-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(270px,.75fr);align-items:start;gap:28px}
+.ig-create-document-paper{min-height:610px;overflow:hidden;background:#fff;border:1px solid #e8e9eb;border-radius:16px;padding:clamp(26px,3vw,50px);box-shadow:0 12px 42px #11111109}
+.ig-create-document-meta{display:flex;justify-content:space-between;gap:16px;padding-bottom:21px;margin-bottom:31px;border-bottom:1px solid #e8e9eb;color:#6b7680;text-transform:uppercase;font-size:12px;letter-spacing:.045em}
+.ig-create-document-paper h2{font:800 clamp(29px,3vw,42px)/1.16 Archivo,Arial,sans-serif;font-variation-settings:"wght" 800,"wdth" 88;letter-spacing:-.015em;word-spacing:.07em;overflow-wrap:anywhere;margin:0 0 26px}
+.ig-create-document-excerpt{white-space:pre-wrap;overflow-wrap:anywhere;color:#36404d;font:430 16px/1.8 Archivo,Arial,sans-serif}
+.ig-create-document-side{background:#f9f9f9;border:1px solid #e7e9eb;border-radius:16px;padding:24px}
+.ig-create-document-side h2{font-size:25px;line-height:1.15;letter-spacing:-.02em;margin:0 0 19px}
+.ig-create-document-side h3{font-size:17px;margin:28px 0 12px}
+.ig-create-document-side dl{margin:0}
+.ig-create-document-side dl>div{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #e7e9eb;font-size:13px}
+.ig-create-document-side dt{color:#65717d}
+.ig-create-document-side dd{font-weight:750;margin:0}
+.ig-create-document-source{display:grid;gap:5px;padding:12px 0;border-bottom:1px solid #e7e9eb}
+.ig-create-document-source strong{font-size:13px}
+.ig-create-document-source small{font-size:11px;color:#77818b}
+.ig-create-document-side>p{color:#69737e;font-size:13px;line-height:1.5}
+.ig-create-document-side .ig-create-document-edit{margin-top:24px;width:100%}
+@media(max-width:1000px){.ig-create-document-grid{grid-template-columns:1fr}.ig-create-document-paper{min-height:410px}}
+@media(max-width:760px){.ig-create-document-heading{flex-direction:column;gap:12px}.ig-create-document-heading h1{font-size:clamp(31px,8vw,43px)}.ig-create-document-heading p{font-size:14px}.ig-create-document-paper{padding:23px 18px}.ig-create-document-paper h2{font-size:28px}.ig-create-document-excerpt{font-size:14px}.ig-create-document-side{padding:19px}}
+
+/* Personalisation belongs to the navigation, never above the reference hero. */
+@media(min-width:761px) {
+ .iw-app.igor-mockup .iw-nav .iw-appearance {position:static;order:0;z-index:4;align-self:stretch;font-size:13px;margin:10px 6px 0}
+ .iw-app.igor-mockup .iw-nav .iw-appearance-trigger {width:100%;min-height:42px;display:flex;justify-content:flex-start;gap:12px;padding:10px 13px;border:0;border-radius:12px;background:transparent;box-shadow:none;font:500 13px/1.3 Archivo,sans-serif;color:inherit}
+ .iw-app.igor-mockup .iw-nav .iw-appearance-trigger>span {position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal}
+ .iw-app.igor-mockup .iw-nav .iw-appearance-panel {bottom:auto;top:0;left:calc(100% + 12px);right:auto;color:#101820;z-index:70}
+}
+@media(max-width:760px) {
+ .iw-app.igor-mockup .iw-nav .iw-appearance {position:fixed;right:76px;top:12px;bottom:auto;z-index:95}
+ .iw-app.igor-mockup .iw-nav .iw-appearance-trigger {width:43px;height:43px;display:grid;place-items:center;border:0;border-radius:50%;padding:9px;background:#fff;color:#111;box-shadow:0 2px 16px #0002}
+ .iw-app.igor-mockup .iw-nav .iw-appearance-panel {right:0;bottom:auto;top:calc(100% + 8px);z-index:96}
+}
+
+/* Atmosphere is the photograph, not a daylight photo crushed under a filter. */
+.iw-app.igor-mockup .iw-welcome {
+ background:
+  linear-gradient(90deg,rgba(2,8,12,.64),rgba(2,8,12,.19) 63%,rgba(1,5,10,.1)),
+  linear-gradient(0deg,#02080df2 0%,rgba(2,8,13,.58) 32%,transparent 75%),
+  url("https://images.pexels.com/photos/14125304/pexels-photo-14125304.jpeg?auto=compress&cs=tinysrgb&w=1920") 55% center / cover no-repeat,
+  #070e13;
+}
+.iw-app.igor-mockup .ig-library-heading h1 {
+ overflow:visible;white-space:normal;padding-bottom:.1em;
+}
+
+/* Owner-locked 1448x1086 visual reconstruction measurements.
+   These overrides target only the cinematic entry and editorial discovery. */
+@media (min-width: 1120px) and (min-height: 901px) {
+  .iw-app.igor-mockup .iw-welcome {
+    padding-top: clamp(145px, 14vw, 155px);
+    padding-left: clamp(82px, 7vw, 104px);
+    padding-right: 50px;
+  }
+  .iw-app.igor-mockup .iw-intro h1 {
+    font-size: clamp(101px, 7.52vw, 113px);
+    line-height: .915;
+    letter-spacing: -.021em;
+    word-spacing: .16em;
+  }
+  .iw-app.igor-mockup .iw-intro p {
+    font-size: clamp(29px, 2.34vw, 34px);
+    line-height: 1.24;
+    margin-top: 23px !important;
+    word-spacing: .075em;
+  }
+  .iw-app.igor-mockup .iw-welcome-compose {
+    max-width: 960px;
+    margin-top: 45px;
+    margin-left: -10px;
+  }
+  .iw-app.igor-mockup .iw-quick-start {
+    margin: 22px 0 0 -74px;
+    width: max-content;
+    max-width: calc(100vw - 250px);
+    gap: 12px;
+  }
+  .iw-app.igor-mockup .iw-quick-start button {
+    min-height: 61px;
+    padding: 13px 23px;
+    font-size: 17px;
+    font-weight: 520;
+    border-radius: 35px;
+  }
+  .iw-app.igor-mockup .iw-quick-start button:nth-child(1) { min-width: 236px; }
+  .iw-app.igor-mockup .iw-quick-start button:nth-child(2) { min-width: 160px; }
+  .iw-app.igor-mockup .iw-quick-start button:nth-child(3) { min-width: 195px; }
+  .iw-app.igor-mockup .iw-quick-start button:nth-child(4) { min-width: 170px; }
+  .iw-app.igor-mockup .iw-quick-start button:nth-child(5) { min-width: 224px; }
+  .iw-app.igor-mockup .iw-ideas {
+    margin-top: 29px !important;
+    margin-left: -80px !important;
+    gap: 16px;
+    width: min(1134px, calc(100vw - 255px));
+    max-width: 1134px;
+  }
+  .iw-app.igor-mockup .iw-story-card { aspect-ratio: .712; }
+  .iw-app.igor-mockup .iw-story-name {
+    font-size: clamp(22px, 1.9vw, 27px);
+    letter-spacing: -.006em;
+    word-spacing: .21em;
+    line-height: 1.09;
+    left: 16px;
+    right: 12px;
+    bottom: 25px;
+  }
+}
+.iw-app.igor-mockup .iw-brand > span {
+  font-family: Archivo, Arial, sans-serif;
+  font-weight: 850;
+  letter-spacing: -.032em;
+}
+.iw-app.igor-mockup .iw-welcome .iw-composer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.iw-app.igor-mockup .iw-home-search-icon {
+  color: #10161b;
+  width: 29px;
+  min-width: 29px;
+  height: 29px;
+  pointer-events: none;
+}
+.iw-app.igor-mockup .iw-welcome .iw-composer textarea {
+  min-width: 0;
+  flex: 1;
+  font-size: clamp(18px,1.65vw,23px);
+}
+.iw-app.igor-mockup .iw-welcome .iw-composer textarea::placeholder {
+  color:#7a8290;
+  opacity:1;
+}
+/* Portrait rhythm: source-reference geometry instead of equal-height cards. */
+@media (min-width: 1120px) {
+ .iw-app.igor-mockup .ir-surface.ir-discover {
+   width: 100%;
+   max-width: none;
+   padding: 31px 78px 65px 72px;
+   box-sizing: border-box;
+ }
+ .iw-app.igor-mockup .ir-discover .ir-chip-row {
+   margin-bottom: 43px;
+ }
+ .iw-app.igor-mockup .ir-discover .ir-reference-rail+.ir-reference-rail {
+   margin-top: 50px;
+ }
+ .iw-app.igor-mockup .ir-reference-tiles {
+   grid-template-columns: repeat(5,minmax(0,1fr));
+   gap: 16px;
+ }
+ .iw-app.igor-mockup .ir-reference-portrait .ir-reference-image {
+   aspect-ratio: .81;
+ }
+ .iw-app.igor-mockup .ir-reference-landscape .ir-reference-image {
+   aspect-ratio: 1.28;
+ }
+ .iw-app.igor-mockup .ir-reference-tile-label {
+   padding-top: 11px;
+   align-items: flex-start;
+ }
+ .iw-app.igor-mockup .ir-reference-tile-label strong {
+   font-size: clamp(19px,1.65vw,23px);
+   font-weight: 850;
+   font-variation-settings: "wght" 850,"wdth" 87;
+   line-height: 1.13;
+   letter-spacing: -.006em;
+   word-spacing: .19em;
+   text-align: left;
+ }
+ .iw-app.igor-mockup .ir-reference-tile-label span {
+   font-size: 20px;
+   text-align: left;
+   margin-top: 5px;
+ }
+ .iw-app.igor-mockup .ir-reference-section-heading h3 {
+   letter-spacing: -.015em !important;
+   word-spacing: .17em;
+ }
+}
+@media (min-width:761px) and (max-width:1119px) {
+ .iw-app.igor-mockup .iw-story-name {
+   letter-spacing: 0;
+   word-spacing:.18em;
+ }
+ .iw-app.igor-mockup .ir-reference-tile-label strong {
+   letter-spacing: 0;
+   word-spacing:.17em;
+ }
+}
+/* Keep interactive UI above images, never over content it does not own. */
+.iw-app.igor-mockup .iw-story-heart:focus-visible,
+.iw-app.igor-mockup .ir-reference-favorite:focus-visible,
+.iw-app.igor-mockup .iw-quick-start button:focus-visible {
+ outline: 3px solid #ffffff;
+ outline-offset: 3px;
+}
+
+/* Licensed cinematic gathering source:
+   https://www.splitshire.com/images/rooftop-terrace-with-string-lights
+   Image free to use with source attribution; never asserted to depict a Qloo venue.
+   Keep a local image fallback so the product remains readable offline. */
+.iw-app.igor-mockup .iw-welcome {
+ background:
+  linear-gradient(90deg,rgba(1,7,11,.77) 0%,rgba(1,7,11,.34) 46%,rgba(1,7,11,.06) 100%),
+  linear-gradient(0deg,#010608f8 0%,rgba(1,7,10,.66) 27%,transparent 70%),
+  url("https://images.splitshire.com/full/Rooftop-Supper-Terrace-String-Lights_1d7bbb.png") 56% 29% / cover no-repeat,
+  url("/marketing/assets/photos/hero-dinner-a-1200.webp") center / cover no-repeat,
+  #061014;
+}
+
+.iw-app.igor-mockup .iw-welcome {
+  position: relative;
+}
+.iw-app.igor-mockup .iw-photo-credit {
+  position: absolute;
+  right: 22px;
+  bottom: 12px;
+  z-index: 2;
+  color: #e9f0f1;
+  opacity: .62;
+  font: 500 10px/1.2 Archivo,Arial,sans-serif;
+  text-decoration: none;
+}
+.iw-app.igor-mockup .iw-photo-credit:hover,
+.iw-app.igor-mockup .iw-photo-credit:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+
+/* ================================================================
+   IGOR — SHARED PRODUCT COHERENCE CONTRACT
+   This is the final authoritative shell layer. Individual reference
+   compositions remain distinct; repeated controls never drift.
+   ================================================================ */
+.iw-app.igor-mockup {
+  --igor-shell-rail: 205px;
+  --igor-ink: #090c10;
+  --igor-paper: #fff;
+  --igor-muted: #626d7c;
+  --igor-line: #e7e9ec;
+  --igor-control-fill: #f7f7f8;
+  --igor-control-radius: 15px;
+  --igor-focus: #2062b4;
+  color: var(--igor-ink);
+  font-family: Archivo, Arial, sans-serif;
+}
+.iw-app.igor-mockup :is(button, a, input, textarea, summary):focus-visible {
+  outline: 2px solid var(--igor-focus);
+  outline-offset: 3px;
+}
+.iw-app.igor-mockup :is(.iw-brand, .iw-nav nav button, .iw-new, .iw-account) {
+  -webkit-tap-highlight-color: transparent;
+}
+.iw-app.igor-mockup :is(.iw-nav nav button, .ir-chip-row button, .ir-plan-tabs button,
+  .ir-detail-tabs button, .ir-compare-domains button, .iw-resource-tabs button) {
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+}
+@media (min-width:761px) {
+  .iw-app.igor-mockup {
+    padding-left: var(--igor-shell-rail);
+  }
+  .iw-app.igor-mockup .iw-nav,
+  .iw-app.igor-mockup .iw-nav:is(:hover, :focus-within) {
+    width: var(--igor-shell-rail) !important;
+    min-width: var(--igor-shell-rail);
+    border-right: 1px solid var(--igor-line);
+    box-shadow: none;
+  }
+  .iw-app.igor-mockup .iw-nav nav button {
+    min-height: 54px;
+    border-radius: 15px;
+  }
+  .iw-app.igor-mockup .iw-nav nav button[aria-current="page"] {
+    font-weight: 750;
+  }
+  .iw-app.igor-mockup .iw-nav .iw-brand {
+    letter-spacing: -.03em;
+  }
+}
+/* A task has two views of one authoritative state, never a cramped
+   chatbot column competing with an unrelated dashboard. */
+.iw-app.igor-mockup.iw-active .iw-inline-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100dvh;
+  background: var(--igor-paper);
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-workbar {
+  flex: 0 0 auto;
+  min-height: 70px;
+  padding-inline: clamp(20px, 3vw, 50px);
+  border-bottom: 1px solid var(--igor-line);
+  background: white;
+}
+.iw-app.igor-mockup.iw-active .iw-pane-switch {
+  display: flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 !important;
+  padding: 11px 18px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--igor-line) !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+}
+.iw-app.igor-mockup.iw-active .iw-pane-switch button {
+  min-height: 43px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 22px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: #f5f5f6;
+  color: #576270;
+  font: 670 15px/1.2 Archivo, Arial, sans-serif;
+}
+.iw-app.igor-mockup.iw-active .iw-pane-switch button[aria-pressed="true"] {
+  color: #fff;
+  border-color: #07090b;
+  background: #07090b;
+  box-shadow: none;
+}
+.iw-app.igor-mockup.iw-active .iw-pane-switch button svg {
+  width: 17px;
+  height: 17px;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-workgrid {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  grid-template-rows: minmax(0,1fr);
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-thread {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  border-right: 0;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-messages {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(20px, 2.2vw, 34px) clamp(20px, 5vw, 74px) 38px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-message-stream {
+  width: min(100%, 1100px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-inline-output {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: clamp(20px,2.2vw,34px) clamp(20px,5vw,74px);
+  overflow: auto;
+  border: 0;
+  background: #fff;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-inline-output > .iw-result-content {
+  width: min(100%, 1130px);
+  max-width: 1130px;
+  margin: 0 auto;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace[data-pane="thread"] .iw-inline-output {
+  display: none !important;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace[data-pane="work"] .iw-thread {
+  display: none !important;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-workspace-footer {
+  display: flex !important;
+  flex: 0 0 auto;
+  justify-content: center;
+  min-width: 0;
+  border-top: 1px solid var(--igor-line);
+  background: #fff;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-workspace-footer::after {
+  display: none !important;
+  content: none !important;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-dock {
+  display: block;
+  width: min(100%, 950px);
+  max-width: 950px;
+  padding: 12px 24px max(16px, env(safe-area-inset-bottom));
+  margin: 0 auto;
+}
+.iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-dock > p {
+  color: var(--igor-muted);
+  font-size: 11px;
+}
+/* Reusable work surfaces share content width and control scale while
+   keeping Home cinematic, Maps immersive and Create expressive. */
+.iw-app.igor-mockup .ir-surface :is(.ir-heading h2, .ir-reference-section-heading h3) {
+  text-wrap: balance;
+  overflow-wrap: normal;
+  word-spacing: .09em;
+}
+.iw-app.igor-mockup .ir-surface :is(.ir-chip-row button, .ir-plan-tabs button,
+  .ir-detail-tabs button, .ir-compare-domains button) {
+  font-family: Archivo, Arial, sans-serif;
+  font-weight: 600;
+}
+.iw-app.igor-mockup .ir-surface :is(.ir-chip-row button, .ir-plan-tabs button,
+  .ir-detail-tabs button, .ir-compare-domains button)[aria-pressed="true"] {
+  color: #fff;
+  background: #090a0c;
+  border-color: #090a0c;
+}
+.iw-app.igor-mockup .ir-surface :is(.ir-compare-add,.ir-plan-add-stop,.ir-detail-add) {
+  min-height: 50px;
+  font-family: Archivo, Arial, sans-serif;
+  font-weight: 700;
+}
+@media (max-width:760px) {
+  .iw-app.igor-mockup.iw-active .iw-inline-workspace {
+    height: calc(100dvh - 66px - env(safe-area-inset-bottom));
+  }
+  .iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-workbar {
+    min-height: 55px;
+    padding-inline: 18px;
+  }
+  .iw-app.igor-mockup.iw-active .iw-pane-switch {
+    padding: 9px 14px !important;
+  }
+  .iw-app.igor-mockup.iw-active .iw-pane-switch button {
+    min-height: 42px;
+    font-size: 13px;
+    padding: 9px 17px;
+  }
+  .iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-messages,
+  .iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-inline-output {
+    padding: 18px 14px 25px;
+  }
+  .iw-app.igor-mockup.iw-active .iw-inline-workspace .iw-dock {
+    padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+ .iw-app.igor-mockup :is(.iw-nav nav button,.ir-chip-row button,
+  .ir-plan-tabs button,.ir-detail-tabs button,.ir-compare-domains button) {
+    transition: none;
+  }
+}
+
+
+/* Focused regression correction: Library must never sit underneath the
+   existing desktop rail. This keeps PR31's widths, colors and composition. */
+@media (min-width: 761px) {
+  .iw-app.igor-mockup:has(> main > .iw-library:not(.iw-history-page)) {
+    padding-left: var(--igor-shell-rail) !important;
+  }
+  .iw-app.igor-mockup > main > .ig-reference-library {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: clip;
+  }
+}
+.iw-app.igor-mockup .ig-library-grid {
+  min-width: 0;
+}
+.iw-app.igor-mockup .ig-library-card {
+  min-width: 0;
+}
+.iw-app.igor-mockup .ig-library-cover-fallback strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: clamp(16px, 1.45vw, 22px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  letter-spacing: -.03em;
+}
+.iw-app.igor-mockup .ig-library-card > strong {
+  overflow-wrap: anywhere;
+}

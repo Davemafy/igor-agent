@@ -2079,42 +2079,9 @@
 .iw-app .iw-work-stage .iw-sharing {
   margin-top: 24px;
 }
-@media (min-width: 961px) {
-  .iw-app .iw-inline-workspace.iw-with-result .iw-workgrid {
-    display: grid;
-    grid-template-columns: minmax(300px, 0.78fr) minmax(420px, 1.4fr);
-  }
-  .iw-app .iw-inline-workspace.iw-with-result .iw-workspace-footer {
-    display: grid;
-    grid-template-columns: minmax(300px, 0.78fr) minmax(420px, 1.4fr);
-  }
-  .iw-app .iw-inline-workspace.iw-with-result .iw-workspace-footer > .iw-dock {
-    grid-column: 1;
-    padding-inline: 20px;
-  }
-  .iw-app .iw-with-result .iw-messages {
-    padding: 30px 24px 20px;
-  }
-  .iw-app .iw-with-result .iw-message .pp-message-text {
-    font-size: 14px;
-    line-height: 1.7;
-  }
-  .iw-app .iw-with-result .iw-message {
-    margin-bottom: 30px;
-  }
-  .iw-app .iw-with-result .iw-dock .iw-composer textarea {
-    font-size: 14px;
-  }
-  .iw-app .iw-with-result .iw-workspace-footer::after {
-    content: "Saved with this conversation";
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-left: 1px solid #e0e3d7;
-    color: #8a907e;
-    font-size: 11px;
-  }
-}
+/* Legacy side-by-side conversation/dashboard grid removed. The active
+   Igor workspace is owned by the shared full-width pane system. */
+
 @media (max-width: 960px) {
   .iw-app .iw-pane-switch {
     display: flex;

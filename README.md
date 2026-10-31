@@ -4,9 +4,11 @@
 
 <p align="center">
   <a href="assets/Screen%20Recording%202026-10-31%20035320.mp4">
-    <img src="assets/readme/igor-cover.webp" alt="Igor — your agent with taste, powered by Qloo. Watch the product walkthrough." width="100%">
+    <img src="assets/readme/igor-demo-preview.gif" alt="Moving preview from the real Igor product screen recording. Select to view the complete video with sound." width="100%">
   </a>
 </p>
+
+<p align="center"><sub>Real product footage · looping silent preview · <a href="assets/Screen%20Recording%202026-10-31%20035320.mp4">Play the complete video with audio</a></sub></p>
 
 **Most AI gives you recommendations. Igor turns cultural intelligence into decisions, connected work, and plans that can change with you.**
 

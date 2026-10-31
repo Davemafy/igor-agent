@@ -6,6 +6,7 @@ import { ProductText } from "./product-surfaces";
 /** The document stage is displayed ONLY after a real persisted artifact exists. */
 export function ReferenceDocumentStage({task, onEdit}: {task: Task; onEdit: ()=>void}) {
   const artifact=[...task.artifacts].reverse().find(a => a.freshness === "current");
+
   if (!artifact) { return null; }
 
   const title=artifact.title.trim();

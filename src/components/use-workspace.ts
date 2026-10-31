@@ -457,6 +457,22 @@ export function useWorkspace() {
         }
       }
 
+      // SSE and view-transition animations are not authoritative. Re-read
+      // the committed task before making the composer available. This is
+      // read-only: it never replays a model call or an external action.
+      if (!failed) {
+        try {
+          const saved = await fetchWorkspace(currentTask.id);
+
+          if (saved) {
+            setTask((current) => newestWorkspace(current, saved));
+          }
+        } catch {
+          // A completed stream remains usable if a later refresh fails.
+          // Its persisted journal still permits read-only recovery.
+        }
+      }
+
       sending.current = false;
       setIsBusy(false);
     }

@@ -1,5 +1,7 @@
 # Igor
 
+[![CI](https://github.com/Davemafy/igor-agent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Davemafy/igor-agent/actions/workflows/ci.yml)
+
 <p align="center">
   <a href="assets/Screen%20Recording%202026-10-31%20035320.mp4">
     <img src="assets/readme/igor-cover.webp" alt="Igor — your agent with taste, powered by Qloo. Watch the product walkthrough." width="100%">
@@ -73,13 +75,6 @@ The important boundary:
 > **Qloo helps Igor understand cultural fit. The agent and application turn that into a decision you can revisit.**
 
 Qloo does not verify venue opening hours, real-time availability or your budget for you. Igor keeps those questions separate from cultural affinity.
-
-<table>
-  <tr>
-    <td width="50%" valign="top"><img src="assets/readme/igor-cultural-evidence.svg" alt="Cultural signals remain distinct from practical facts" width="100%"></td>
-    <td width="50%" valign="top"><img src="assets/readme/igor-group-tradeoffs.svg" alt="Participants retain individual preferences and source evidence" width="100%"></td>
-  </tr>
-</table>
 
 ## How it works
 
@@ -220,10 +215,6 @@ Budget changes can reuse a discovered reference pool. A changed artist or city c
 
 The same dependency model links preferences, facts, candidates, evidence and artifacts. [Revision implementation](src/core/revision.ts) and [connected-work validation](docs/connected-work-validation.md) document the tested boundaries.
 
-<p align="center">
-  <img src="assets/readme/igor-selective-revision.svg" alt="A budget correction preserves independent prior cultural evidence" width="100%">
-</p>
-
 ## What the model does, and what it never does
 
 | Model-driven | Code-enforced |
@@ -265,10 +256,6 @@ The Railway checks recorded on **October 26, 2026** exercised a configured Gemin
 The production check shows a real retrieval and a selective correction in those tested circumstances. It is **not** a completed comparative study of how much Qloo improves user satisfaction, nor a fresh pass on every later commit.
 
 **Evidence:** [live integration report](docs/live-integration.md) · [Qloo-specific observations](qloo/EVIDENCE.md) · [verification metadata](docs/verification.json).
-
-<p align="center">
-  <img src="assets/readme/igor-observed-workflow.svg" alt="Documented earlier live Qloo retrieval, evidence and budget revision" width="100%">
-</p>
 
 ## Judge walkthrough
 

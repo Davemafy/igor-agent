@@ -18,11 +18,9 @@ export function groundDocumentSources(
 
   for (const reference of requested) {
     const matches = observed.filter((source) =>
-      [
-        source.id,
-        source.url,
-        `${taskId}:agent:${runId}:${source.id}`,
-      ].includes(reference),
+      [source.id, source.url, `${taskId}:agent:${runId}:${source.id}`].includes(
+        reference,
+      ),
     );
 
     if (matches.length === 1) {

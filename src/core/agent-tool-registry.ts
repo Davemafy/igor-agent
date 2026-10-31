@@ -1050,7 +1050,7 @@ export function createAgentToolRegistry(
                   ]),
                 ],
                 candidateIds: candidateIds ?? linked.candidateIds,
-                fulfills: fulfills ?? linked.fulfills,
+                fulfills: fulfills?.length ? fulfills : linked.fulfills,
               },
             ],
             ctx.task.agentRun?.goal,

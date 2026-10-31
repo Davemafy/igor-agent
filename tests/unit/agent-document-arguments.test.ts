@@ -212,3 +212,44 @@ it("accepts single-action compose envelopes without discarding unsafe keys", () 
     ),
   ).toThrow();
 });
+
+it("preserves saved memo fulfillment when a revision sends an empty fulfills list", async () => {
+  const task = freshTask("retain-fulfillment", "owner");
+  task.artifacts.push({
+    id: "agent-doc-previous-1",
+    kind: "research-report",
+    title: "Initial investment memo",
+    content: "Original observed report.",
+    version: 1,
+    evidenceIds: [],
+    dependencies: [],
+    assumptions: [],
+    freshness: "current",
+    edited: false,
+    fulfills: ["investment memo"],
+  });
+  const ctx = {
+    task,
+    runId: "revision-run",
+    sources: [],
+    research: { available: false, research: vi.fn() },
+  };
+  const tool = createAgentToolRegistry(ctx).find(
+    (item) => item.name === "document.revise",
+  );
+  const result = await tool?.execute(
+    {
+      artifactId: "agent-doc-previous-1",
+      title: "Updated investment memo",
+      content:
+        "This updated memo preserves previously validated citations and lists unverified market assumptions.",
+      sourceIds: [],
+      fulfills: [],
+    },
+    ctx,
+  );
+
+  expect(result?.status).toBe("ok");
+  expect(task.artifacts[0].fulfills).toEqual(["investment memo"]);
+  expect(task.artifacts[0].id).toBe("agent-doc-previous-1");
+});

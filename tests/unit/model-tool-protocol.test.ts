@@ -410,7 +410,8 @@ it("keeps sole-document revision context narrow and the existing source content 
       arguments: {
         artifactId: "agent-doc-prior-1",
         title: "Revised memo",
-        content: "The original evidence remains visible; revisions remain unverified.",
+        content:
+          "The original evidence remains visible; revisions remain unverified.",
         sourceIds: [],
       },
     });

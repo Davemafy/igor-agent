@@ -91,6 +91,24 @@ test("existing chat UI carries a listening-bar concept through approvals, edits,
   await expect(overview).toContainText("WORKING PROPOSAL");
   const messageCountBeforeViewing = (await saved(page)).messages.length;
   await page.reload();
+  console.log("IGOR_RELOAD_WORK_DIAGNOSTIC", JSON.stringify(await page.evaluate(async () => {
+    const id = localStorage.getItem("igor-task");
+    const response = id ? await fetch(`/api/tasks/${id}`) : null;
+    const task = response?.ok ? await response.json() : null;
+
+    return {
+      url: location.pathname + location.search,
+      savedWorkspace: !!id,
+      status: response?.status ?? null,
+      messageCount: task?.messages?.length ?? null,
+      savedDocuments: task?.work?.documents?.length ?? null,
+      hasSurface: !!document.querySelector('[aria-label="Connected work"]'),
+      resultCount: document.querySelectorAll(".iw-inline-output").length,
+      pageState: document.querySelector(".iw-inline-workspace")?.getAttribute("data-pane"),
+      bodyPreview: document.querySelector("main")?.textContent?.slice(0, 280),
+      alerts: [...document.querySelectorAll('[role="alert"]')].map((element) => element.textContent?.slice(0, 100)),
+    };
+  })));
   await expect(surface).toHaveAttribute(
     "data-active-artifact-id",
     "document:listening-bar-launch",

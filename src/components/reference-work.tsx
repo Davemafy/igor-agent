@@ -30,6 +30,7 @@ const fact = (value: number | null) =>
 
 function CandidateMedia({ candidate, wide = false }: { candidate: Candidate; wide?: boolean }) {
   const [broken, setBroken] = useState(false);
+
   return (
     <div className={`ir-media ${wide ? "ir-media-wide" : ""}`}>
       {candidate.imageUrl && !broken ? (
@@ -44,8 +45,10 @@ function CandidateMedia({ candidate, wide = false }: { candidate: Candidate; wid
     </div>
   );
 }
+
 function EvidenceSource({ source }: { source: Task["evidence"][number] }) {
   const url = source.reference.startsWith("https://") && source.source === "provider-returned" ? source.reference : null;
+
   return (
     <article className="ir-evidence" key={source.id}>
       <div className="ir-source-head">
@@ -64,6 +67,7 @@ function EvidenceSource({ source }: { source: Task["evidence"][number] }) {
 function CandidateSignals({ task, candidate, vm }: { task: Task; candidate: Candidate; vm: WorkspaceViewModel }) {
   const signals = vm.culturalSignalsForCandidate(candidate.id);
   const sampleIds = new Set(task.brief.participants.filter((p) => p.sample).map((p) => p.id));
+
   return (
     <div className="ir-signals">
       {!signals.length && <p className="ir-subtle">No Qloo cultural signal returned for this candidate.</p>}
@@ -93,10 +97,12 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
   const [compareCategory, setCompareCategory] = useState("all");
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null);
   const selectedId = selectedCandidateId ?? localSelectedId;
+
   function setSelectedId(id: string | null) {
     setLocalSelectedId(id);
     onSelectCandidate?.(id);
   }
+
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [comparisonEdited, setComparisonEdited] = useState(false);
   const [planTab, setPlanTab] = useState<"overview" | "itinerary" | "map" | "options" | "notes">("overview");
@@ -136,6 +142,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
     const canEditItinerary = !!proposalNode && !!task.canvas &&
       ("candidateIds" in proposalNode) && proposalNode.candidateIds.includes(id) &&
       task.candidates.some((candidate) => candidate.id === id && candidate.freshness === "current");
+
     if (canEditItinerary && task.canvas && proposalNode) {
       const candidateIds = [...new Set([...task.canvas.itineraryIds, id])];
       await onTurn({ type: "canvas", surfaceId: task.canvas.surface.id,
@@ -146,6 +153,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
       await onTurn({ type: "message", text: `Add the existing candidate with ID ${id} to my current work. Preserve unrelated selections and return the updated work.` });
     }
   }
+
   function toggleCompare(id: string) {
     const current = comparisonEdited ? comparisonIds : originalComparisonIds.slice(0, 4);
     setComparisonIds(current.includes(id)
@@ -156,6 +164,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
   // A spatial renderer is a presentation of verified Task coordinates, not an
   // engine state transition. Some valid tasks have geocoded candidates but
   // no spatial presentation node. Those tasks still deserve a real map.
+
   const spatialNode = task.canvas?.surface.nodes.find((node) => node.type === "spatial");
   const verifiedMap = vm.mapPlaces.length > 0 ? (
     <IgorSpatialCanvas
@@ -170,8 +179,10 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
       mutate={(mutation) => {
         if (mutation.operation === "select") {
           setSelectedId(mutation.candidateId);
+
           return;
         }
+
         if (mutation.operation === "itinerary") {
           void onTurn({type:"message", text:
             "Update my existing plan with these exact verified place IDs in order: " +
@@ -203,6 +214,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
           <form className="ir-search" onSubmit={(event) => {
             event.preventDefault();
             const text = query.trim();
+
             if (text) {
               void onTurn({ type: "message", text: `Explore ${text}. Find relevant results with sources and explain what is known.` });
             }
@@ -324,6 +336,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
                 {compared.map((candidate) => {
                   const signals = vm.culturalSignalsForCandidate(candidate.id);
                   const participants = task.brief.participants.filter((person) => !person.sample || task.mode === "illustrative-fixtures");
+
                   return (
                     <article className="ir-matrix-column" key={candidate.id}>
                       <button className="ir-comparison-cover" onClick={() => {setSelectedId(candidate.id);onNavigate("detail");}}
@@ -334,6 +347,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
                       <div className="ir-comparison-people">
                         {participants.length ? participants.map((person) => {
                           const signal = signals.find((entry) => entry.participantId === person.id);
+
                           return (
                             <div className="ir-comparison-person" key={person.id}>
                               <span className="ir-person-avatar" aria-hidden="true">{person.name.slice(0,1).toUpperCase()}</span>
@@ -455,7 +469,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
                     vm.evidenceForCandidate(chosen.id).map((source) => <EvidenceSource key={source.id} source={source}/>)
                   ) : <p className="ir-subtle">No inspectable source records are attached to this candidate.</p>}
                 </div>
-                <p className="ir-footnote">Qloo data is a contextual input; Igor's interpretation and third-party facts are not automatically provider-certified.</p>
+                <p className="ir-footnote">Qloo data is a contextual input; Igor&apos;s interpretation and third-party facts are not automatically provider-certified.</p>
               </div>
             )}
           </section>
@@ -484,6 +498,7 @@ export function ReferenceWork({ task, view, busy, onTurn, onNavigate, selectedCa
                   <ol className="ir-plan-timeline">
                     {task.schedule.map((stop, index) => {
                       const candidate = stop.candidateId ? vm.candidateById.get(stop.candidateId) : null;
+
                       return (
                         <li key={index}>
                           <span className="ir-plan-time">Time TBD</span>

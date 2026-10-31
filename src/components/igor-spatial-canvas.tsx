@@ -164,6 +164,7 @@ export default function IgorSpatialCanvas({
   const candidates = useMemo(() => availableCandidates.filter((candidate) => {
     const text = [candidate.name, candidate.description, candidate.place?.address ?? "", ...candidate.tags]
       .join(" ").toLowerCase();
+
     return text.includes(mapQuery.trim().toLowerCase()) &&
       (mapCategory === "All" || text.includes(mapCategory.toLowerCase()));
   }), [availableCandidates, mapQuery, mapCategory]);
@@ -339,6 +340,7 @@ export default function IgorSpatialCanvas({
           markerButton.className = "ic-photo-map-pin";
           markerButton.setAttribute("aria-label", `Select ${candidate.name}`);
           markerButton.title = candidate.name;
+
           if (candidate.imageUrl) {
             const image = document.createElement("img");
             image.src = candidate.imageUrl;
@@ -352,25 +354,32 @@ export default function IgorSpatialCanvas({
             letter.textContent = candidate.name.slice(0,1);
             markerButton.append(letter);
           }
+
           const select = () => {
             if (!busyRef.current) {
               mutationRef.current({operation:"select", nodeId:node.id, candidateId:candidate.id});
             }
           };
+
           markerButton.addEventListener("click",select);
+
           overlay.onAdd = () => {
             overlay.getPanes()?.overlayMouseTarget.append(markerButton);
           };
+
           overlay.draw = () => {
             const pixel = overlay.getProjection().fromLatLngToDivPixel(position(candidate));
+
             if (pixel) {
               markerButton.style.left = `${pixel.x}px`;
               markerButton.style.top = `${pixel.y}px`;
             }
           };
+
           overlay.onRemove = () => markerButton.remove();
           overlay.setMap(flat);
           markersRefSet(candidate.id,{element:markerButton});
+
           return () => {
             markerButton.removeEventListener("click",select);
             overlay.setMap(null);
@@ -483,9 +492,11 @@ export default function IgorSpatialCanvas({
               label: c.name,
               altitudeMode: "CLAMP_TO_GROUND",
             });
+
         if (library.MarkerInteractiveElement) {
           const chip = document.createElement("div");
           chip.className = "ic-map-3d-label";
+
           if (c.imageUrl) {
             const photo = document.createElement("img");
             photo.src = c.imageUrl;
@@ -494,6 +505,7 @@ export default function IgorSpatialCanvas({
             photo.addEventListener("error", () => photo.remove());
             chip.append(photo);
           }
+
           const name = document.createElement("strong");
           name.textContent = c.name;
           chip.append(name);

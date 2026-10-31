@@ -51,9 +51,11 @@ export function GroundedMap({
   const mapUrl = new URL("https://www.openstreetmap.org/export/embed.html");
   mapUrl.searchParams.set("bbox", bbox.map((value) => value.toFixed(6)).join(","));
   mapUrl.searchParams.set("layer", "mapnik");
+
   if (selectedPlace) {
     mapUrl.searchParams.set("marker", [latitude, longitude].map((value) => value.toFixed(6)).join(","));
   }
+
   const externalMap = `https://www.openstreetmap.org/#map=13/${latitude}/${longitude}`;
 
   return (

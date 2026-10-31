@@ -107,9 +107,11 @@ export function AgentWorkspace({
   const focusedCandidateId = focusedCandidate && focusedCandidate.taskId === task?.id
     ? focusedCandidate.candidateId
     : null;
+
   function setFocusedCandidateId(id: string | null) {
     setFocusedCandidate(id && task ? { taskId: task.id, candidateId: id } : null);
   }
+
   const hasResult = !task
     ? initialHasResult
     : !!(
@@ -188,7 +190,7 @@ export function AgentWorkspace({
     presentedResult.current = resultIdentity;
     const frame = requestAnimationFrame(() => {
       // The work is already visible beside conversation on desktop.
-      if (window.matchMedia("(min-width: 1024px)").matches) return;
+      if (window.matchMedia("(min-width: 1024px)").matches) { return; }
       outputRef.current?.scrollIntoView({
         block: "start",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -251,8 +253,10 @@ export function AgentWorkspace({
   function navigate(next: Page) {
     if (next === page) {
       setMenu(false);
+
       return;
     }
+
     if (page === "work" && next !== "work" && !canLeave()) {
       return;
     }
@@ -285,10 +289,12 @@ export function AgentWorkspace({
       if (["compare", "detail", "plan", "revisions"].includes(String(view))) {
         setPage("explore");
         setExploreView(view as "compare" | "detail" | "plan" | "revisions");
-      } else if (next === "explore") setExploreView("discover");
-      if (next === "maps") setExploreView("maps");
+      } else if (next === "explore") { setExploreView("discover"); }
+      if (next === "maps") { setExploreView("maps"); }
     };
+
     window.addEventListener("popstate", restoreView);
+
     return () => window.removeEventListener("popstate", restoreView);
   }, []);
 
@@ -553,6 +559,7 @@ export function AgentWorkspace({
                       loading="eager"
                       onError={(event) => {
                         const fallback = assets + story.fallback;
+
                         if (event.currentTarget.src !== new URL(fallback, location.origin).href) {
                           event.currentTarget.src = fallback;
                         }
@@ -852,15 +859,16 @@ export function AgentWorkspace({
               selectedCandidateId={focusedCandidateId} onSelectCandidate={setFocusedCandidateId}
               onNavigate={(view) => {
                 setExploreView(view);
+
                 if (view === "maps") {
                   navigate("maps");
                 } else {
                   const fromMap = page === "maps";
-                  if (fromMap) navigate("explore");
+                  if (fromMap) { navigate("explore"); }
                   const url = new URL(location.href);
                   url.searchParams.set("view", view === "discover" ? "explore" : view);
-                  if (fromMap) history.replaceState({view}, "", url);
-                  else history.pushState({view}, "", url);
+                  if (fromMap) { history.replaceState({view}, "", url); }
+                  else { history.pushState({view}, "", url); }
                 }
               }} />
           </section>
@@ -891,7 +899,7 @@ export function AgentWorkspace({
               busy={w.isBusy || w.isLoadingWorkspace}
               onResearch={(area) => void (async () => {
                 const workspace = await w.createWorkspace();
-                if (!workspace) return;
+                if (!workspace) { return; }
                 navigate("work");
                 await w.sendTurn({type:"message",text:
                   `Find real places in ${area}. Show source-backed places and verified coordinates only.`}, workspace);
@@ -1518,6 +1526,7 @@ function Saved({
         {manage && (saved.isLoading ? <LoadingSurface mode="collection"/> :
           <ProductCollections task={task} collections={saved.data.collections}
             isBusy={saved.isBusy || busy} saveOutput={saved.saveOutput}
+
             onDiscover={onDiscover} onLoad={async (id) => {await onLoad(id);return true;}}/>)}
       </div>
       {saved.errorMessage && <p role="alert">{saved.errorMessage}</p>}

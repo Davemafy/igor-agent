@@ -62,24 +62,27 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
   const byId = new Map<string, WorkspaceCandidate>();
 
   // Evaluated candidates override catalogue records with matching IDs.
-  for (const item of task.catalogue) byId.set(item.id, item);
-  for (const item of task.candidates) byId.set(item.id, item);
+  for (const item of task.catalogue) { byId.set(item.id, item); }
+  for (const item of task.candidates) { byId.set(item.id, item); }
 
   const evidenceById = new Map<string, Evidence>();
-  for (const item of task.evidenceArchive ?? []) evidenceById.set(item.id, item);
-  for (const item of task.evidence) evidenceById.set(item.id, item);
+  for (const item of task.evidenceArchive ?? []) { evidenceById.set(item.id, item); }
+  for (const item of task.evidence) { evidenceById.set(item.id, item); }
 
   const participantById = new Map(
     task.brief.participants.map((person) => [person.id, person]),
   );
 
   const mapPlaces: GroundedMapPlace[] = [];
+
   for (const candidate of byId.values()) {
     if (candidate.type !== "place" || candidate.sample || !candidate.providerId) {
       continue;
     }
+
     const latitude = candidate.place?.latitude;
     const longitude = candidate.place?.longitude;
+
     if (
       latitude == null ||
       longitude == null ||
@@ -88,12 +91,14 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
     ) {
       continue;
     }
+
     mapPlaces.push({ candidate, latitude, longitude });
   }
 
   function evidenceForCandidate(id: string): readonly Evidence[] {
     const candidate = byId.get(id);
-    if (!candidate || !("evidenceIds" in candidate)) return [];
+    if (!candidate || !("evidenceIds" in candidate)) { return []; }
+
     return candidate.evidenceIds
       .map((evidenceId) => evidenceById.get(evidenceId))
       .filter((evidence): evidence is Evidence => evidence !== undefined);
@@ -101,11 +106,12 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
 
   function culturalSignalsForCandidate(id: string): readonly ScopedCulturalSignal[] {
     const candidate = byId.get(id);
-    if (!candidate?.cultural) return [];
+    if (!candidate?.cultural) { return []; }
 
     return Object.entries(candidate.cultural).map(([key, signal]) => {
       const person = participantById.get(key);
       const isParticipant = Boolean(person) && signal.signalScope !== "context";
+
       return {
         key,
         participantId: isParticipant && person ? person.id : null,

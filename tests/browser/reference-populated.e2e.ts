@@ -5,7 +5,7 @@ type VisualTask = ReturnType<typeof freshTask>;
 
 async function serveTask(page: Page, task: VisualTask) {
   await page.route(`**/api/tasks/${task.id}`, async (route) => {
-    if (route.request().method() !== "GET") return route.continue();
+    if (route.request().method() !== "GET") { return route.continue(); }
     await route.fulfill({
       status: 200, contentType: "application/json",
       body: JSON.stringify(task),
@@ -36,6 +36,7 @@ function gatheringFixture(): VisualTask {
     content:"Dinner and film with friends",version:1,
     dependencies:[],evidenceIds:[],assumptions:[],freshness:"current",edited:false,
   });
+
   return task;
 }
 
@@ -52,6 +53,7 @@ function researchFixture(): VisualTask {
   task.messages.push({
     role:"user",text:"Compare New York rooftop venues.",at:"2026-10-30T10:00:00Z",
   });
+
   return task;
 }
 

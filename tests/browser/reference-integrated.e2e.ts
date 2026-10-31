@@ -24,9 +24,11 @@ test("mobile navigation keeps all primary actions accessible without page overfl
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/app");
   const nav = page.getByRole("navigation", { name: "Product navigation" });
+
   for (const name of ["Home", "Explore", "Create", "Search", "Library"]) {
     await expect(nav.getByRole("button", { name })).toBeVisible();
   }
+
   await expect.poll(() => page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   )).toBe(true);
@@ -50,11 +52,14 @@ test("Home reconstructs the supplied desktop visual grid at original dimensions"
     firstCard: page.locator(".iw-story-card").first(),
     lastCard: page.locator(".iw-story-card").last(),
   };
+
   const box = async (locator: typeof elements.sidebar) => {
     const rect = await locator.boundingBox();
     expect(rect).toBeTruthy();
+
     return rect!;
   };
+
   const sidebar = await box(elements.sidebar);
   const title = await box(elements.title);
   const search = await box(elements.search);
@@ -109,6 +114,7 @@ test("headlines maintain real word spacing and appearance controls never obscure
   await expect(title).toBeVisible();
   const metrics = await title.evaluate((element) => {
     const style = getComputedStyle(element);
+
     return {
       wordSpacing: Number.parseFloat(style.wordSpacing),
       tracking: Number.parseFloat(style.letterSpacing),
@@ -136,6 +142,7 @@ test("headlines maintain real word spacing and appearance controls never obscure
 test("Igor uses one navigation geometry and control system across primary pages", async ({page}) => {
   await page.setViewportSize({width:1448,height:1086});
   const snapshots: {view:string; width:number; items:string[]; radius:string}[] = [];
+
   for (const view of ["home","explore","create","saved","maps","conversations"]) {
     await page.goto(`/app?view=${view}`);
     const nav = page.getByRole("navigation",{name:"Product navigation"});
@@ -143,6 +150,7 @@ test("Igor uses one navigation geometry and control system across primary pages"
     const metrics = await page.evaluate(() => {
       const shell = document.querySelector(".iw-nav");
       const buttons = [...document.querySelectorAll(".iw-nav nav button")];
+
       return {
         width: shell?.getBoundingClientRect().width || 0,
         items: buttons.map((button)=>button.textContent?.trim() || ""),
@@ -154,6 +162,7 @@ test("Igor uses one navigation geometry and control system across primary pages"
     expect(metrics.width).toBeLessThanOrEqual(208);
     expect(metrics.items).toEqual(["Home","Explore","Create","Library","Maps","Search"]);
   }
+
   expect(new Set(snapshots.map((value)=>value.radius)).size).toBe(1);
   console.log("IGOR_COHERENCE_NAV",JSON.stringify(snapshots));
 });

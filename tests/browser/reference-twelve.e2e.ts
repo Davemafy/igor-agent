@@ -21,6 +21,7 @@ const desktopViews = [
 
 test("Empty-state desktop routes do not overflow; this is not a visual fidelity test", async ({page}) => {
   await page.setViewportSize({width:1448,height:1086});
+
   for (const item of desktopViews) {
     await page.goto(`/app?view=${item.view}`);
     await expect(page.locator(item.selector).first()).toBeVisible();
@@ -41,6 +42,7 @@ test("Empty-state mobile routes preserve navigation without claiming content cov
     {view:"create",name:"12-create"},
     {view:"compare",name:"12-compare"},
   ];
+
   for (const item of views) {
     await page.goto(`/app?view=${item.view}`);
     await expect(page.getByRole("navigation",{name:"Product navigation"})).toBeVisible();
@@ -78,6 +80,7 @@ test("capture real map rendering after iframe assets have settled", async ({page
   await page.waitForTimeout(6000);
   const current=page.frames().find((frame)=>frame.url().includes("openstreetmap.org/export/embed.html"));
   let diagnostic={frame:current?.url() || "none",loadedImages:0,canvasCount:0,bodyChars:0};
+
   if (current) {
     try {
       const details=await current.evaluate(()=>({
@@ -89,6 +92,7 @@ test("capture real map rendering after iframe assets have settled", async ({page
       diagnostic={frame:current.url(),...details};
     } catch {/* Frame may navigate during task restoration; screenshot still documents output. */}
   }
+
   console.log("IGOR_MAP_RENDER_DIAGNOSTIC",JSON.stringify(diagnostic));
   await page.screenshot({path:"test-results/ighor-loaded-map-visual-review.png",fullPage:false});
 });

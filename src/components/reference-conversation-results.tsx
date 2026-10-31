@@ -23,7 +23,7 @@ export function ReferenceConversationResults({ task, busy, onOpen, onCompare }: 
     (!("freshness" in candidate) || candidate.freshness === "current")
   ).slice(0, 3);
   const participants = view.participants.filter((person) => !person.sample);
-  if (!candidates.length) return null;
+  if (!candidates.length) { return null; }
 
   return (
     <section className="ir-conversation-recommendations" aria-label="Grounded recommendations from this conversation">
@@ -54,6 +54,7 @@ export function ReferenceConversationResults({ task, busy, onOpen, onCompare }: 
           const signals = view.culturalSignalsForCandidate(candidate.id);
           const matchingSignal = signals.find((signal) => signal.participantName) || signals[0];
           const evidence = view.evidenceForCandidate(candidate.id);
+
           return (
             <article key={candidate.id} className="ir-conversation-recommendation">
               <button type="button" className="ir-conversation-recommendation-image"

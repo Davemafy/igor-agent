@@ -6,7 +6,7 @@ import { ProductText } from "./product-surfaces";
 /** The document stage is displayed ONLY after a real persisted artifact exists. */
 export function ReferenceDocumentStage({task, onEdit}: {task: Task; onEdit: ()=>void}) {
   const artifact=[...task.artifacts].reverse().find(a => a.freshness === "current");
-  if (!artifact) return null;
+  if (!artifact) { return null; }
 
   const title=artifact.title.trim();
   const longTitle=title.length > 92;
@@ -16,6 +16,7 @@ export function ReferenceDocumentStage({task, onEdit}: {task: Task; onEdit: ()=>
     .map(id=>evidence.find(e=>e.id===id))
     .filter((e):e is Task["evidence"][number]=>Boolean(e));
   const body=artifact.content.trim();
+
   return (
     <section className="ig-create-stage ig-create-stage-document" aria-label="Saved document">
       <header className="ig-create-document-heading">

@@ -251,6 +251,15 @@ export function AgentWorkspace({
     );
   }
 
+  function selectWorkspacePane(next: "thread" | "work") {
+    setWorkspacePane(next);
+    const url = new URL(location.href);
+    const view = next === "work" ? "editor" : "conversation";
+
+    url.searchParams.set("view", view);
+    history.replaceState({ view }, "", url);
+  }
+
   function navigate(next: Page) {
     if (next === page) {
       setMenu(false);
@@ -287,6 +296,10 @@ export function AgentWorkspace({
         : view === "conversations" ? "history" : "work";
       setPage(next);
       setMenu(false);
+
+      if (view === "editor" || view === "conversation") {
+        setWorkspacePane(view === "editor" ? "work" : "thread");
+      }
 
       if (["compare", "detail", "plan", "revisions"].includes(String(view))) {
         setPage("explore");
@@ -626,11 +639,11 @@ export function AgentWorkspace({
             {hasResult && (
               <nav className="iw-pane-switch" aria-label="Conversation and work">
                 <button type="button" aria-pressed={workspacePane === "thread"}
-                  onClick={() => setWorkspacePane("thread")}>
+                  onClick={() => selectWorkspacePane("thread")}>
                   <MessageCircle /> Conversation
                 </button>
                 <button type="button" aria-pressed={workspacePane === "work"}
-                  onClick={() => setWorkspacePane("work")}>
+                  onClick={() => selectWorkspacePane("work")}>
                   <FileText /> Your work
                 </button>
               </nav>

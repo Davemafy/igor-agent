@@ -73,7 +73,9 @@ describe("agent multi-turn connected document editing", () => {
 
       expect(offered[0]).toEqual(["document.revise"]);
       expect(offered[1]).toContain("agent.finish");
-      expect(task.work?.documents.find((d) => d.id === "event-invitation")).toMatchObject({
+      expect(
+        task.work?.documents.find((d) => d.id === "event-invitation"),
+      ).toMatchObject({
         title: "Warm invitation",
         version: 2,
       });

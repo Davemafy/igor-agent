@@ -741,7 +741,7 @@ export class ToolCallingModel implements ModelProvider {
           "When culturalDecision is required, resolving entities only identifies seeds. Call qloo.discover for the currently required seeds to obtain actual candidate affinities and evidence. qloo.explore_location supplies geography/category leads and does not satisfy personalized cultural evidence. Candidate IDs must come from culturalCandidates, never knownEntities. If web tools are unavailable, create a culturally grounded creative draft with practical facts explicitly unverified instead of inventing venues or citations.",
           "Prefer the cheapest sufficient tool. Use Qloo for relevant cultural links, Google Places for locations, web search for fresh evidence, and page reads only for observed IDs.",
           "For a revision, use document.revise with the affected existing agent artifactId to retain identity and prior versions. Use document.create only for new deliverables. Approved and manually edited work remains protected.",
-          "If document.revise is the only offered tool, rewrite the relevant saved artifact using its visible current content and existing evidenceIds; preserve valid references, report unverified claims, and do not request a new document ID or unrelated cultural discovery.",
+          "If document.revise is the only offered tool, rewrite the relevant saved artifact using its visible current content and existing evidenceIds; preserve valid references, report unverified claims, and do not request a new document ID or unrelated cultural discovery. Connected experience documents appear in connectedWork.documents with artifactId document:<id>; revise those exact IDs without rewriting unrelated decisions or creating new goals.",
           "Prefer one coherent saved document covering related deliverables, with their exact fulfills keys, unless the user requests separate outputs. If completion was rejected, inspect the unmet requirements and continue rather than repeating agent.finish.",
           "After Qloo discovery, prefer experience.propose for a new connected experience: title, decisions [{domain,value,rationale,candidateId?,estimatedCost?}], documents [{title,content,fulfills}]. Use only candidateIds from culturalCandidates. Include substantive plans, schedule and requested pitch content; do not claim verified prices, venues or availability. The server links current Qloo evidence and creates versioned typed work. Use experience.compose for granular selective revisions and existing linked decisions. Never modify approved or manually edited work.",
           "After observations, save requested editable work using experience.compose for linked experience decisions/documents, or document.create for standalone artifacts, before agent.finish. Its arguments are {title,content,sourceIds,evidenceIds?,candidateIds?,fulfills?}. For document.create, sourceIds MUST be exact IDs from validDocumentSourceIds; never invent IDs or copy evidence IDs into sourceIds. Qloo evidence IDs belong in evidenceIds. fulfills must name interpreted deliverable keys. Clearly label estimates and unknowns. Never retry identical failed arguments.",
@@ -754,7 +754,43 @@ export class ToolCallingModel implements ModelProvider {
         content: JSON.stringify({
           goal,
           acceptanceRequirements: context.agentRun?.requirements,
-          connectedWork: context.work,
+          connectedWork: revisionOnly
+            ? {
+                activeGoalId: context.work?.activeGoalId,
+                budget: context.work?.budget,
+                documents: (context.work?.documents ?? [])
+                  .filter(
+                    (document) =>
+                      document.goalId === context.work?.activeGoalId,
+                  )
+                  .slice(-4)
+                  .map((document) => ({
+                    artifactId: `document:${document.id}`,
+                    id: document.id,
+                    title: document.title,
+                    content: document.content.slice(0, 6500),
+                    evidenceIds: document.evidenceIds,
+                    candidateIds: document.candidateIds,
+                    fulfills: document.fulfills,
+                    edited: document.edited,
+                    status: document.status,
+                    version: document.version,
+                  })),
+                decisions: (context.work?.decisions ?? [])
+                  .filter(
+                    (decision) =>
+                      decision.goalId === context.work?.activeGoalId &&
+                      decision.status !== "rejected",
+                  )
+                  .slice(-6)
+                  .map((decision) => ({
+                    id: decision.id,
+                    domain: decision.domain,
+                    value: decision.value,
+                    status: decision.status,
+                  })),
+              }
+            : context.work,
           conversationFocus: context.conversationFocus,
           priorConversation: context.messages.slice(-10).map((message) => ({
             role: message.role,

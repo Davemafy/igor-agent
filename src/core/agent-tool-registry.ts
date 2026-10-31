@@ -167,6 +167,7 @@ export function createAgentToolRegistry(
     (context.task.work?.documents.some(
       (document) => !document.edited && document.status !== "approved",
     ) ?? false);
+
   const priorWork = () =>
     context.task.artifacts.length > 0 ||
     (context.task.agentRunHistory?.length ?? 0) > 0;
@@ -1055,7 +1056,8 @@ export function createAgentToolRegistry(
           return {
             status: "ok",
             requests: 0,
-            summary: `Revised connected document ${workId}; version and protected work preserved. ${summary}`.slice(0, 500),
+            summary:
+              `Revised connected document ${workId}; version and protected work preserved. ${summary}`.slice(0, 500),
             artifactIds: [`document:${workId}`],
           };
         }

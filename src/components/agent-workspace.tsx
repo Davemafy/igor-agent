@@ -624,7 +624,7 @@ export function AgentWorkspace({
               </span>
             </header>
             {hasResult && (
-              <div className="iw-pane-switch" role="group" aria-label="Workspace view">
+              <nav className="iw-pane-switch" aria-label="Conversation and work">
                 <button type="button" aria-pressed={workspacePane === "thread"}
                   onClick={() => setWorkspacePane("thread")}>
                   <MessageCircle /> Conversation
@@ -633,7 +633,7 @@ export function AgentWorkspace({
                   onClick={() => setWorkspacePane("work")}>
                   <FileText /> Your work
                 </button>
-              </div>
+              </nav>
             )}
             <div className="iw-workgrid">
               <section

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ModelToolProtocolError } from "./model-tool-protocol-error";
+import { ModelRequestBudgetError } from "./model-budget";
 import {
   ModelOutputFormatError,
   ProviderHttpError,
@@ -58,6 +59,7 @@ export class FallbackModel implements ModelProvider {
   private async readOnly<T>(
     primary: (() => Promise<T>) | undefined,
     backup: (() => Promise<T>) | undefined,
+    allowUnknownDecisionError = false,
   ): Promise<T | undefined> {
     if (this.usingBackup || !primary) {
       return backup?.();
@@ -66,7 +68,15 @@ export class FallbackModel implements ModelProvider {
     try {
       return await primary();
     } catch (error) {
-      if (!recoverableModelError(error) || !backup) {
+      // Agent decisions are read-only and have not executed a tool yet.
+      // One configured backup can handle an unclassified provider error;
+      // never bypass an explicit model-request budget.
+      const decisionFailure =
+        allowUnknownDecisionError &&
+        error instanceof Error &&
+        !(error instanceof ModelRequestBudgetError);
+
+      if ((!recoverableModelError(error) && !decisionFailure) || !backup) {
         throw error;
       }
 
@@ -185,6 +195,7 @@ export class FallbackModel implements ModelProvider {
         ? () =>
             this.backup.chooseAgentAction!(goal, tools, observations, context)
         : undefined,
+      true,
     );
 
     if (!choice) {

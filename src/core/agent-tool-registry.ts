@@ -915,7 +915,9 @@ export function createAgentToolRegistry(
           assumptions: [
             "This document distinguishes confirmed source observations from remaining uncertainties.",
             ...(incompleteReferences
-              ? ["Some model-supplied source IDs were unobserved and excluded; this draft does not fulfill requested deliverables."]
+              ? [
+                  "Some model-supplied source IDs were unobserved and excluded; this draft does not fulfill requested deliverables.",
+                ]
               : []),
           ],
           freshness: "current",

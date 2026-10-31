@@ -157,16 +157,19 @@ export function createAgentToolRegistry(
   const trueforge = trueForgeConfig();
   // Do not spend scarce model steps on actions the current workspace cannot
   // perform. The executor still validates permissions and protected edits.
-  const revisableDocument = () =>
+  const editableAgentArtifact = () =>
     context.task.artifacts.some(
       (artifact) =>
         artifact.id.startsWith("agent-doc-") &&
         !artifact.edited &&
         !artifact.locked,
-    ) ||
-    (context.task.work?.documents.some(
+    );
+  const editableConnectedDocument = () =>
+    context.task.work?.documents.some(
       (document) => !document.edited && document.status !== "approved",
-    ) ?? false);
+    ) ?? false;
+  const revisableDocument = () =>
+    editableAgentArtifact() || editableConnectedDocument();
 
   const priorWork = () =>
     context.task.artifacts.length > 0 ||
@@ -1053,11 +1056,13 @@ export function createAgentToolRegistry(
             ctx.task.agentRun?.goal,
           );
 
+          const revisionSummary =
+            `Revised connected document ${workId}; version and protected work preserved. ${summary}`;
+
           return {
             status: "ok",
             requests: 0,
-            summary:
-              `Revised connected document ${workId}; version and protected work preserved. ${summary}`.slice(0, 500),
+            summary: revisionSummary.slice(0, 500),
             artifactIds: [`document:${workId}`],
           };
         }

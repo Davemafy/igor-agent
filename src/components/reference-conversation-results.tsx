@@ -23,6 +23,7 @@ export function ReferenceConversationResults({ task, busy, onOpen, onCompare }: 
     (!("freshness" in candidate) || candidate.freshness === "current")
   ).slice(0, 3);
   const participants = view.participants.filter((person) => !person.sample);
+
   if (!candidates.length) { return null; }
 
   return (

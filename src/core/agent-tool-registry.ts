@@ -1133,7 +1133,7 @@ export function createAgentToolRegistry(
           };
         }
 
-        artifact.fulfills = fulfills ?? artifact.fulfills;
+        artifact.fulfills = fulfills?.length ? fulfills : artifact.fulfills;
         artifact.candidateIds = candidateIds ?? artifact.candidateIds;
         artifact.title = title;
         artifact.content = content;

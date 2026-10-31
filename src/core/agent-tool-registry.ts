@@ -1056,8 +1056,7 @@ export function createAgentToolRegistry(
             ctx.task.agentRun?.goal,
           );
 
-          const revisionSummary =
-            `Revised connected document ${workId}; version and protected work preserved. ${summary}`;
+          const revisionSummary = `Revised connected document ${workId}; version and protected work preserved. ${summary}`;
 
           return {
             status: "ok",

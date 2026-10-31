@@ -422,7 +422,11 @@ export async function runUnifiedAgent(
       task.work?.documents.some(
         (document) => document.status !== "approved" && !document.edited,
       ) ?? false;
+    const revisionSavedThisTurn = run.steps.some(
+      (step) => step.tool === "document.revise" && step.status === "ok",
+    );
     const directArtifactRevision =
+      !revisionSavedThisTurn &&
       /\b(?:revise|rewrite|edit|update|refine|modify)\b/i.test(input.goal) &&
       !/\b(?:new|additional|fresh|latest|current)\s+(?:research|sources|facts|evidence)\b|\b(?:search|investigate|look up)\b/i.test(
         input.goal,

@@ -63,10 +63,13 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
 
   // Evaluated candidates override catalogue records with matching IDs.
   for (const item of task.catalogue) { byId.set(item.id, item); }
+
   for (const item of task.candidates) { byId.set(item.id, item); }
 
   const evidenceById = new Map<string, Evidence>();
+
   for (const item of task.evidenceArchive ?? []) { evidenceById.set(item.id, item); }
+
   for (const item of task.evidence) { evidenceById.set(item.id, item); }
 
   const participantById = new Map(
@@ -97,6 +100,7 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
 
   function evidenceForCandidate(id: string): readonly Evidence[] {
     const candidate = byId.get(id);
+
     if (!candidate || !("evidenceIds" in candidate)) { return []; }
 
     return candidate.evidenceIds
@@ -106,6 +110,7 @@ export function adaptTaskForPresentation(input: unknown): WorkspaceViewModel {
 
   function culturalSignalsForCandidate(id: string): readonly ScopedCulturalSignal[] {
     const candidate = byId.get(id);
+
     if (!candidate?.cultural) { return []; }
 
     return Object.entries(candidate.cultural).map(([key, signal]) => {

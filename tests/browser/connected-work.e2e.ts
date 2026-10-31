@@ -71,6 +71,16 @@ test("existing chat UI carries a listening-bar concept through approvals, edits,
   );
   expect(task.work?.documents).toHaveLength(8);
   await showPane(page, "Your work");
+  console.log("IGOR_INTEGRATION_WORK_DIAGNOSTIC", JSON.stringify(await page.evaluate(() => ({
+    url: location.pathname + location.search,
+    hasConnectedSurface: !!document.querySelector('[aria-label="Connected work"]'),
+    resultCount: document.querySelectorAll(".iw-inline-output").length,
+    resourceTabs: [...document.querySelectorAll(".iw-resource-tabs button")].map((element) => element.textContent?.trim()),
+    documentTabs: document.querySelectorAll(".ig-connected-doc-tabs button").length,
+    pageState: document.querySelector(".iw-inline-workspace")?.getAttribute("data-pane"),
+    workCopy: document.querySelector(".iw-workspace")?.textContent?.slice(0, 240),
+    errors: [...document.querySelectorAll('[role="alert"]')].map((element) => element.textContent?.slice(0, 180)),
+  }))));
   const surface = page.getByRole("complementary", { name: "Connected work" });
   await expect(surface).toBeVisible();
   await surface

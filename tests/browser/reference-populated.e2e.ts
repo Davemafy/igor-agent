@@ -6,6 +6,7 @@ type VisualTask = ReturnType<typeof freshTask>;
 async function serveTask(page: Page, task: VisualTask) {
   await page.route(`**/api/tasks/${task.id}`, async (route) => {
     if (route.request().method() !== "GET") { return route.continue(); }
+
     await route.fulfill({
       status: 200, contentType: "application/json",
       body: JSON.stringify(task),
